@@ -26,7 +26,7 @@ api.interceptors.response.use(
 
 export const checkHealth = async () => {
   try {
-    const data = await api.get('/health');
+   const data = await api.get('/api/health');
     return data;
   } catch (error) {
     console.error('Health check failed:', error);
