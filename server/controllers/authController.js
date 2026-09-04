@@ -16,7 +16,7 @@ const sendTokenResponse = (user, statusCode, res, message = 'Success') => {
     expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
     httpOnly: true,
     secure: isProduction,
-    sameSite: isProduction ? 'strict' : 'lax',
+   sameSite: isProduction ? 'none' : 'lax',
   };
 
   const safeUser = {
@@ -154,7 +154,7 @@ export const logout = async (req, res, next) => {
       httpOnly: true,
       expires: new Date(0),
       secure: isProduction,
-      sameSite: isProduction ? 'strict' : 'lax',
+      sameSite: isProduction ? 'none' : 'lax',
     });
 
     res.status(200).json({
