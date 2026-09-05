@@ -53,6 +53,12 @@ export const initSocket = (httpServer, corsOptions) => {
 
   io.on('connection', (socket) => {
     console.log(`⚡ Socket connected: ${socket.user.name} (${socket.user.role}) [ID: ${socket.id}]`);
+        // Personal room for real-time notifications
+    const userRoom = `user:${socket.user._id}`;
+
+    socket.join(userRoom);
+
+    console.log(`🔔 ${socket.user.name} joined notification room: ${userRoom}`);
 
     // Join Delivery Room (with authorization checks)
     socket.on('delivery:join', async ({ orderId }) => {
