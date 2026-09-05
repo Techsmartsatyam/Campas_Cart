@@ -319,10 +319,9 @@
 
 
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { io } from 'socket.io-client';
-import api from '../services/api';
+import { useNotifications } from '../context/NotificationContext';
 import {
   Bell,
   CheckCheck,
@@ -335,160 +334,26 @@ import {
 } from 'lucide-react';
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [actionLoading, setActionLoading] = useState(false);
+  const {
+    notifications,
+    loading,
+    error,
+    fetchNotifications,
+    markAsRead,
+    markAllAsRead,
+  } = useNotifications();
 
+  const [actionLoading, setActionLoading] = useState(false);
   const navigate = useNavigate();
 
-  const fetchNotifications = async () => {
-    try {
-      setLoading(true);
-      setError('');
-
-      const res = await api.get('/notifications');
-
-      if (res.success) {
-        setNotifications(Array.isArray(res.data) ? res.data : []);
-      }
-    } catch (err) {
-      console.error('Failed to fetch notifications:', err);
-      setError(err.message || 'Failed to load notifications');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  /*
-   * Initial notifications + Real-time Socket.IO notifications
-   */
-  useEffect(() => {
-    let socket = null;
-
-    const setupSocket = async () => {
-      try {
-        const response = await api.get('/auth/socket-token');
-        const socketToken = response.data?.socketToken;
-
-        if (!socketToken) {
-          console.error('❌ Socket token not received');
-          return;
-        }
-
-        const apiUrl =
-          import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-
-        const socketUrl = apiUrl.replace(/\/api\/?$/, '');
-
-        socket = io(socketUrl, {
-          auth: {
-            token: socketToken,
-          },
-          withCredentials: true,
-          transports: ['websocket', 'polling'],
-        });
-
-        socket.on('connect', () => {
-          console.log(
-            '🔔 Notification socket connected:',
-            socket.id
-          );
-        });
-
-        socket.on('connect_error', (err) => {
-          console.error(
-            '❌ Notification socket connection error:',
-            err.message
-          );
-        });
-
-        socket.on('notification:new', (newNotification) => {
-          console.log(
-            '🔔 New real-time notification:',
-            newNotification
-          );
-
-          if (!newNotification?._id) {
-            return;
-          }
-
-          setNotifications((prev) => {
-            const alreadyExists = prev.some(
-              (notification) =>
-                notification._id === newNotification._id
-            );
-
-            if (alreadyExists) {
-              return prev;
-            }
-
-            return [newNotification, ...prev];
-          });
-        });
-
-        socket.on('disconnect', (reason) => {
-          console.log(
-            '🔌 Notification socket disconnected:',
-            reason
-          );
-        });
-      } catch (error) {
-        console.error(
-          '❌ Failed to setup notification socket:',
-          error
-        );
-      }
-    };
-
-    fetchNotifications();
-    setupSocket();
-
-    return () => {
-      if (socket) {
-        socket.off('notification:new');
-        socket.off('connect');
-        socket.off('connect_error');
-        socket.off('disconnect');
-        socket.disconnect();
-      }
-    };
-  }, []);
-
   const handleMarkAsRead = async (id) => {
-    try {
-      const res = await api.patch(`/notifications/${id}/read`);
-
-      if (res.success) {
-        setNotifications((prev) =>
-          prev.map((item) =>
-            item._id === id
-              ? { ...item, isRead: true }
-              : item
-          )
-        );
-      }
-    } catch (err) {
-      console.error('Failed to mark notification as read:', err);
-    }
+    await markAsRead(id);
   };
 
   const handleMarkAllAsRead = async () => {
     try {
       setActionLoading(true);
-
-      const res = await api.patch('/notifications/read-all');
-
-      if (res.success) {
-        setNotifications((prev) =>
-          prev.map((item) => ({
-            ...item,
-            isRead: true,
-          }))
-        );
-      }
-    } catch (err) {
-      console.error('Failed to mark all notifications as read:', err);
+      await markAllAsRead();
     } finally {
       setActionLoading(false);
     }

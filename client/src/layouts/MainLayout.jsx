@@ -1,52 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import { ShoppingBag, LogOut, User as UserIcon, Menu, X, Bell, Check, ExternalLink } from 'lucide-react';
 import api from '../services/api';
 
 export default function MainLayout() {
   const { user, isAuthenticated, logout } = useAuth();
+  const { notifications, unreadCount, markAsRead, markAllAsRead, fetchNotifications } = useNotifications();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [unreadCount, setUnreadCount] = useState(0);
-  const [recentNotifications, setRecentNotifications] = useState([]);
   const [notifDropdownOpen, setNotifDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
-  const fetchUnreadCount = async () => {
-    if (!isAuthenticated) return;
-    try {
-      const res = await api.get('/notifications/unread-count');
-      if (res.success) {
-        setUnreadCount(res.count || 0);
-      }
-    } catch (err) {
-      console.error('Error fetching unread notification count:', err);
-    }
-  };
-
-  const fetchRecentNotifications = async () => {
-    if (!isAuthenticated) return;
-    try {
-      const res = await api.get('/notifications');
-      if (res.success) {
-        setRecentNotifications(res.data.slice(0, 5));
-      }
-    } catch (err) {
-      console.error('Error fetching notifications:', err);
-    }
-  };
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      fetchUnreadCount();
-      const interval = setInterval(fetchUnreadCount, 30000);
-      return () => clearInterval(interval);
-    } else {
-      setUnreadCount(0);
-      setRecentNotifications([]);
-    }
-  }, [isAuthenticated]);
+  const recentNotifications = notifications.slice(0, 5);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -60,7 +27,7 @@ export default function MainLayout() {
 
   const toggleDropdown = () => {
     if (!notifDropdownOpen) {
-      fetchRecentNotifications();
+      fetchNotifications();
     }
     setNotifDropdownOpen(!notifDropdownOpen);
   };
@@ -68,12 +35,7 @@ export default function MainLayout() {
   const handleNotificationClick = async (notif) => {
     setNotifDropdownOpen(false);
     if (!notif.isRead) {
-      try {
-        await api.patch(`/notifications/${notif._id}/read`);
-        fetchUnreadCount();
-      } catch (err) {
-        console.error('Error marking notification as read:', err);
-      }
+      await markAsRead(notif._id);
     }
     if (notif.relatedOrder) {
       const orderId = typeof notif.relatedOrder === 'object' ? notif.relatedOrder._id : notif.relatedOrder;
@@ -82,13 +44,7 @@ export default function MainLayout() {
   };
 
   const handleMarkAllRead = async () => {
-    try {
-      await api.patch('/notifications/read-all');
-      setUnreadCount(0);
-      setRecentNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    } catch (err) {
-      console.error('Error marking all as read:', err);
-    }
+    await markAllAsRead();
   };
 
   const handleLogout = async () => {
