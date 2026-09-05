@@ -10,6 +10,7 @@ import Payment from '../models/Payment.js';
 import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import Delivery from '../models/Delivery.js';
+import { getIO } from '../config/socket.js';
 
 /**
  * Helper to generate human-readable unique order number: CC-2026-XXXXXX
@@ -345,51 +346,95 @@ export const createOrder = async (req, res) => {
       { path: 'items.product', select: 'name images unit' },
     ]);
 
-    // 13. Create Notifications safely (Student, Shopkeeper, & Delivery Boys)
-    try {
-      // A. Student Order Confirmation Notification
-      await Notification.create({
-        user: req.user._id,
-        title: 'Order Placed Successfully',
-        message: `Your order ${order.orderNumber} has been placed successfully.`,
-        type: 'ORDER',
-        relatedOrder: order._id,
-        isRead: false,
-      });
 
-      // B. Shopkeeper New Order Notification (Only shop owner)
-      if (shop.owner) {
-        await Notification.create({
-          user: shop.owner,
-          title: 'New Order Received',
-          message: `New order ${order.orderNumber} has been placed for your shop.`,
-          type: 'ORDER',
-          relatedOrder: order._id,
-          isRead: false,
-        });
-      }
+   // 13. Create Notifications + Real-Time Socket.IO
+try {
+  const notifications = [];
 
-      // C. Eligible Delivery Boys Notification
-      const activeDeliveryBoys = await User.find({
-        role: 'DELIVERY_BOY',
-        isActive: true,
-        accountStatus: 'APPROVED',
-      }).select('_id');
+  // A. Student notification
+  const studentNotification = await Notification.create({
+    user: req.user._id,
+    title: 'Order Placed Successfully',
+    message: `Your order ${order.orderNumber} has been placed successfully.`,
+    type: 'ORDER',
+    relatedOrder: order._id,
+    isRead: false,
+  });
 
-      if (activeDeliveryBoys.length > 0) {
-        const deliveryNotifications = activeDeliveryBoys.map((dbUser) => ({
-          user: dbUser._id,
-          title: 'New Delivery Available',
-          message: `Order ${order.orderNumber} is available for delivery.`,
-          type: 'DELIVERY',
-          relatedOrder: order._id,
-          isRead: false,
-        }));
-        await Notification.insertMany(deliveryNotifications);
-      }
-    } catch (notifErr) {
-      console.warn('Order creation notification notice:', notifErr.message);
+  notifications.push(studentNotification);
+
+  // B. Shopkeeper notification
+  if (shop.owner) {
+    const shopkeeperNotification = await Notification.create({
+      user: shop.owner,
+      title: 'New Order Received',
+      message: `New order ${order.orderNumber} has been placed for your shop.`,
+      type: 'ORDER',
+      relatedOrder: order._id,
+      isRead: false,
+    });
+
+    notifications.push(shopkeeperNotification);
+  }
+
+  // C. Delivery Boy notifications
+  const activeDeliveryBoys = await User.find({
+    role: 'DELIVERY_BOY',
+    isActive: true,
+    accountStatus: 'APPROVED',
+  }).select('_id');
+
+  if (activeDeliveryBoys.length > 0) {
+    const deliveryNotifications = activeDeliveryBoys.map((dbUser) => ({
+      user: dbUser._id,
+      title: 'New Delivery Available',
+      message: `Order ${order.orderNumber} is available for delivery.`,
+      type: 'DELIVERY',
+      relatedOrder: order._id,
+      isRead: false,
+    }));
+
+    const createdDeliveryNotifications =
+      await Notification.insertMany(deliveryNotifications);
+
+    notifications.push(...createdDeliveryNotifications);
+  }
+
+  // D. Send notifications instantly using Socket.IO
+  try {
+    const io = getIO();
+
+    for (const notification of notifications) {
+      io.to(`user:${notification.user.toString()}`).emit(
+        'notification:new',
+        {
+          _id: notification._id,
+          title: notification.title,
+          message: notification.message,
+          type: notification.type,
+          relatedOrder: notification.relatedOrder,
+          isRead: notification.isRead,
+          createdAt: notification.createdAt,
+        }
+      );
     }
+
+    console.log(
+      `🔔 Real-time notifications sent for order ${order.orderNumber}`
+    );
+  } catch (socketError) {
+    console.warn(
+      'Socket notification error:',
+      socketError.message
+    );
+  }
+
+} catch (notifErr) {
+  console.warn(
+    'Order notification creation notice:',
+    notifErr.message
+  );
+}
 
     return res.status(201).json({
       success: true,
