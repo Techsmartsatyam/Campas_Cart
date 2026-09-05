@@ -364,66 +364,94 @@ export default function NotificationsPage() {
    * Initial notifications + Real-time Socket.IO notifications
    */
   useEffect(() => {
-    fetchNotifications();
+    let socket = null;
 
-    // VITE_API_URL normally:
-    // http://localhost:5000/api
-    // or
-    // https://campas-cart-1.onrender.com/api
-    //
-    // Socket.IO needs the server URL WITHOUT /api
-    const apiUrl =
-      import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+    const setupSocket = async () => {
+      try {
+        const response = await api.get('/auth/socket-token');
+        const socketToken = response.data?.socketToken;
 
-    const socketUrl = apiUrl.replace(/\/api\/?$/, '');
-
-    console.log('🔌 Connecting notification socket:', socketUrl);
-
-    const socket = io(socketUrl, {
-      withCredentials: true,
-      transports: ['websocket', 'polling'],
-    });
-
-    socket.on('connect', () => {
-      console.log('🔔 Notification socket connected:', socket.id);
-    });
-
-    socket.on('connect_error', (err) => {
-      console.error('❌ Notification socket connection error:', err.message);
-    });
-
-    /*
-     * New notification received from backend
-     */
-    socket.on('notification:new', (newNotification) => {
-      console.log('🔔 New real-time notification:', newNotification);
-
-      if (!newNotification?._id) {
-        return;
-      }
-
-      setNotifications((prev) => {
-        // Prevent duplicate notification
-        const alreadyExists = prev.some(
-          (notification) => notification._id === newNotification._id
-        );
-
-        if (alreadyExists) {
-          return prev;
+        if (!socketToken) {
+          console.error('❌ Socket token not received');
+          return;
         }
 
-        // New notification goes to the top
-        return [newNotification, ...prev];
-      });
-    });
+        const apiUrl =
+          import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-    socket.on('disconnect', (reason) => {
-      console.log('🔌 Notification socket disconnected:', reason);
-    });
+        const socketUrl = apiUrl.replace(/\/api\/?$/, '');
+
+        socket = io(socketUrl, {
+          auth: {
+            token: socketToken,
+          },
+          withCredentials: true,
+          transports: ['websocket', 'polling'],
+        });
+
+        socket.on('connect', () => {
+          console.log(
+            '🔔 Notification socket connected:',
+            socket.id
+          );
+        });
+
+        socket.on('connect_error', (err) => {
+          console.error(
+            '❌ Notification socket connection error:',
+            err.message
+          );
+        });
+
+        socket.on('notification:new', (newNotification) => {
+          console.log(
+            '🔔 New real-time notification:',
+            newNotification
+          );
+
+          if (!newNotification?._id) {
+            return;
+          }
+
+          setNotifications((prev) => {
+            const alreadyExists = prev.some(
+              (notification) =>
+                notification._id === newNotification._id
+            );
+
+            if (alreadyExists) {
+              return prev;
+            }
+
+            return [newNotification, ...prev];
+          });
+        });
+
+        socket.on('disconnect', (reason) => {
+          console.log(
+            '🔌 Notification socket disconnected:',
+            reason
+          );
+        });
+      } catch (error) {
+        console.error(
+          '❌ Failed to setup notification socket:',
+          error
+        );
+      }
+    };
+
+    fetchNotifications();
+    setupSocket();
 
     return () => {
-      socket.off('notification:new');
-      socket.disconnect();
+      if (socket) {
+        socket.off('notification:new');
+        socket.off('connect');
+        socket.off('connect_error');
+        socket.off('disconnect');
+        socket.disconnect();
+      }
     };
   }, []);
 

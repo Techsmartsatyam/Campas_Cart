@@ -302,3 +302,29 @@ export const createStaff = async (req, res, next) => {
     next(error);
   }
 };
+export const getSocketToken = async (req, res) => {
+  try {
+    const token = jwt.sign(
+      {
+        userId: req.user._id,
+        role: req.user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: '5m',
+      }
+    );
+
+    res.status(200).json({
+      success: true,
+      socketToken: token,
+    });
+  } catch (error) {
+    console.error('Socket token error:', error);
+
+    res.status(500).json({
+      success: false,
+      message: 'Failed to generate socket token',
+    });
+  }
+};
