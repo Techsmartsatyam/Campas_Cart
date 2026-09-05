@@ -17,6 +17,7 @@ const sendTokenResponse = (user, statusCode, res, message = 'Success') => {
     httpOnly: true,
     secure: isProduction,
    sameSite: isProduction ? 'none' : 'lax',
+   path: '/',
   };
 
   const safeUser = {
@@ -155,6 +156,7 @@ export const logout = async (req, res, next) => {
       expires: new Date(0),
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax',
+        path: '/',
     });
 
     res.status(200).json({
