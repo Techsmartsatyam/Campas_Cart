@@ -646,6 +646,78 @@ export default function Shopkeeper() {
                           {ord.paymentStatus === 'USER_CONFIRMED' ? '🟡 Payment Claimed — Verification Required' : ord.paymentStatus === 'PAID' ? '🟢 PAID / VERIFIED' : ord.paymentStatus}
                         </span>
                       </div>
+                      {/*   Agar koi proble ayi to yahi se remove krna h bro code ko*/}
+{/* Ordered Products */}
+{Array.isArray(ord.items) && ord.items.length > 0 && (
+  <div
+    style={{
+      marginTop: '1rem',
+      padding: '1rem',
+      background: 'rgba(15, 23, 42, 0.7)',
+      border: '1px solid var(--border-color)',
+      borderRadius: '0.5rem',
+    }}
+  >
+    <h4
+      style={{
+        margin: '0 0 0.75rem 0',
+        color: 'var(--text-primary)',
+        fontSize: '0.95rem',
+      }}
+    >
+      Ordered Items ({ord.items.length})
+    </h4>
+
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+      {ord.items.map((item, index) => (
+        <div
+          key={item._id || item.product?._id || index}
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '1rem',
+            padding: '0.65rem',
+            background: 'rgba(255, 255, 255, 0.03)',
+            borderRadius: '0.4rem',
+          }}
+        >
+          <div>
+            <strong
+              style={{
+                color: 'var(--text-primary)',
+                display: 'block',
+              }}
+            >
+              {item.name || item.product?.name || 'Product'}
+            </strong>
+
+            <span
+              style={{
+                color: 'var(--text-muted)',
+                fontSize: '0.8rem',
+              }}
+            >
+              Quantity: {item.quantity}
+            </span>
+          </div>
+
+          <div
+            style={{
+              color: 'var(--text-primary)',
+              fontWeight: '700',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            ₹{item.subtotal ?? ((item.price || 0) * (item.quantity || 0))}
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+{/* Yaha tak */}
+
                       {ord.cancellationReason && (
                         <p style={{ fontSize: '0.8rem', color: 'var(--danger)', marginTop: '0.25rem' }}>
                           Reason: {ord.cancellationReason}
