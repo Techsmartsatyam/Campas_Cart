@@ -311,13 +311,16 @@ export const getSocketToken = async (req, res) => {
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: '5m',
+        expiresIn: '15m',
       }
     );
 
     res.status(200).json({
       success: true,
       socketToken: token,
+      data: {
+        socketToken: token,
+      },
     });
   } catch (error) {
     console.error('Socket token error:', error);
