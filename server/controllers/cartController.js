@@ -16,7 +16,8 @@ export const getCart = async (req, res) => {
       })
       .populate({
         path: 'items.shop',
-        select: 'name isApproved isActive deliveryFee minimumOrder',
+        // select: 'name isApproved isActive deliveryFee minimumOrder',
+        select: 'name isApproved isActive deliveryFee minimumOrder upiEnabled upiId upiQrImage'
       });
 
     if (!cart) {
@@ -166,7 +167,7 @@ export const addToCart = async (req, res) => {
 
     await cart.populate([
       { path: 'items.product', select: 'name price images isAvailable stock unit shop' },
-      { path: 'items.shop', select: 'name isApproved isActive deliveryFee minimumOrder' },
+      { path: 'items.shop', select: 'name isApproved isActive deliveryFee minimumOrder upiEnabled upiId upiQrImage' },
     ]);
 
     return res.status(200).json({
@@ -249,7 +250,7 @@ export const updateCartItem = async (req, res) => {
 
     await cart.populate([
       { path: 'items.product', select: 'name price images isAvailable stock unit shop' },
-      { path: 'items.shop', select: 'name isApproved isActive deliveryFee minimumOrder' },
+      { path: 'items.shop', select: 'name isApproved isActive deliveryFee minimumOrder upiEnabled upiId upiQrImage' },
     ]);
 
     return res.status(200).json({
@@ -292,7 +293,7 @@ export const removeCartItem = async (req, res) => {
 
     await cart.populate([
       { path: 'items.product', select: 'name price images isAvailable stock unit shop' },
-      { path: 'items.shop', select: 'name isApproved isActive deliveryFee minimumOrder' },
+      { path: 'items.shop',select: 'name isApproved isActive deliveryFee minimumOrder upiEnabled upiId upiQrImage' },
     ]);
 
     return res.status(200).json({
