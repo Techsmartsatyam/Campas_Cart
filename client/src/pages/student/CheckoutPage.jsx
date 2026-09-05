@@ -350,13 +350,26 @@ export default function CheckoutPage() {
 
               {/* UPI Option */}
               <div
+                // onClick={() => {
+                //   if (shop?.upiEnabled === false) {
+                //     alert('This shop does not have UPI payments enabled. Please select Cash on Delivery (COD).');
+                //     return;
+                //   }
+                //   setPaymentMethod('UPI');
+                // }}
                 onClick={() => {
-                  if (shop?.upiEnabled === false) {
-                    alert('This shop does not have UPI payments enabled. Please select Cash on Delivery (COD).');
-                    return;
-                  }
-                  setPaymentMethod('UPI');
-                }}
+               if (shop?.upiEnabled === false) {
+               alert('This shop does not have UPI payments enabled. Please select Cash on Delivery (COD).');
+               return;
+                   }
+
+                        if (!shop?.upiId && !shop?.upiQrImage) {
+                    alert('This shop has not configured UPI payment details. Please select Cash on Delivery (COD).');
+                     return;
+                            }
+
+                            setPaymentMethod('UPI');
+                                }}
                 style={{
                   padding: '1rem',
                   borderRadius: '0.5rem',
@@ -388,6 +401,143 @@ export default function CheckoutPage() {
                   </div>
                 </div>
               </div>
+          
+{/* UPI Payment Details */}
+{paymentMethod === 'UPI' && (
+  <div
+    style={{
+      marginTop: '1rem',
+      padding: '1.25rem',
+      borderRadius: '0.75rem',
+      border: '1px solid var(--border-color)',
+      background: 'rgba(16, 185, 129, 0.06)',
+      textAlign: 'center',
+    }}
+  >
+    <h4
+      style={{
+        margin: '0 0 0.75rem',
+        color: 'var(--text-primary)',
+        fontSize: '1rem',
+        fontWeight: '800',
+      }}
+    >
+      Pay {shop?.name || 'Shopkeeper'} Directly
+    </h4>
+
+    {/* UPI ID */}
+    {shop?.upiId ? (
+      <div
+        style={{
+          marginBottom: '1rem',
+          padding: '0.75rem',
+          borderRadius: '0.5rem',
+          background: 'var(--surface-hover)',
+          border: '1px solid var(--border-color)',
+        }}
+      >
+        <div
+          style={{
+            color: 'var(--text-muted)',
+            fontSize: '0.75rem',
+            marginBottom: '0.25rem',
+          }}
+        >
+          UPI ID
+        </div>
+
+        <div
+          style={{
+            color: 'var(--primary)',
+            fontSize: '1rem',
+            fontWeight: '800',
+            wordBreak: 'break-all',
+          }}
+        >
+          {shop.upiId}
+        </div>
+      </div>
+    ) : (
+      <div
+        style={{
+          color: 'var(--danger)',
+          fontSize: '0.85rem',
+          marginBottom: '1rem',
+        }}
+      >
+        Shopkeeper UPI ID is not available.
+      </div>
+    )}
+
+    {/* QR Image */}
+    {shop?.upiQrImage ? (
+      <div>
+        <p
+          style={{
+            color: 'var(--text-secondary)',
+            fontSize: '0.85rem',
+            marginBottom: '0.75rem',
+          }}
+        >
+          Scan this QR code to pay
+        </p>
+
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <img
+            src={shop.upiQrImage}
+            alt={`${shop.name || 'Shopkeeper'} UPI QR`}
+            style={{
+              width: '220px',
+              height: '220px',
+              objectFit: 'contain',
+              background: '#ffffff',
+              padding: '0.5rem',
+              borderRadius: '0.75rem',
+              border: '1px solid var(--border-color)',
+            }}
+            onError={(e) => {
+              e.currentTarget.style.display = 'none';
+            }}
+          />
+        </div>
+      </div>
+    ) : (
+      <div
+        style={{
+          padding: '0.75rem',
+          borderRadius: '0.5rem',
+          background: 'rgba(239, 68, 68, 0.08)',
+          border: '1px solid var(--danger)',
+          color: 'var(--danger)',
+          fontSize: '0.85rem',
+        }}
+      >
+        Shopkeeper has not uploaded a UPI QR code.
+        Please select Cash on Delivery.
+      </div>
+    )}
+
+    <div
+      style={{
+        marginTop: '1rem',
+        fontSize: '0.75rem',
+        color: 'var(--text-muted)',
+        lineHeight: 1.5,
+      }}
+    >
+      Please make the payment directly to the shopkeeper using the
+      displayed UPI ID or QR code.
+    </div>
+  </div>
+)}
+
+
             </div>
           </div>
 

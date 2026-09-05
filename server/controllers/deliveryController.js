@@ -285,10 +285,18 @@ export const updateDeliveryStatus = async (req, res, next) => {
       if (order) {
         if (status === 'PICKED_UP') order.orderStatus = 'PICKED_UP';
         else if (status === 'OUT_FOR_DELIVERY') order.orderStatus = 'OUT_FOR_DELIVERY';
-        else if (status === 'DELIVERED') {
-          order.orderStatus = 'DELIVERED';
-          order.paymentStatus = 'PAID';
-        }
+        // else if (status === 'DELIVERED') {
+        //   order.orderStatus = 'DELIVERED';
+        //   order.paymentStatus = 'PAID';
+        // }
+   else if (status === 'DELIVERED') {
+  order.orderStatus = 'DELIVERED';
+
+  // COD order: payment is collected by delivery boy at delivery
+  if (order.paymentMethod === 'COD') {
+    order.paymentStatus = 'PAID';
+  }
+}
         await order.save();
 
         // Broadcast real-time status update to delivery room via Socket.IO

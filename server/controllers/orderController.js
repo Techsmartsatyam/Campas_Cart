@@ -414,7 +414,8 @@ export const createOrder = async (req, res) => {
 export const getStudentOrders = async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user._id })
-      .populate('shop', 'name bannerImage address')
+      // .populate('shop', 'name bannerImage address')
+      .populate('shop', 'name bannerImage address upiEnabled upiId upiQrImage')
       .populate('address')
       .sort({ createdAt: -1 });
 
@@ -440,7 +441,7 @@ export const getStudentOrders = async (req, res) => {
 export const getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
-      .populate('shop', 'name phone address bannerImage')
+      .populate('shop', 'name phone address bannerImage upiEnabled upiId upiQrImage')
       .populate('address')
       .populate('items.product', 'name images unit');
 
