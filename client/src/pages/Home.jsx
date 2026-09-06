@@ -82,7 +82,7 @@ export default function Home() {
               gap: '0.5rem',
               padding: '0.4rem 1rem',
               borderRadius: '9999px',
-              background: 'rgba(16, 28, 46, 0.8)',
+              background: '#f1f5f9',
               border: '1px solid var(--border-color)',
               fontSize: '0.85rem',
               marginBottom: '2rem',
@@ -166,7 +166,7 @@ export default function Home() {
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
             <div className="glass-card">
-              <div style={{ width: '2.75rem', height: '2.75rem', borderRadius: '0.5rem', background: 'rgba(56, 189, 248, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+              <div style={{ width: '2.75rem', height: '2.75rem', borderRadius: '0.5rem', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
                 <ShoppingBag style={{ color: 'var(--primary)' }} size={22} />
               </div>
               <h3 style={{ fontSize: '1.15rem', fontWeight: '600', marginBottom: '0.4rem' }}>Student</h3>
@@ -179,7 +179,7 @@ export default function Home() {
             </div>
 
             <div className="glass-card">
-              <div style={{ width: '2.75rem', height: '2.75rem', borderRadius: '0.5rem', background: 'rgba(16, 185, 129, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+              <div style={{ width: '2.75rem', height: '2.75rem', borderRadius: '0.5rem', background: '#d1fae5', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
                 <Store style={{ color: 'var(--success)' }} size={22} />
               </div>
               <h3 style={{ fontSize: '1.15rem', fontWeight: '600', marginBottom: '0.4rem' }}>Shopkeeper</h3>
@@ -192,7 +192,7 @@ export default function Home() {
             </div>
 
             <div className="glass-card">
-              <div style={{ width: '2.75rem', height: '2.75rem', borderRadius: '0.5rem', background: 'rgba(245, 158, 11, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+              <div style={{ width: '2.75rem', height: '2.75rem', borderRadius: '0.5rem', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
                 <Truck style={{ color: 'var(--warning)' }} size={22} />
               </div>
               <h3 style={{ fontSize: '1.15rem', fontWeight: '600', marginBottom: '0.4rem' }}>Delivery Partner</h3>
@@ -205,14 +205,14 @@ export default function Home() {
             </div>
 
             <div className="glass-card">
-              <div style={{ width: '2.75rem', height: '2.75rem', borderRadius: '0.5rem', background: 'rgba(168, 85, 247, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
-                <ShieldCheck style={{ color: '#a855f7' }} size={22} />
+              <div style={{ width: '2.75rem', height: '2.75rem', borderRadius: '0.5rem', background: '#f3e8ff', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+                <ShieldCheck style={{ color: '#9333ea' }} size={22} />
               </div>
               <h3 style={{ fontSize: '1.15rem', fontWeight: '600', marginBottom: '0.4rem' }}>Admin</h3>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
                 Onboard store vendors, verify delivery staff, and oversee platform health.
               </p>
-              <Link to="/admin" style={{ color: '#a855f7', fontSize: '0.875rem', fontWeight: '600' }}>
+              <Link to="/admin" style={{ color: '#9333ea', fontSize: '0.875rem', fontWeight: '600' }}>
                 Access Portal →
               </Link>
             </div>
@@ -221,7 +221,7 @@ export default function Home() {
       </section>
 
       {/* How It Works Section */}
-      <section id="how-it-works" style={{ padding: '4rem 0', background: 'rgba(7, 17, 31, 0.4)', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)' }}>
+      <section id="how-it-works" style={{ padding: '4rem 0', background: '#ffffff', borderTop: '1px solid var(--border-color)', borderBottom: '1px solid var(--border-color)' }}>
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
             <h2 style={{ fontSize: '1.75rem', fontWeight: '700', marginBottom: '0.5rem' }}>How CampusCart Works</h2>
@@ -236,7 +236,7 @@ export default function Home() {
                     fontSize: '2.5rem',
                     fontWeight: '800',
                     color: 'var(--primary)',
-                    opacity: 0.25,
+                    opacity: 0.3,
                     display: 'block',
                     marginBottom: '0.5rem',
                   }}
@@ -264,7 +264,7 @@ export default function Home() {
               const IconComp = f.icon;
               return (
                 <div key={f.title} className="glass-card" style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                  <div style={{ padding: '0.6rem', borderRadius: '0.5rem', background: 'rgba(56, 189, 248, 0.1)', color: 'var(--primary)', flexShrink: 0 }}>
+                  <div style={{ padding: '0.6rem', borderRadius: '0.5rem', background: '#e0f2fe', color: 'var(--primary)', flexShrink: 0 }}>
                     <IconComp size={20} />
                   </div>
                   <div>

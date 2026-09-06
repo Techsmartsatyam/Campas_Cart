@@ -186,7 +186,8 @@ export default function CartPage() {
                 }}
               >
                 {/* Product Image */}
-                <div style={{ width: '80px', height: '80px', borderRadius: '0.5rem', overflow: 'hidden', background: '#0f172a', flexShrink: 0 }}>
+                <div style={{ width: '80px', height: '80px', borderRadius: '0.5rem', overflow: 'hidden', background: '#f1f5f9', border: '1px solid var(--border-color)', flexShrink: 0 }}>
+
                   {itemImage ? (
                     <img src={itemImage} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (

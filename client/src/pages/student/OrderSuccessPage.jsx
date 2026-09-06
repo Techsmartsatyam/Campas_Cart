@@ -103,7 +103,7 @@ export default function OrderSuccessPage() {
         {/* Details Grid */}
         <div style={{
           textAlign: 'left',
-          background: '#07111f',
+          background: '#f8fafc',
           borderRadius: '0.75rem',
           padding: '1.5rem',
           border: '1px solid var(--border-color)',
@@ -124,7 +124,7 @@ export default function OrderSuccessPage() {
             <span style={{ color: 'var(--text-muted)' }}>Order Status</span>
             <span style={{
               background: 'var(--primary-gradient)',
-              color: '#07111f',
+              color: '#ffffff',
               padding: '0.15rem 0.5rem',
               borderRadius: '0.25rem',
               fontWeight: '800',
@@ -133,6 +133,7 @@ export default function OrderSuccessPage() {
               {order.orderStatus}
             </span>
           </div>
+
 
           {/* Payment Method & Status */}
           <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--border-color)', paddingBottom: '0.75rem' }}>

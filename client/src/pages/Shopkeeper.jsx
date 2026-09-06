@@ -564,7 +564,7 @@ export default function Shopkeeper() {
                       {filteredProducts.map((p) => (
                         <tr key={p._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                           <td style={{ padding: '0.75rem' }}>
-                            <div style={{ width: '45px', height: '45px', borderRadius: '0.375rem', background: 'rgba(7, 17, 31, 0.8)', border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <div style={{ width: '45px', height: '45px', borderRadius: '0.375rem', background: '#f1f5f9', border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                               {p.images && p.images.length > 0 ? (
                                 <img src={p.images[0]} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                               ) : (
@@ -585,7 +585,7 @@ export default function Shopkeeper() {
                           </td>
                           <td style={{ padding: '0.75rem' }}>{p.stock}</td>
                           <td style={{ padding: '0.75rem' }}>
-                            <span style={{ padding: '0.2rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: '700', background: p.stock > 0 && p.isAvailable ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', color: p.stock > 0 && p.isAvailable ? 'var(--success)' : 'var(--danger)' }}>
+                            <span style={{ padding: '0.2rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: '700', background: p.stock > 0 && p.isAvailable ? '#d1fae5' : '#fee2e2', color: p.stock > 0 && p.isAvailable ? '#047857' : '#b91c1c' }}>
                               {p.stock === 0 ? 'OUT OF STOCK' : p.stock <= 5 ? 'LOW STOCK' : 'IN STOCK'}
                             </span>
                           </td>
@@ -635,7 +635,7 @@ export default function Shopkeeper() {
                           <td style={{ padding: '0.75rem' }}>{inv.category}</td>
                           <td style={{ padding: '0.75rem', fontWeight: '700' }}>{inv.stock}</td>
                           <td style={{ padding: '0.75rem' }}>
-                            <span style={{ padding: '0.2rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: '700', background: inv.stockStatus === 'OUT_OF_STOCK' ? 'rgba(239, 68, 68, 0.15)' : inv.stockStatus === 'LOW_STOCK' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(16, 185, 129, 0.15)', color: inv.stockStatus === 'OUT_OF_STOCK' ? 'var(--danger)' : inv.stockStatus === 'LOW_STOCK' ? 'var(--warning)' : 'var(--success)' }}>
+                            <span style={{ padding: '0.2rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: '700', background: inv.stockStatus === 'OUT_OF_STOCK' ? '#fee2e2' : inv.stockStatus === 'LOW_STOCK' ? '#fef3c7' : '#d1fae5', color: inv.stockStatus === 'OUT_OF_STOCK' ? '#b91c1c' : inv.stockStatus === 'LOW_STOCK' ? '#b45309' : '#047857' }}>
                               {inv.stockStatus}
                             </span>
                           </td>
@@ -660,7 +660,7 @@ export default function Shopkeeper() {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
                   {orders.map((ord) => (
-                    <div key={ord._id} style={{ padding: '1.25rem', background: 'rgba(7, 17, 31, 0.6)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)' }}>
+                    <div key={ord._id} style={{ padding: '1.25rem', background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
                         <strong>Order #{ord.orderNumber}</strong>
                         <span style={{
@@ -680,83 +680,81 @@ export default function Shopkeeper() {
                           borderRadius: '0.25rem',
                           fontSize: '0.75rem',
                           fontWeight: '700',
-                          background: ord.paymentStatus === 'PAID' ? 'rgba(16, 185, 129, 0.15)' : ord.paymentStatus === 'USER_CONFIRMED' ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                          color: ord.paymentStatus === 'PAID' ? 'var(--success)' : ord.paymentStatus === 'USER_CONFIRMED' ? '#fbbf24' : 'var(--text-muted)',
+                          background: ord.paymentStatus === 'PAID' ? '#d1fae5' : ord.paymentStatus === 'USER_CONFIRMED' ? '#fef3c7' : 'rgba(255, 255, 255, 0.05)',
+                          color: ord.paymentStatus === 'PAID' ? '#047857' : ord.paymentStatus === 'USER_CONFIRMED' ? '#b45309' : 'var(--text-muted)',
                         }}>
                           {ord.paymentStatus === 'USER_CONFIRMED' ? '🟡 Payment Claimed — Verification Required' : ord.paymentStatus === 'PAID' ? '🟢 PAID / VERIFIED' : ord.paymentStatus}
                         </span>
                       </div>
-                      {/*   Agar koi proble ayi to yahi se remove krna h bro code ko*/}
-{/* Ordered Products */}
-{Array.isArray(ord.items) && ord.items.length > 0 && (
-  <div
-    style={{
-      marginTop: '1rem',
-      padding: '1rem',
-      background: 'rgba(15, 23, 42, 0.7)',
-      border: '1px solid var(--border-color)',
-      borderRadius: '0.5rem',
-    }}
-  >
-    <h4
-      style={{
-        margin: '0 0 0.75rem 0',
-        color: 'var(--text-primary)',
-        fontSize: '0.95rem',
-      }}
-    >
-      Ordered Items ({ord.items.length})
-    </h4>
+                      {/* Ordered Products */}
+                      {Array.isArray(ord.items) && ord.items.length > 0 && (
+                        <div
+                          style={{
+                            marginTop: '1rem',
+                            padding: '1rem',
+                            background: '#f1f5f9',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '0.5rem',
+                          }}
+                        >
+                          <h4
+                            style={{
+                              margin: '0 0 0.75rem 0',
+                              color: 'var(--text-primary)',
+                              fontSize: '0.95rem',
+                            }}
+                          >
+                            Ordered Items ({ord.items.length})
+                          </h4>
 
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-      {ord.items.map((item, index) => (
-        <div
-          key={item._id || item.product?._id || index}
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '1rem',
-            padding: '0.65rem',
-            background: 'rgba(255, 255, 255, 0.03)',
-            borderRadius: '0.4rem',
-          }}
-        >
-          <div>
-            <strong
-              style={{
-                color: 'var(--text-primary)',
-                display: 'block',
-              }}
-            >
-              {item.name || item.product?.name || 'Product'}
-            </strong>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                            {ord.items.map((item, index) => (
+                              <div
+                                key={item._id || item.product?._id || index}
+                                style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  gap: '1rem',
+                                  padding: '0.65rem',
+                                  background: 'rgba(255, 255, 255, 0.5)',
+                                  borderRadius: '0.4rem',
+                                }}
+                              >
+                                <div>
+                                  <strong
+                                    style={{
+                                      color: 'var(--text-primary)',
+                                      display: 'block',
+                                    }}
+                                  >
+                                    {item.name || item.product?.name || 'Product'}
+                                  </strong>
 
-            <span
-              style={{
-                color: 'var(--text-muted)',
-                fontSize: '0.8rem',
-              }}
-            >
-              Quantity: {item.quantity}
-            </span>
-          </div>
+                                  <span
+                                    style={{
+                                      color: 'var(--text-muted)',
+                                      fontSize: '0.8rem',
+                                    }}
+                                  >
+                                    Quantity: {item.quantity}
+                                  </span>
+                                </div>
 
-          <div
-            style={{
-              color: 'var(--text-primary)',
-              fontWeight: '700',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            ₹{item.subtotal ?? ((item.price || 0) * (item.quantity || 0))}
-          </div>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
-{/* Yaha tak */}
+                                <div
+                                  style={{
+                                    color: 'var(--text-primary)',
+                                    fontWeight: '700',
+                                    whiteSpace: 'nowrap',
+                                  }}
+                                >
+                                  ₹{item.subtotal ?? ((item.price || 0) * (item.quantity || 0))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
 
                       {ord.cancellationReason && (
                         <p style={{ fontSize: '0.8rem', color: 'var(--danger)', marginTop: '0.25rem' }}>
@@ -854,7 +852,7 @@ export default function Shopkeeper() {
               </p>
 
               <form onSubmit={handleSaveShop}>
-                <div className="form-group" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: 'rgba(7, 17, 31, 0.6)', border: '1px solid var(--border-color)', borderRadius: '0.5rem', marginBottom: '1.25rem' }}>
+                <div className="form-group" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: '0.5rem', marginBottom: '1.25rem' }}>
                   <div>
                     <strong style={{ color: 'var(--text-primary)', display: 'block', fontSize: '0.95rem' }}>UPI Payments</strong>
                     <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Allow students to pay via your shop's UPI QR</span>
@@ -884,7 +882,7 @@ export default function Shopkeeper() {
                   <label className="form-label">UPI QR Code Image</label>
                   
                   {shopForm.upiQrImage ? (
-                    <div style={{ background: '#0f172a', padding: '1rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', textAlign: 'center', marginBottom: '1rem' }}>
+                    <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', textAlign: 'center', marginBottom: '1rem' }}>
                       <div style={{ width: '180px', height: '180px', margin: '0 auto 1rem auto', borderRadius: '0.5rem', overflow: 'hidden', border: '2px solid var(--primary)', background: '#ffffff', padding: '0.5rem' }}>
                         <img src={shopForm.upiQrImage} alt="Shop UPI QR" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
                       </div>
@@ -1009,7 +1007,7 @@ export default function Shopkeeper() {
                   border: '2px solid var(--primary)',
                   display: 'flex',
                   alignItems: 'center',
-                  justify: 'center',
+                  justifyContent: 'center',
                   fontSize: '2rem',
                   fontWeight: '800',
                   color: 'var(--primary)',
@@ -1091,8 +1089,8 @@ export default function Shopkeeper() {
 
       {/* Add / Edit Product Modal with Multi-Image Management */}
       {showProductModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(7, 17, 31, 0.85)', backdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: '1rem' }}>
-          <div className="glass-card" style={{ width: '100%', maxWidth: '580px', padding: '2rem', maxHeight: '90vh', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: '1rem' }}>
+          <div className="glass-card" style={{ width: '100%', maxWidth: '580px', padding: '2rem', maxHeight: '90vh', overflowY: 'auto', background: '#ffffff' }}>
             <h3 style={{ fontSize: '1.3rem', fontWeight: '700', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>
               {editingProductId ? 'Edit Product' : 'Add New Product'}
             </h3>
@@ -1112,7 +1110,7 @@ export default function Shopkeeper() {
               </div>
 
               {/* Multi-Image Upload & Preview Section */}
-              <div className="form-group" style={{ background: 'rgba(7, 17, 31, 0.6)', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
+              <div className="form-group" style={{ background: '#f8fafc', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
                 <label className="form-label">Product Images (Max 5)</label>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.75rem' }}>
                   First image will automatically be used as the main product cover.
@@ -1160,12 +1158,12 @@ export default function Shopkeeper() {
                           border: index === 0 ? '2px solid var(--primary)' : '1px solid var(--border-color)',
                           position: 'relative',
                           overflow: 'hidden',
-                          background: '#07111f',
+                          background: '#f1f5f9',
                         }}
                       >
                         <img src={imgUrl} alt={`Prod Preview ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         {index === 0 && (
-                          <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(56, 189, 248, 0.9)', color: '#07111f', fontSize: '0.6rem', fontWeight: '800', textAlign: 'center' }}>
+                          <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(2, 132, 199, 0.9)', color: '#ffffff', fontSize: '0.6rem', fontWeight: '800', textAlign: 'center' }}>
                             MAIN
                           </span>
                         )}

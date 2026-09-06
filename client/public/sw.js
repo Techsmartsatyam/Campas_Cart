@@ -89,30 +89,43 @@ self.addEventListener('push', (event) => {
     payload = event.data.json();
   } catch (e) {
     payload = {
-      notification: {
+      data: {
         title: 'CampusCart Notification',
         body: event.data.text(),
       },
     };
   }
 
+  const data = payload.data || {};
+  const notification = payload.notification || {};
+
   const notificationTitle =
-    payload.notification?.title ||
-    payload.data?.title ||
+    data.title ||
+    notification.title ||
     'CampusCart Notification';
 
+  const notificationBody =
+    data.body ||
+    notification.body ||
+    data.message ||
+    '';
+
+  const targetUrl =
+    payload.fcmOptions?.link ||
+    data.click_action ||
+    data.url ||
+    (data.orderId ? `/orders/${data.orderId}` : '/notifications');
+
   const notificationOptions = {
-    body:
-      payload.notification?.body ||
-      payload.data?.body ||
-      payload.data?.message ||
-      '',
-    icon: payload.notification?.icon || '/pwa-192x192.png',
+    body: notificationBody,
+    icon: notification.icon || '/pwa-192x192.png',
     badge: '/favicon.svg',
-    tag: payload.data?.orderId ? `order-${payload.data.orderId}` : undefined,
+    tag: data.orderId ? `order-${data.orderId}` : `campuscart-${Date.now()}`,
+    renotify: true,
+    vibrate: [100, 50, 100],
     data: {
-      url: payload.fcmOptions?.link || payload.data?.click_action || payload.data?.url || '/notifications',
-      orderId: payload.data?.orderId,
+      url: targetUrl,
+      orderId: data.orderId || null,
     },
   };
 
@@ -146,3 +159,4 @@ self.addEventListener('notificationclick', (event) => {
       })
   );
 });
+

@@ -53,7 +53,7 @@ export default function RolePlaceholder({ roleTitle, description }) {
         {user && (
           <div
             style={{
-              background: 'rgba(7, 17, 31, 0.6)',
+              background: '#f8fafc',
               border: '1px solid var(--border-color)',
               borderRadius: 'var(--radius-sm)',
               padding: '1.25rem',

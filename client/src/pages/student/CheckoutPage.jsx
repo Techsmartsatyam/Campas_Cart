@@ -262,8 +262,8 @@ export default function CheckoutPage() {
                         width: '20px',
                         height: '20px',
                         borderRadius: '50%',
-                        border: isSelected ? '6px solid var(--primary)' : '2px solid var(--border-color)',
-                        background: '#07111f',
+                        border: isSelected ? '6px solid var(--primary)' : '2px solid #cbd5e1',
+                        background: '#ffffff',
                         marginTop: '0.2rem',
                         flexShrink: 0,
                       }}></div>
@@ -272,7 +272,7 @@ export default function CheckoutPage() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                           <span style={{
                             background: 'var(--primary-gradient)',
-                            color: '#07111f',
+                            color: '#ffffff',
                             fontSize: '0.7rem',
                             fontWeight: '800',
                             padding: '0.15rem 0.4rem',
@@ -323,7 +323,7 @@ export default function CheckoutPage() {
                   padding: '1rem',
                   borderRadius: '0.5rem',
                   border: paymentMethod === 'COD' ? '2px solid var(--primary)' : '1px solid var(--border-color)',
-                  background: paymentMethod === 'COD' ? 'rgba(56, 189, 248, 0.05)' : 'var(--surface-hover)',
+                  background: paymentMethod === 'COD' ? '#e0f2fe' : '#ffffff',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
@@ -334,8 +334,8 @@ export default function CheckoutPage() {
                   width: '20px',
                   height: '20px',
                   borderRadius: '50%',
-                  border: paymentMethod === 'COD' ? '6px solid var(--primary)' : '2px solid var(--border-color)',
-                  background: '#07111f',
+                  border: paymentMethod === 'COD' ? '6px solid var(--primary)' : '2px solid #cbd5e1',
+                  background: '#ffffff',
                   flexShrink: 0,
                 }}></div>
                 <div>
@@ -350,31 +350,24 @@ export default function CheckoutPage() {
 
               {/* UPI Option */}
               <div
-                // onClick={() => {
-                //   if (shop?.upiEnabled === false) {
-                //     alert('This shop does not have UPI payments enabled. Please select Cash on Delivery (COD).');
-                //     return;
-                //   }
-                //   setPaymentMethod('UPI');
-                // }}
                 onClick={() => {
-               if (shop?.upiEnabled === false) {
-               alert('This shop does not have UPI payments enabled. Please select Cash on Delivery (COD).');
-               return;
-                   }
+                  if (shop?.upiEnabled === false) {
+                    alert('This shop does not have UPI payments enabled. Please select Cash on Delivery (COD).');
+                    return;
+                  }
 
-                        if (!shop?.upiId && !shop?.upiQrImage) {
+                  if (!shop?.upiId && !shop?.upiQrImage) {
                     alert('This shop has not configured UPI payment details. Please select Cash on Delivery (COD).');
-                     return;
-                            }
+                    return;
+                  }
 
-                            setPaymentMethod('UPI');
-                                }}
+                  setPaymentMethod('UPI');
+                }}
                 style={{
                   padding: '1rem',
                   borderRadius: '0.5rem',
                   border: paymentMethod === 'UPI' ? '2px solid var(--primary)' : '1px solid var(--border-color)',
-                  background: paymentMethod === 'UPI' ? 'rgba(56, 189, 248, 0.05)' : 'var(--surface-hover)',
+                  background: paymentMethod === 'UPI' ? '#e0f2fe' : '#ffffff',
                   cursor: shop?.upiEnabled === false ? 'not-allowed' : 'pointer',
                   opacity: shop?.upiEnabled === false ? 0.6 : 1,
                   display: 'flex',
@@ -386,13 +379,13 @@ export default function CheckoutPage() {
                   width: '20px',
                   height: '20px',
                   borderRadius: '50%',
-                  border: paymentMethod === 'UPI' ? '6px solid var(--primary)' : '2px solid var(--border-color)',
-                  background: '#07111f',
+                  border: paymentMethod === 'UPI' ? '6px solid var(--primary)' : '2px solid #cbd5e1',
+                  background: '#ffffff',
                   flexShrink: 0,
                 }}></div>
                 <div>
                   <div style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    Shopkeeper UPI QR <span style={{ fontSize: '0.75rem', background: 'rgba(16, 185, 129, 0.15)', color: 'var(--success)', padding: '0.1rem 0.4rem', borderRadius: '0.25rem' }}>Direct Pay</span>
+                    Shopkeeper UPI QR <span style={{ fontSize: '0.75rem', background: '#d1fae5', color: '#047857', padding: '0.1rem 0.4rem', borderRadius: '0.25rem' }}>Direct Pay</span>
                   </div>
                   <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                     {shop?.upiEnabled === false
@@ -402,142 +395,140 @@ export default function CheckoutPage() {
                 </div>
               </div>
           
-{/* UPI Payment Details */}
-{paymentMethod === 'UPI' && (
-  <div
-    style={{
-      marginTop: '1rem',
-      padding: '1.25rem',
-      borderRadius: '0.75rem',
-      border: '1px solid var(--border-color)',
-      background: 'rgba(16, 185, 129, 0.06)',
-      textAlign: 'center',
-    }}
-  >
-    <h4
-      style={{
-        margin: '0 0 0.75rem',
-        color: 'var(--text-primary)',
-        fontSize: '1rem',
-        fontWeight: '800',
-      }}
-    >
-      Pay {shop?.name || 'Shopkeeper'} Directly
-    </h4>
+              {/* UPI Payment Details */}
+              {paymentMethod === 'UPI' && (
+                <div
+                  style={{
+                    marginTop: '1rem',
+                    padding: '1.25rem',
+                    borderRadius: '0.75rem',
+                    border: '1px solid var(--border-color)',
+                    background: 'rgba(16, 185, 129, 0.06)',
+                    textAlign: 'center',
+                  }}
+                >
+                  <h4
+                    style={{
+                      margin: '0 0 0.75rem',
+                      color: 'var(--text-primary)',
+                      fontSize: '1rem',
+                      fontWeight: '800',
+                    }}
+                  >
+                    Pay {shop?.name || 'Shopkeeper'} Directly
+                  </h4>
 
-    {/* UPI ID */}
-    {shop?.upiId ? (
-      <div
-        style={{
-          marginBottom: '1rem',
-          padding: '0.75rem',
-          borderRadius: '0.5rem',
-          background: 'var(--surface-hover)',
-          border: '1px solid var(--border-color)',
-        }}
-      >
-        <div
-          style={{
-            color: 'var(--text-muted)',
-            fontSize: '0.75rem',
-            marginBottom: '0.25rem',
-          }}
-        >
-          UPI ID
-        </div>
+                  {/* UPI ID */}
+                  {shop?.upiId ? (
+                    <div
+                      style={{
+                        marginBottom: '1rem',
+                        padding: '0.75rem',
+                        borderRadius: '0.5rem',
+                        background: '#f8fafc',
+                        border: '1px solid var(--border-color)',
+                      }}
+                    >
+                      <div
+                        style={{
+                          color: 'var(--text-muted)',
+                          fontSize: '0.75rem',
+                          marginBottom: '0.25rem',
+                        }}
+                      >
+                        UPI ID
+                      </div>
 
-        <div
-          style={{
-            color: 'var(--primary)',
-            fontSize: '1rem',
-            fontWeight: '800',
-            wordBreak: 'break-all',
-          }}
-        >
-          {shop.upiId}
-        </div>
-      </div>
-    ) : (
-      <div
-        style={{
-          color: 'var(--danger)',
-          fontSize: '0.85rem',
-          marginBottom: '1rem',
-        }}
-      >
-        Shopkeeper UPI ID is not available.
-      </div>
-    )}
+                      <div
+                        style={{
+                          color: 'var(--primary)',
+                          fontSize: '1rem',
+                          fontWeight: '800',
+                          wordBreak: 'break-all',
+                        }}
+                      >
+                        {shop.upiId}
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        color: 'var(--danger)',
+                        fontSize: '0.85rem',
+                        marginBottom: '1rem',
+                      }}
+                    >
+                      Shopkeeper UPI ID is not available.
+                    </div>
+                  )}
 
-    {/* QR Image */}
-    {shop?.upiQrImage ? (
-      <div>
-        <p
-          style={{
-            color: 'var(--text-secondary)',
-            fontSize: '0.85rem',
-            marginBottom: '0.75rem',
-          }}
-        >
-          Scan this QR code to pay
-        </p>
+                  {/* QR Image */}
+                  {shop?.upiQrImage ? (
+                    <div>
+                      <p
+                        style={{
+                          color: 'var(--text-secondary)',
+                          fontSize: '0.85rem',
+                          marginBottom: '0.75rem',
+                        }}
+                      >
+                        Scan this QR code to pay
+                      </p>
 
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-          }}
-        >
-          <img
-            src={shop.upiQrImage}
-            alt={`${shop.name || 'Shopkeeper'} UPI QR`}
-            style={{
-              width: '220px',
-              height: '220px',
-              objectFit: 'contain',
-              background: '#ffffff',
-              padding: '0.5rem',
-              borderRadius: '0.75rem',
-              border: '1px solid var(--border-color)',
-            }}
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-        </div>
-      </div>
-    ) : (
-      <div
-        style={{
-          padding: '0.75rem',
-          borderRadius: '0.5rem',
-          background: 'rgba(239, 68, 68, 0.08)',
-          border: '1px solid var(--danger)',
-          color: 'var(--danger)',
-          fontSize: '0.85rem',
-        }}
-      >
-        Shopkeeper has not uploaded a UPI QR code.
-        Please select Cash on Delivery.
-      </div>
-    )}
+                      <div
+                        style={{
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <img
+                          src={shop.upiQrImage}
+                          alt={`${shop.name || 'Shopkeeper'} UPI QR`}
+                          style={{
+                            width: '220px',
+                            height: '220px',
+                            objectFit: 'contain',
+                            background: '#ffffff',
+                            padding: '0.5rem',
+                            borderRadius: '0.75rem',
+                            border: '1px solid var(--border-color)',
+                          }}
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div
+                      style={{
+                        padding: '0.75rem',
+                        borderRadius: '0.5rem',
+                        background: 'rgba(239, 68, 68, 0.08)',
+                        border: '1px solid var(--danger)',
+                        color: 'var(--danger)',
+                        fontSize: '0.85rem',
+                      }}
+                    >
+                      Shopkeeper has not uploaded a UPI QR code.
+                      Please select Cash on Delivery.
+                    </div>
+                  )}
 
-    <div
-      style={{
-        marginTop: '1rem',
-        fontSize: '0.75rem',
-        color: 'var(--text-muted)',
-        lineHeight: 1.5,
-      }}
-    >
-      Please make the payment directly to the shopkeeper using the
-      displayed UPI ID or QR code.
-    </div>
-  </div>
-)}
-
-
+                  <div
+                    style={{
+                      marginTop: '1rem',
+                      fontSize: '0.75rem',
+                      color: 'var(--text-muted)',
+                      lineHeight: 1.5,
+                    }}
+                  >
+                    Please make the payment directly to the shopkeeper using the
+                    displayed UPI ID or QR code.
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -547,6 +538,7 @@ export default function CheckoutPage() {
             borderRadius: '0.75rem',
             border: '1px solid var(--border-color)',
             padding: '1.5rem',
+            marginTop: '1.5rem',
           }}>
             <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
               3. Delivery Instructions (Optional)
@@ -560,8 +552,8 @@ export default function CheckoutPage() {
                 width: '100%',
                 padding: '0.75rem',
                 borderRadius: '0.5rem',
-                background: '#0f172a',
-                border: '1px solid var(--border-color)',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
                 color: 'var(--text-primary)',
                 fontSize: '0.9rem',
               }}
@@ -605,9 +597,9 @@ export default function CheckoutPage() {
 
               {appliedCoupon ? (
                 <div style={{
-                  background: 'rgba(16, 185, 129, 0.1)',
-                  border: '1px solid var(--success)',
-                  color: 'var(--success)',
+                  background: '#d1fae5',
+                  border: '1px solid #a7f3d0',
+                  color: '#047857',
                   padding: '0.6rem 0.85rem',
                   borderRadius: '0.5rem',
                   display: 'flex',
@@ -634,8 +626,8 @@ export default function CheckoutPage() {
                       flex: 1,
                       padding: '0.5rem 0.75rem',
                       borderRadius: '0.4rem',
-                      background: '#0f172a',
-                      border: '1px solid var(--border-color)',
+                      background: '#ffffff',
+                      border: '1px solid #cbd5e1',
                       color: 'var(--text-primary)',
                       fontSize: '0.85rem',
                       textTransform: 'uppercase',
@@ -703,16 +695,16 @@ export default function CheckoutPage() {
         <div style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.75)',
+          background: 'rgba(15, 23, 42, 0.5)',
           backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
-          justify: 'center',
+          justifyContent: 'center',
           zIndex: 1000,
           padding: '1rem'
         }}>
           <div style={{
-            background: 'var(--surface)',
+            background: '#ffffff',
             border: '1px solid var(--border-color)',
             borderRadius: '0.75rem',
             padding: '1.75rem',
@@ -720,6 +712,7 @@ export default function CheckoutPage() {
             maxWidth: '500px',
             maxHeight: '90vh',
             overflowY: 'auto',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
           }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '1.25rem' }}>
               Add Delivery Address
@@ -731,7 +724,7 @@ export default function CheckoutPage() {
                 <select
                   value={addressFormData.label}
                   onChange={(e) => setAddressFormData({ ...addressFormData, label: e.target.value })}
-                  style={{ width: '100%', padding: '0.6rem', background: '#0f172a', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '0.4rem' }}
+                  style={{ width: '100%', padding: '0.6rem', background: '#ffffff', border: '1px solid #cbd5e1', color: 'var(--text-primary)', borderRadius: '0.4rem' }}
                 >
                   <option value="HOSTEL">Hostel</option>
                   <option value="HOME">Home</option>
@@ -747,7 +740,7 @@ export default function CheckoutPage() {
                     placeholder="e.g. Boys Hostel A"
                     value={addressFormData.hostelName}
                     onChange={(e) => setAddressFormData({ ...addressFormData, hostelName: e.target.value })}
-                    style={{ width: '100%', padding: '0.6rem', background: '#0f172a', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '0.4rem' }}
+                    style={{ width: '100%', padding: '0.6rem', background: '#ffffff', border: '1px solid #cbd5e1', color: 'var(--text-primary)', borderRadius: '0.4rem' }}
                   />
                 </div>
                 <div>
@@ -757,7 +750,7 @@ export default function CheckoutPage() {
                     placeholder="e.g. 302"
                     value={addressFormData.roomNumber}
                     onChange={(e) => setAddressFormData({ ...addressFormData, roomNumber: e.target.value })}
-                    style={{ width: '100%', padding: '0.6rem', background: '#0f172a', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '0.4rem' }}
+                    style={{ width: '100%', padding: '0.6rem', background: '#ffffff', border: '1px solid #cbd5e1', color: 'var(--text-primary)', borderRadius: '0.4rem' }}
                   />
                 </div>
               </div>
@@ -770,7 +763,7 @@ export default function CheckoutPage() {
                   value={addressFormData.fullAddress}
                   onChange={(e) => setAddressFormData({ ...addressFormData, fullAddress: e.target.value })}
                   rows={2}
-                  style={{ width: '100%', padding: '0.6rem', background: '#0f172a', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '0.4rem' }}
+                  style={{ width: '100%', padding: '0.6rem', background: '#ffffff', border: '1px solid #cbd5e1', color: 'var(--text-primary)', borderRadius: '0.4rem' }}
                 />
               </div>
 
@@ -781,7 +774,7 @@ export default function CheckoutPage() {
                   placeholder="Near Mess / Main Gate"
                   value={addressFormData.landmark}
                   onChange={(e) => setAddressFormData({ ...addressFormData, landmark: e.target.value })}
-                  style={{ width: '100%', padding: '0.6rem', background: '#0f172a', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '0.4rem' }}
+                  style={{ width: '100%', padding: '0.6rem', background: '#ffffff', border: '1px solid #cbd5e1', color: 'var(--text-primary)', borderRadius: '0.4rem' }}
                 />
               </div>
 

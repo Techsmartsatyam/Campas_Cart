@@ -1,20 +1,21 @@
 :root {
-  --bg-dark: #07111f;
-  --bg-card: rgba(11, 23, 40, 0.75);
-  --bg-card-hover: rgba(16, 28, 46, 0.85);
-  --surface: #101c2e;
-  --surface-light: #1e293b;
+  --bg-dark: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --surface: #ffffff;
+  --surface-light: #f8fafc;
+  --surface-hover: #f1f5f9;
 
-  --primary: #38bdf8;
-  --primary-hover: #0284c7;
-  --primary-gradient: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+  --primary: #0284c7;
+  --primary-hover: #0369a1;
+  --primary-gradient: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
 
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
   --text-muted: #64748b;
 
-  --border-color: rgba(255, 255, 255, 0.08);
-  --border-glow: rgba(56, 189, 248, 0.2);
+  --border-color: #e2e8f0;
+  --border-glow: rgba(2, 132, 199, 0.3);
 
   --success: #10b981;
   --warning: #f59e0b;
@@ -24,7 +25,7 @@
   --radius-md: 0.75rem;
   --radius-lg: 1.25rem;
 
-  --shadow-main: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3);
+  --shadow-main: 0 4px 16px rgba(15, 23, 42, 0.06), 0 2px 4px rgba(15, 23, 42, 0.04);
 }
 
 * {
@@ -33,15 +34,22 @@
   padding: 0;
 }
 
+html,
+body,
+#root {
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
 body {
   font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
   background-color: var(--bg-dark);
   background-image: 
-    radial-gradient(circle at 15% 15%, rgba(56, 189, 248, 0.06) 0%, transparent 40%),
-    radial-gradient(circle at 85% 85%, rgba(129, 140, 248, 0.06) 0%, transparent 40%);
+    radial-gradient(circle at 15% 15%, rgba(2, 132, 199, 0.04) 0%, transparent 40%),
+    radial-gradient(circle at 85% 85%, rgba(79, 70, 229, 0.04) 0%, transparent 40%);
   background-attachment: fixed;
   color: var(--text-primary);
-  min-height: 100vh;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
@@ -57,11 +65,9 @@ a {
   padding: 0 1.5rem;
 }
 
-/* Glassmorphic Card */
+/* Glassmorphic / Card */
 .glass-card {
   background: var(--bg-card);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-md);
   padding: 1.75rem;
@@ -72,6 +78,7 @@ a {
 .glass-card:hover {
   border-color: var(--border-glow);
   transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
 /* Buttons */
@@ -81,7 +88,7 @@ a {
   justify-content: center;
   gap: 0.5rem;
   background: var(--primary-gradient);
-  color: #07111f;
+  color: #ffffff;
   font-weight: 600;
   padding: 0.75rem 1.5rem;
   border-radius: var(--radius-sm);
@@ -108,12 +115,13 @@ a {
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-color);
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
   font-size: 0.95rem;
 }
 
 .btn-secondary:hover {
-  background-color: rgba(255, 255, 255, 0.08);
+  background-color: var(--surface-hover);
+  border-color: #cbd5e1;
 }
 
 /* Form Inputs & Select Options styling */
@@ -132,8 +140,8 @@ a {
 .form-input {
   width: 100%;
   padding: 0.75rem 1rem;
-  background: rgba(7, 17, 31, 0.95);
-  border: 1px solid var(--border-color);
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
   border-radius: var(--radius-sm);
   color: var(--text-primary);
   font-size: 0.95rem;
@@ -141,15 +149,19 @@ a {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
+.form-input::placeholder {
+  color: #94a3b8;
+}
+
 select.form-input option {
-  background-color: #0b1728;
-  color: #f8fafc;
+  background-color: #ffffff;
+  color: #0f172a;
   padding: 0.5rem;
 }
 
 .form-input:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.2);
 }
 
 /* Responsive adjustments & Utility classes */
@@ -194,4 +206,5 @@ img, svg, video, canvas, audio {
     grid-template-columns: repeat(2, 1fr) !important;
   }
 }
+
 

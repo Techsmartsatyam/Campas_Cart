@@ -141,7 +141,8 @@ export default function OrderHistoryPage() {
                 </div>
 
                 {/* Items preview */}
-                <div style={{ background: '#07111f', borderRadius: '0.5rem', padding: '0.75rem 1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                <div style={{ background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: '0.5rem', padding: '0.75rem 1rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+
                   {order.items && order.items.map((item, idx) => (
                     <span key={idx}>
                       {item.quantity}x {item.name}{idx < order.items.length - 1 ? ' • ' : ''}

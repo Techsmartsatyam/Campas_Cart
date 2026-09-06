@@ -466,30 +466,36 @@ try {
 
   // E. Send Push Notifications via FCM
   try {
-    // Student push
-    sendPushToUser(req.user._id, {
-      title: 'Order Placed',
-      body: `Your order ${order.orderNumber} has been placed successfully.`,
-      orderId: order._id,
-      type: 'ORDER',
-      url: `/orders/${order._id}`,
-    }).catch((err) => console.warn('Student FCM push notice:', err.message));
+    const pushTasks = [];
 
-    // Shopkeeper push
-    if (shop.owner) {
-      sendPushToUser(shop.owner, {
-        title: 'New Order Received',
-        body: `Order ${order.orderNumber} has been placed for your shop.`,
+    // Student push
+    pushTasks.push(
+      sendPushToUser(req.user._id, {
+        title: 'Order Placed',
+        body: `Your order ${order.orderNumber} has been placed successfully.`,
         orderId: order._id,
         type: 'ORDER',
         url: `/orders/${order._id}`,
-      }).catch((err) => console.warn('Shopkeeper FCM push notice:', err.message));
+      }).then((res) => ({ role: 'Student', res }))
+    );
+
+    // Shopkeeper push
+    if (shop.owner) {
+      pushTasks.push(
+        sendPushToUser(shop.owner, {
+          title: 'New Order Received',
+          body: `New order ${order.orderNumber} has been placed for your shop.`,
+          orderId: order._id,
+          type: 'ORDER',
+          url: `/orders/${order._id}`,
+        }).then((res) => ({ role: 'Shopkeeper', res }))
+      );
     }
 
     // Delivery Boy push
     if (activeDeliveryBoys && activeDeliveryBoys.length > 0) {
       const dbUserIds = activeDeliveryBoys.map((dbUser) => dbUser._id);
-      User.find({ _id: { $in: dbUserIds } })
+      const deliveryPushPromise = User.find({ _id: { $in: dbUserIds } })
         .select('pushTokens')
         .then((dbUsers) => {
           const dbTokens = [];
@@ -501,7 +507,7 @@ try {
             }
           });
           if (dbTokens.length > 0) {
-            sendPushToTokens(dbTokens, {
+            return sendPushToTokens(dbTokens, {
               title: 'New Delivery Available',
               body: `Order ${order.orderNumber} is available for delivery.`,
               orderId: order._id,
@@ -509,12 +515,25 @@ try {
               url: `/orders/${order._id}`,
             });
           }
+          return { success: true, sentCount: 0, failureCount: 0 };
         })
-        .catch((err) => console.warn('Delivery Boy FCM push notice:', err.message));
+        .then((res) => ({ role: 'DeliveryBoys', res }));
+
+      pushTasks.push(deliveryPushPromise);
     }
+
+    Promise.allSettled(pushTasks).then((results) => {
+      results.forEach((r) => {
+        if (r.status === 'fulfilled' && r.value) {
+          const { role, res } = r.value;
+          console.log(`📱 [FCM Push Diagnostics] Order #${order.orderNumber} -> ${role}: ${res?.sentCount || 0} succeeded, ${res?.failureCount || 0} failed`);
+        }
+      });
+    });
   } catch (fcmErr) {
     console.warn('FCM push dispatch notice:', fcmErr.message);
   }
+
 
 } catch (notifErr) {
   console.warn(

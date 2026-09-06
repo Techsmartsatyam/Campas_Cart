@@ -359,7 +359,7 @@ export default function Delivery() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))', gap: '1.25rem', marginBottom: '2.5rem' }}>
         <div className="glass-card" style={{ padding: '1.25rem' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block' }}>Available Jobs</span>
-          <strong style={{ fontSize: '1.7rem', color: '#38bdf8' }}>{availableDeliveries.length}</strong>
+          <strong style={{ fontSize: '1.7rem', color: 'var(--primary)' }}>{availableDeliveries.length}</strong>
         </div>
         <div className="glass-card" style={{ padding: '1.25rem' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block' }}>Active Deliveries</span>
@@ -371,17 +371,17 @@ export default function Delivery() {
         </div>
         <div className="glass-card" style={{ padding: '1.25rem' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block' }}>Today's Earnings</span>
-          <strong style={{ fontSize: '1.7rem', color: '#f59e0b' }}>₹{todaysEarnings}</strong>
+          <strong style={{ fontSize: '1.7rem', color: '#d97706' }}>₹{todaysEarnings}</strong>
         </div>
         <div className="glass-card" style={{ padding: '1.25rem' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block' }}>Total Earnings</span>
-          <strong style={{ fontSize: '1.7rem', color: '#10b981' }}>₹{totalEarnings}</strong>
+          <strong style={{ fontSize: '1.7rem', color: '#059669' }}>₹{totalEarnings}</strong>
         </div>
       </div>
 
       {/* Active Delivery Focus Card */}
       {activeDelivery && activeDelivery.order && (
-        <div className="glass-card" style={{ padding: '2rem', marginBottom: '2.5rem', border: '1px solid var(--primary)' }}>
+        <div className="glass-card" style={{ padding: '2rem', marginBottom: '2.5rem', border: '2px solid var(--primary)', background: '#ffffff' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Clock style={{ color: 'var(--primary)' }} size={22} />
@@ -398,8 +398,8 @@ export default function Delivery() {
                     padding: '0.25rem 0.65rem',
                     borderRadius: '1rem',
                     background: geoStatus === 'LIVE' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                    color: geoStatus === 'LIVE' ? '#10b981' : '#f59e0b',
-                    border: `1px solid ${geoStatus === 'LIVE' ? '#10b981' : '#f59e0b'}`,
+                    color: geoStatus === 'LIVE' ? '#059669' : '#d97706',
+                    border: `1px solid ${geoStatus === 'LIVE' ? '#059669' : '#d97706'}`,
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.3rem',
@@ -415,7 +415,7 @@ export default function Delivery() {
                   borderRadius: '1rem',
                   fontSize: '0.85rem',
                   fontWeight: '800',
-                  background: 'rgba(56, 189, 248, 0.15)',
+                  background: 'rgba(37, 99, 235, 0.1)',
                   color: 'var(--primary)',
                   border: '1px solid var(--primary)',
                 }}
@@ -480,7 +480,7 @@ export default function Delivery() {
       {/* Available Deliveries Section */}
       <div className="glass-card" style={{ padding: '2rem', marginBottom: '2.5rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '1.5rem' }}>
-          <Package style={{ color: '#38bdf8' }} size={22} />
+          <Package style={{ color: 'var(--primary)' }} size={22} />
           <h3 style={{ fontSize: '1.3rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
             Available Deliveries ({availableDeliveries.length})
           </h3>
@@ -495,7 +495,7 @@ export default function Delivery() {
         ) : loading && availableDeliveries.length === 0 ? (
           <p style={{ color: 'var(--text-muted)' }}>Checking for available orders...</p>
         ) : availableDeliveries.length === 0 ? (
-          <div style={{ padding: '2rem', textAlign: 'center', background: 'rgba(255,255,255,0.02)', borderRadius: '0.5rem', border: '1px dashed var(--border-color)' }}>
+          <div style={{ padding: '2rem', textAlign: 'center', background: '#f8fafc', borderRadius: '0.5rem', border: '1px dashed var(--border-color)' }}>
             <p style={{ color: 'var(--text-muted)', margin: 0 }}>No unassigned orders available at this moment.</p>
           </div>
         ) : (
@@ -509,9 +509,10 @@ export default function Delivery() {
                   key={item._id}
                   style={{
                     padding: '1.5rem',
-                    background: 'rgba(7, 17, 31, 0.7)',
-                    border: '1px solid rgba(56, 189, 248, 0.3)',
+                    background: '#ffffff',
+                    border: '1px solid var(--border-color)',
                     borderRadius: 'var(--radius-sm)',
+                    boxShadow: 'var(--shadow-sm)',
                     display: 'flex',
                     flexDirection: 'column',
                     justify: 'space-between',
@@ -590,7 +591,7 @@ export default function Delivery() {
                     key={del._id}
                     style={{
                       padding: '1.5rem',
-                      background: 'rgba(7, 17, 31, 0.6)',
+                      background: '#f8fafc',
                       border: '1px solid var(--border-color)',
                       borderRadius: 'var(--radius-sm)',
                     }}

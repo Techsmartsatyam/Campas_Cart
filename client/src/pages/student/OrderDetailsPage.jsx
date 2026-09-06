@@ -162,9 +162,9 @@ export default function OrderDetailsPage() {
           </h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             <span style={{
-              background: ['CANCELLED', 'SHOP_REJECTED'].includes(order.orderStatus) ? 'rgba(239, 68, 68, 0.15)' : 'var(--primary-gradient)',
-              color: ['CANCELLED', 'SHOP_REJECTED'].includes(order.orderStatus) ? 'var(--danger)' : '#07111f',
-              border: ['CANCELLED', 'SHOP_REJECTED'].includes(order.orderStatus) ? '1px solid var(--danger)' : 'none',
+              background: ['CANCELLED', 'SHOP_REJECTED'].includes(order.orderStatus) ? '#fee2e2' : 'var(--primary-gradient)',
+              color: ['CANCELLED', 'SHOP_REJECTED'].includes(order.orderStatus) ? '#b91c1c' : '#ffffff',
+              border: ['CANCELLED', 'SHOP_REJECTED'].includes(order.orderStatus) ? '1px solid #fca5a5' : 'none',
               fontWeight: '800',
               fontSize: '0.85rem',
               padding: '0.25rem 0.75rem',
@@ -191,12 +191,12 @@ export default function OrderDetailsPage() {
       {/* Cancellation / Rejection Banner */}
       {['CANCELLED', 'SHOP_REJECTED'].includes(order.orderStatus) && (
         <div style={{
-          background: 'rgba(239, 68, 68, 0.1)',
-          border: '1px solid var(--danger)',
+          background: '#fee2e2',
+          border: '1px solid #fca5a5',
           borderRadius: '0.75rem',
           padding: '1rem 1.25rem',
           marginBottom: '1.5rem',
-          color: '#f87171',
+          color: '#b91c1c',
         }}>
           <strong style={{ fontSize: '0.95rem', display: 'block', marginBottom: '0.25rem' }}>
             {order.orderStatus === 'SHOP_REJECTED' ? 'Order Rejected by Shop' : 'Order Cancelled'}
@@ -209,7 +209,7 @@ export default function OrderDetailsPage() {
 
       {/* Order Status Progress Timeline */}
       {!['CANCELLED', 'SHOP_REJECTED'].includes(order.orderStatus) && (
-        <div style={{ background: 'var(--surface)', borderRadius: '0.75rem', border: '1px solid var(--border-color)', padding: '1.25rem', marginBottom: '1.5rem' }}>
+        <div style={{ background: '#ffffff', borderRadius: '0.75rem', border: '1px solid var(--border-color)', padding: '1.25rem', marginBottom: '1.5rem' }}>
           <h3 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <Clock size={16} style={{ color: 'var(--primary)' }} /> Delivery Progress Tracker
           </h3>
@@ -252,8 +252,8 @@ export default function OrderDetailsPage() {
                       style={{
                         padding: '0.6rem 0.75rem',
                         borderRadius: '0.5rem',
-                        background: isCurrent ? 'rgba(56, 189, 248, 0.15)' : isDone ? 'rgba(16, 185, 129, 0.08)' : 'rgba(255,255,255,0.02)',
-                        border: isCurrent ? '1px solid var(--primary)' : isDone ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid var(--border-color)',
+                        background: isCurrent ? '#e0f2fe' : isDone ? '#d1fae5' : '#f8fafc',
+                        border: isCurrent ? '1px solid var(--primary)' : isDone ? '1px solid #a7f3d0' : '1px solid var(--border-color)',
                         display: 'flex',
                         alignItems: 'center',
                         gap: '0.4rem',
@@ -264,8 +264,8 @@ export default function OrderDetailsPage() {
                           width: '1rem',
                           height: '1rem',
                           borderRadius: '50%',
-                          background: isDone ? '#10b981' : 'var(--border-color)',
-                          color: '#07111f',
+                          background: isDone ? '#10b981' : '#cbd5e1',
+                          color: '#ffffff',
                           fontSize: '0.65rem',
                           fontWeight: '800',
                           display: 'flex',
@@ -290,12 +290,12 @@ export default function OrderDetailsPage() {
       {/* Delivery Partner Contact Card */}
       {!['CANCELLED', 'SHOP_REJECTED'].includes(order.orderStatus) && (
         <div style={{
-          background: 'var(--surface)',
+          background: '#ffffff',
           borderRadius: '0.75rem',
-          border: order.deliveryBoy ? '1px solid rgba(56, 189, 248, 0.4)' : '1px solid var(--border-color)',
+          border: order.deliveryBoy ? '1px solid #bae6fd' : '1px solid var(--border-color)',
           padding: '1.25rem',
           marginBottom: '1.5rem',
-          boxShadow: order.deliveryBoy ? '0 4px 20px rgba(56, 189, 248, 0.08)' : 'none',
+          boxShadow: order.deliveryBoy ? '0 4px 16px rgba(2, 132, 199, 0.08)' : 'none',
         }}>
           <h3 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-primary)', margin: '0 0 1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <span style={{ fontSize: '1.2rem' }}>🚚</span> DELIVERY PARTNER
@@ -312,7 +312,7 @@ export default function OrderDetailsPage() {
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  color: '#07111f',
+                  color: '#ffffff',
                   fontWeight: '800',
                   fontSize: '1.25rem',
                   overflow: 'hidden',
@@ -660,7 +660,7 @@ export default function OrderDetailsPage() {
         <div style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.8)',
+          background: 'rgba(15, 23, 42, 0.5)',
           backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
@@ -669,12 +669,13 @@ export default function OrderDetailsPage() {
           padding: '1rem'
         }}>
           <div style={{
-            background: 'var(--surface)',
+            background: '#ffffff',
             border: '1px solid var(--border-color)',
             borderRadius: '0.75rem',
             padding: '1.75rem',
             maxWidth: '460px',
             width: '100%',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
           }}>
             <h3 style={{ fontSize: '1.2rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
               Cancel Order {order.orderNumber}?
@@ -688,7 +689,7 @@ export default function OrderDetailsPage() {
               <select
                 value={cancelReasonOption}
                 onChange={(e) => setCancelReasonOption(e.target.value)}
-                style={{ width: '100%', padding: '0.6rem', background: '#0f172a', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '0.4rem' }}
+                style={{ width: '100%', padding: '0.6rem', background: '#ffffff', border: '1px solid #cbd5e1', color: 'var(--text-primary)', borderRadius: '0.4rem' }}
               >
                 <option value="Ordered by mistake">Ordered by mistake</option>
                 <option value="No longer needed">No longer needed</option>
@@ -706,10 +707,11 @@ export default function OrderDetailsPage() {
                   placeholder="Enter brief reason..."
                   value={customReason}
                   onChange={(e) => setCustomReason(e.target.value)}
-                  style={{ width: '100%', padding: '0.6rem', background: '#0f172a', border: '1px solid var(--border-color)', color: 'var(--text-primary)', borderRadius: '0.4rem' }}
+                  style={{ width: '100%', padding: '0.6rem', background: '#ffffff', border: '1px solid #cbd5e1', color: 'var(--text-primary)', borderRadius: '0.4rem' }}
                 />
               </div>
             )}
+
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
               <button onClick={() => setShowCancelModal(false)} className="btn-secondary" style={{ padding: '0.5rem 1rem' }}>

@@ -13,12 +13,17 @@ const firebaseConfig = {
 let app = null;
 let messaging = null;
 
+const isConfigValid = Boolean(firebaseConfig.apiKey && firebaseConfig.projectId);
+
 try {
-  if (firebaseConfig.apiKey && firebaseConfig.projectId) {
+  if (isConfigValid) {
     app = initializeApp(firebaseConfig);
+    console.log('[FCM] Firebase initialized: PASS');
+  } else {
+    console.warn('⚠️ [FCM] Firebase Web config environment variables not fully set');
   }
 } catch (err) {
-  console.warn('⚠️ Firebase App initialization notice:', err.message);
+  console.warn('⚠️ [FCM] Firebase App initialization notice:', err.message);
 }
 
 /**
@@ -27,22 +32,24 @@ try {
 export const requestAndRegisterFCMToken = async (apiInstance) => {
   try {
     if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) {
+      console.log('[FCM] Push notifications not supported in this browser environment');
       return null;
     }
 
     const supported = await isSupported().catch(() => false);
     if (!supported) {
-      console.log('FCM messaging is not supported in this browser environment');
+      console.log('[FCM] Messaging supported: FAIL (Browser does not support FCM Messaging)');
       return null;
+    }
+    console.log('[FCM] Messaging supported: PASS');
+
+    if (!app && isConfigValid) {
+      app = initializeApp(firebaseConfig);
     }
 
     if (!app) {
-      if (firebaseConfig.apiKey && firebaseConfig.projectId) {
-        app = initializeApp(firebaseConfig);
-      } else {
-        console.log('⚠️ Firebase Web config environment variables not set');
-        return null;
-      }
+      console.warn('⚠️ [FCM] Firebase App not initialized due to missing web config');
+      return null;
     }
 
     if (!messaging) {
@@ -50,44 +57,65 @@ export const requestAndRegisterFCMToken = async (apiInstance) => {
     }
 
     let permission = Notification.permission;
+    console.log('[FCM] Current notification permission:', permission);
+
     if (permission === 'default') {
       permission = await Notification.requestPermission();
+      console.log('[FCM] Requested notification permission:', permission);
     }
 
     if (permission !== 'granted') {
-      console.log('Notification permission status:', permission);
+      console.warn('[FCM] Notification permission status: denied/dismissed');
       return null;
     }
+    console.log('[FCM] Notification permission: GRANTED');
 
-    let swRegistration = await navigator.serviceWorker.getRegistration('/sw.js');
-    if (!swRegistration) {
-      swRegistration = await navigator.serviceWorker.ready.catch(() => null);
+    // Acquire active Service Worker registration
+    let swRegistration = null;
+    try {
+      swRegistration = await navigator.serviceWorker.ready;
+      console.log('[FCM] Service worker registered: PASS (Scope:', swRegistration.scope, ')');
+    } catch (swErr) {
+      console.warn('[FCM] Waiting for navigator.serviceWorker.ready failed:', swErr.message);
+      swRegistration = await navigator.serviceWorker.register('/sw.js').catch((err) => {
+        console.error('[FCM] Direct SW registration failed:', err.message);
+        return null;
+      });
     }
 
     const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY || undefined;
 
-    const token = await getToken(messaging, {
+    const tokenOptions = {
       vapidKey,
-      serviceWorkerRegistration: swRegistration || undefined,
-    }).catch((err) => {
-      console.warn('FCM getToken notice:', err.message);
+    };
+    if (swRegistration) {
+      tokenOptions.serviceWorkerRegistration = swRegistration;
+    }
+
+    const token = await getToken(messaging, tokenOptions).catch((err) => {
+      console.warn('⚠️ [FCM] getToken notice:', err.message);
       return null;
     });
 
-    if (token && apiInstance) {
-      await apiInstance.post('/notifications/device-token', {
-        token,
-        platform: 'web',
-      }).catch((err) => {
-        console.warn('Backend device-token registration notice:', err.message);
-      });
-      console.log('📱 FCM Device Token registered successfully');
+    if (token) {
+      console.log('[FCM] Token obtained: PASS');
+      if (apiInstance) {
+        await apiInstance.post('/notifications/device-token', {
+          token,
+          platform: 'web',
+        }).then(() => {
+          console.log('[FCM] Token registered with backend: PASS');
+        }).catch((err) => {
+          console.warn('⚠️ [FCM] Backend device-token registration notice:', err.message);
+        });
+      }
       return token;
+    } else {
+      console.warn('⚠️ [FCM] Token obtained: FAIL (Empty token returned)');
+      return null;
     }
-
-    return token;
   } catch (error) {
-    console.warn('FCM Token registration error:', error.message);
+    console.warn('⚠️ [FCM] Token registration error:', error.message);
     return null;
   }
 };
@@ -102,13 +130,14 @@ export const setupForegroundFCMListener = async (onForegroundMessage) => {
     if (!messaging) messaging = getMessaging(app);
 
     return onMessage(messaging, (payload) => {
-      console.log('🔔 Foreground FCM notification received:', payload);
+      console.log('🔔 [FCM] Foreground message received:', payload);
       if (typeof onForegroundMessage === 'function') {
         onForegroundMessage(payload);
       }
     });
   } catch (err) {
-    console.warn('Foreground FCM listener setup notice:', err.message);
+    console.warn('⚠️ [FCM] Foreground listener setup notice:', err.message);
     return null;
   }
 };
+

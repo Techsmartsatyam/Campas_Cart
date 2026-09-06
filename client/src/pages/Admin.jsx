@@ -212,7 +212,7 @@ export default function Admin() {
             Create Staff Account
           </h3>
 
-          <div style={{ display: 'flex', gap: '0.5rem', background: 'rgba(7, 17, 31, 0.8)', padding: '0.35rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', marginBottom: '1.75rem' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', background: '#f1f5f9', padding: '0.35rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', marginBottom: '1.75rem' }}>
             <button
               type="button"
               onClick={() => setStaffTab('SHOPKEEPER')}
@@ -225,7 +225,7 @@ export default function Admin() {
                 fontWeight: '700',
                 cursor: 'pointer',
                 background: staffTab === 'SHOPKEEPER' ? 'var(--primary-gradient)' : 'transparent',
-                color: staffTab === 'SHOPKEEPER' ? '#07111f' : 'var(--text-secondary)',
+                color: staffTab === 'SHOPKEEPER' ? '#ffffff' : 'var(--text-secondary)',
               }}
             >
               Shopkeeper
@@ -242,7 +242,7 @@ export default function Admin() {
                 fontWeight: '700',
                 cursor: 'pointer',
                 background: staffTab === 'DELIVERY_BOY' ? 'var(--primary-gradient)' : 'transparent',
-                color: staffTab === 'DELIVERY_BOY' ? '#07111f' : 'var(--text-secondary)',
+                color: staffTab === 'DELIVERY_BOY' ? '#ffffff' : 'var(--text-secondary)',
               }}
             >
               Delivery Partner
@@ -412,7 +412,7 @@ export default function Admin() {
           {/* Payment Stats Overview */}
           {paymentStats && (
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-              <div style={{ background: 'rgba(7, 17, 31, 0.6)', padding: '1rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)' }}>
+              <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)' }}>
                 <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total Payments</div>
                 <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)' }}>{paymentStats.totalPayments}</div>
               </div>
@@ -425,10 +425,10 @@ export default function Admin() {
                 <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--danger)' }}>{paymentStats.failedPayments}</div>
               </div>
               <div style={{ background: 'rgba(245, 158, 11, 0.08)', padding: '1rem', borderRadius: '0.5rem', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
-                <div style={{ fontSize: '0.8rem', color: '#fbbf24' }}>Pending</div>
-                <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#fbbf24' }}>{paymentStats.pendingPayments}</div>
+                <div style={{ fontSize: '0.8rem', color: '#d97706' }}>Pending</div>
+                <div style={{ fontSize: '1.4rem', fontWeight: '800', color: '#d97706' }}>{paymentStats.pendingPayments}</div>
               </div>
-              <div style={{ background: 'rgba(56, 189, 248, 0.08)', padding: '1rem', borderRadius: '0.5rem', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+              <div style={{ background: 'rgba(37, 99, 235, 0.08)', padding: '1rem', borderRadius: '0.5rem', border: '1px solid rgba(37, 99, 235, 0.2)' }}>
                 <div style={{ fontSize: '0.8rem', color: 'var(--primary)' }}>Total Revenue</div>
                 <div style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--primary)' }}>₹{paymentStats.totalRevenue.toFixed(2)}</div>
               </div>
@@ -466,7 +466,7 @@ export default function Admin() {
                         ₹{p.amount?.toFixed(2)}
                       </td>
                       <td style={{ padding: '0.75rem' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.2rem 0.5rem', borderRadius: '0.25rem', background: 'rgba(255,255,255,0.05)' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.2rem 0.5rem', borderRadius: '0.25rem', background: '#f1f5f9', color: 'var(--text-primary)' }}>
                           {p.method}
                         </span>
                       </td>
@@ -477,7 +477,7 @@ export default function Admin() {
                           padding: '0.2rem 0.5rem',
                           borderRadius: '0.25rem',
                           background: p.status === 'SUCCESS' ? 'rgba(16, 185, 129, 0.15)' : p.status === 'FAILED' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)',
-                          color: p.status === 'SUCCESS' ? 'var(--success)' : p.status === 'FAILED' ? 'var(--danger)' : '#fbbf24',
+                          color: p.status === 'SUCCESS' ? 'var(--success)' : p.status === 'FAILED' ? 'var(--danger)' : '#d97706',
                         }}>
                           {p.status}
                         </span>

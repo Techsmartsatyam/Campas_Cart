@@ -127,7 +127,7 @@ export default function ProductDetails() {
               width: '100%',
               height: '340px',
               borderRadius: 'var(--radius-md)',
-              background: 'rgba(7, 17, 31, 0.8)',
+              background: '#f1f5f9',
               border: '1px solid var(--border-color)',
               display: 'flex',
               alignItems: 'center',
@@ -149,10 +149,11 @@ export default function ProductDetails() {
                     position: 'absolute',
                     top: '0.75rem',
                     right: '0.75rem',
-                    background: 'rgba(7, 17, 31, 0.7)',
+                    background: 'rgba(255, 255, 255, 0.85)',
                     padding: '0.35rem',
                     borderRadius: '0.375rem',
                     color: 'var(--text-primary)',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
                   }}
                 >
                   <Maximize2 size={16} />
@@ -173,12 +174,13 @@ export default function ProductDetails() {
                     left: '0.5rem',
                     top: '50%',
                     transform: 'translateY(-50%)',
-                    background: 'rgba(7, 17, 31, 0.8)',
+                    background: 'rgba(255, 255, 255, 0.9)',
                     border: '1px solid var(--border-color)',
-                    color: '#fff',
+                    color: '#0f172a',
                     borderRadius: '50%',
                     padding: '0.4rem',
                     cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                   }}
                 >
                   <ChevronLeft size={20} />
@@ -191,12 +193,13 @@ export default function ProductDetails() {
                     right: '0.5rem',
                     top: '50%',
                     transform: 'translateY(-50%)',
-                    background: 'rgba(7, 17, 31, 0.8)',
+                    background: 'rgba(255, 255, 255, 0.9)',
                     border: '1px solid var(--border-color)',
-                    color: '#fff',
+                    color: '#0f172a',
                     borderRadius: '50%',
                     padding: '0.4rem',
                     cursor: 'pointer',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.15)',
                   }}
                 >
                   <ChevronRight size={20} />
@@ -205,7 +208,7 @@ export default function ProductDetails() {
             )}
           </div>
 
-          {/* Thumbnails Gallery Strip */}
+          {/* Thumbnail Strip */}
           {imagesList.length > 1 && (
             <div style={{ display: 'flex', gap: '0.6rem', marginTop: '1rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
               {imagesList.map((imgUrl, idx) => (
@@ -217,7 +220,7 @@ export default function ProductDetails() {
                     height: '64px',
                     borderRadius: '0.375rem',
                     border: idx === selectedImageIndex ? '2px solid var(--primary)' : '1px solid var(--border-color)',
-                    background: 'rgba(7, 17, 31, 0.8)',
+                    background: '#f1f5f9',
                     cursor: 'pointer',
                     overflow: 'hidden',
                     flexShrink: 0,
@@ -268,9 +271,9 @@ export default function ProductDetails() {
                 borderRadius: '9999px',
                 fontSize: '0.8rem',
                 fontWeight: '700',
-                background: product.stock > 0 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                color: product.stock > 0 ? 'var(--success)' : 'var(--danger)',
-                border: `1px solid ${product.stock > 0 ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+                background: product.stock > 0 ? '#d1fae5' : '#fee2e2',
+                color: product.stock > 0 ? '#047857' : '#b91c1c',
+                border: `1px solid ${product.stock > 0 ? '#a7f3d0' : '#fca5a5'}`,
               }}
             >
               {product.stock > 0 ? `In Stock (${product.stock} available)` : 'Currently Out of Stock'}
@@ -285,7 +288,7 @@ export default function ProductDetails() {
           {product.shop && (
             <div
               style={{
-                background: 'rgba(7, 17, 31, 0.6)',
+                background: '#f8fafc',
                 border: '1px solid var(--border-color)',
                 borderRadius: 'var(--radius-sm)',
                 padding: '1.25rem',
@@ -339,7 +342,7 @@ export default function ProductDetails() {
         <div style={{
           position: 'fixed',
           top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.8)',
+          background: 'rgba(15, 23, 42, 0.5)',
           backdropFilter: 'blur(4px)',
           display: 'flex',
           alignItems: 'center',
@@ -348,13 +351,14 @@ export default function ProductDetails() {
           padding: '1rem',
         }}>
           <div style={{
-            background: 'var(--surface)',
+            background: '#ffffff',
             border: '1px solid var(--border-color)',
             borderRadius: '0.75rem',
             padding: '1.75rem',
             maxWidth: '450px',
             width: '100%',
             textAlign: 'center',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
           }}>
             <h3 style={{ fontSize: '1.25rem', color: 'var(--text-primary)', marginBottom: '0.75rem' }}>
               Items from another shop in cart
@@ -389,8 +393,8 @@ export default function ProductDetails() {
           style={{
             position: 'fixed',
             inset: 0,
-            background: 'rgba(7, 17, 31, 0.95)',
-            backdropFilter: 'blur(10px)',
+            background: 'rgba(15, 23, 42, 0.85)',
+            backdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
             justify: 'center',

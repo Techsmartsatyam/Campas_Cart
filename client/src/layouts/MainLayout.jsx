@@ -69,13 +69,13 @@ export default function MainLayout() {
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh', background: 'var(--bg-dark)' }}>
       {/* Header Navbar */}
       <header
         style={{
           borderBottom: '1px solid var(--border-color)',
-          background: 'rgba(7, 17, 31, 0.85)',
-          backdropFilter: 'blur(12px)',
+          background: '#ffffff',
+          boxShadow: '0 2px 8px rgba(15, 23, 42, 0.04)',
           position: 'sticky',
           top: 0,
           zIndex: 100,
@@ -85,7 +85,7 @@ export default function MainLayout() {
           className="container"
           style={{
             display: 'flex',
-            justify: 'space-between',
+            justifyContent: 'space-between',
             alignItems: 'center',
             height: '4.5rem',
           }}
@@ -110,15 +110,15 @@ export default function MainLayout() {
                 borderRadius: '0.5rem',
                 display: 'flex',
                 alignItems: 'center',
-                justify: 'center',
+                justifyContent: 'center',
               }}
             >
-              <ShoppingBag style={{ width: '1.25rem', height: '1.25rem', color: '#07111f' }} />
+              <ShoppingBag style={{ width: '1.25rem', height: '1.25rem', color: '#ffffff' }} />
             </div>
             <span>
               Campus<span style={{ color: 'var(--primary)' }}>Cart</span>
             </span>
-            <span style={{ fontSize: '0.8rem', background: 'rgba(255,255,255,0.06)', border: '1px solid var(--border-color)', padding: '0.15rem 0.45rem', borderRadius: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontWeight: '600' }}>
+            <span style={{ fontSize: '0.8rem', background: '#f1f5f9', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '0.15rem 0.45rem', borderRadius: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontWeight: '600' }}>
               🇮🇳 IN
             </span>
           </Link>
@@ -161,8 +161,8 @@ export default function MainLayout() {
                         alignItems: 'center',
                         gap: '0.4rem',
                         color: 'var(--text-primary)',
-                        background: 'rgba(56, 189, 248, 0.1)',
-                        border: '1px solid var(--border-color)',
+                        background: '#e0f2fe',
+                        border: '1px solid #bae6fd',
                         padding: '0.4rem 0.8rem',
                         borderRadius: '0.5rem',
                         textDecoration: 'none',
@@ -181,7 +181,7 @@ export default function MainLayout() {
                   <button
                     onClick={toggleDropdown}
                     style={{
-                      background: 'rgba(255,255,255,0.05)',
+                      background: '#f8fafc',
                       border: '1px solid var(--border-color)',
                       color: 'var(--text-primary)',
                       borderRadius: '0.5rem',
@@ -224,10 +224,10 @@ export default function MainLayout() {
                         right: 0,
                         top: '2.5rem',
                         width: '320px',
-                        background: '#0c1a2d',
+                        background: '#ffffff',
                         border: '1px solid var(--border-color)',
                         borderRadius: '0.75rem',
-                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5)',
+                        boxShadow: '0 12px 32px rgba(15, 23, 42, 0.12)',
                         zIndex: 200,
                         overflow: 'hidden',
                       }}
@@ -239,7 +239,7 @@ export default function MainLayout() {
                           display: 'flex',
                           justifyContent: 'space-between',
                           alignItems: 'center',
-                          background: 'rgba(255, 255, 255, 0.02)',
+                          background: '#f8fafc',
                         }}
                       >
                         <h4 style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-primary)' }}>
@@ -277,7 +277,7 @@ export default function MainLayout() {
                               style={{
                                 padding: '0.75rem 1rem',
                                 borderBottom: '1px solid var(--border-color)',
-                                background: n.isRead ? 'transparent' : 'rgba(56, 189, 248, 0.05)',
+                                background: n.isRead ? 'transparent' : '#f0f9ff',
                                 cursor: 'pointer',
                                 transition: 'background 0.2s',
                               }}
@@ -313,7 +313,7 @@ export default function MainLayout() {
                           fontWeight: '600',
                           borderTop: '1px solid var(--border-color)',
                           textDecoration: 'none',
-                          background: 'rgba(255, 255, 255, 0.02)',
+                          background: '#f8fafc',
                         }}
                       >
                         <span>View all notifications</span>
@@ -377,7 +377,7 @@ export default function MainLayout() {
           <div
             style={{
               padding: '1rem 1.5rem 1.5rem 1.5rem',
-              background: 'var(--surface)',
+              background: '#ffffff',
               borderBottom: '1px solid var(--border-color)',
               display: 'flex',
               flexDirection: 'column',
@@ -453,7 +453,7 @@ export default function MainLayout() {
       <footer
         style={{
           borderTop: '1px solid var(--border-color)',
-          background: 'rgba(7, 17, 31, 0.95)',
+          background: '#ffffff',
           padding: '3rem 0 2rem 0',
           marginTop: 'auto',
         }}

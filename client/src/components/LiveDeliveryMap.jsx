@@ -94,7 +94,7 @@ export default function LiveDeliveryMap({
           alignItems: 'center',
           flexWrap: 'wrap',
           gap: '0.75rem',
-          background: 'rgba(7, 17, 31, 0.8)',
+          background: '#f8fafc',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>

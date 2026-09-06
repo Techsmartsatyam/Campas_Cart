@@ -17,7 +17,7 @@ try {
         credential: admin.credential.cert(serviceAccount),
       });
       isFirebaseAdminInitialized = true;
-      console.log('🔥 Firebase Admin initialized with FIREBASE_SERVICE_ACCOUNT');
+      console.log('🔥 [FCM Admin] Initialized with FIREBASE_SERVICE_ACCOUNT');
     } else if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
       admin.initializeApp({
         credential: admin.credential.cert({
@@ -27,27 +27,39 @@ try {
         }),
       });
       isFirebaseAdminInitialized = true;
-      console.log('🔥 Firebase Admin initialized with explicit environment credentials');
+      console.log('🔥 [FCM Admin] Initialized with explicit environment credentials');
     } else {
-      console.warn('⚠️ Firebase Admin credentials not set. FCM Push Notifications will operate in dry-run mode.');
+      if (process.env.NODE_ENV === 'production') {
+        console.error('❌ [FCM Error] Firebase Admin SDK credentials missing in production environment! Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
+      } else {
+        console.warn('⚠️ [FCM Warning] Firebase Admin credentials not set. Push notifications will operate in dry-run mode.');
+      }
     }
   } else {
     isFirebaseAdminInitialized = true;
   }
 } catch (err) {
-  console.warn('⚠️ Failed to initialize Firebase Admin SDK:', err.message);
+  console.warn('⚠️ [FCM Error] Failed to initialize Firebase Admin SDK:', err.message);
 }
 
 /**
- * Remove invalid or unregistered device tokens from user record
+ * Remove invalid or unregistered device tokens from user records
  */
 export const removeInvalidTokens = async (userId, invalidTokens) => {
-  if (!userId || !invalidTokens || invalidTokens.length === 0) return;
+  if (!invalidTokens || invalidTokens.length === 0) return;
   try {
-    await User.findByIdAndUpdate(userId, {
-      $pull: { pushTokens: { token: { $in: invalidTokens } } },
-    });
-    console.log(`🧹 Cleaned up ${invalidTokens.length} invalid push token(s) for user ${userId}`);
+    if (userId) {
+      await User.findByIdAndUpdate(userId, {
+        $pull: { pushTokens: { token: { $in: invalidTokens } } },
+      });
+      console.log(`🧹 [FCM Token Cleanup] Removed ${invalidTokens.length} dead token(s) from user ${userId}`);
+    } else {
+      await User.updateMany(
+        { 'pushTokens.token': { $in: invalidTokens } },
+        { $pull: { pushTokens: { token: { $in: invalidTokens } } } }
+      );
+      console.log(`🧹 [FCM Token Cleanup] Removed ${invalidTokens.length} dead token(s) across database`);
+    }
   } catch (err) {
     console.error('Error cleaning up invalid push tokens:', err.message);
   }
@@ -57,36 +69,42 @@ export const removeInvalidTokens = async (userId, invalidTokens) => {
  * Send push notification to a specific list of FCM tokens
  */
 export const sendPushToTokens = async (tokens, payload, userId = null) => {
-  if (!tokens || tokens.length === 0) return { success: true, sentCount: 0 };
+  if (!tokens || tokens.length === 0) {
+    return { success: true, sentCount: 0, failureCount: 0 };
+  }
   if (!isFirebaseAdminInitialized) {
-    console.log(`[FCM Dry-Run] Would send push to ${tokens.length} token(s):`, payload.title || payload.notification?.title);
-    return { success: false, message: 'Firebase Admin not configured' };
+    console.warn(`⚠️ [FCM Dry-Run] Firebase Admin not initialized. Skipping push to ${tokens.length} token(s)`);
+    return { success: false, message: 'Firebase Admin not configured', sentCount: 0, failureCount: tokens.length };
   }
 
   const uniqueTokens = [...new Set(tokens.filter(Boolean))];
-  if (uniqueTokens.length === 0) return { success: true, sentCount: 0 };
+  if (uniqueTokens.length === 0) {
+    return { success: true, sentCount: 0, failureCount: 0 };
+  }
 
+  const title = payload.title || 'CampusCart Notification';
+  const body = payload.body || payload.message || '';
+  const orderId = payload.orderId ? String(payload.orderId) : '';
+  const type = payload.type || 'ORDER';
+  const url = payload.url || '/notifications';
+
+  // Strategy: Send data-only payload to avoid duplicate OS notifications when Service Worker handles push event
   const message = {
-    notification: {
-      title: payload.title || 'CampusCart Notification',
-      body: payload.body || payload.message || '',
-    },
     data: {
-      orderId: payload.orderId ? String(payload.orderId) : '',
-      type: payload.type || 'ORDER',
-      click_action: payload.url || '/notifications',
-      ...payload.data,
+      title,
+      body,
+      orderId,
+      type,
+      url,
+      click_action: url,
+      ...(payload.data || {}),
     },
     webpush: {
-      notification: {
-        title: payload.title || 'CampusCart Notification',
-        body: payload.body || payload.message || '',
-        icon: '/pwa-192x192.png',
-        badge: '/favicon.svg',
-        click_action: payload.url || '/notifications',
+      headers: {
+        Urgency: 'high',
       },
       fcmOptions: {
-        link: payload.url || '/notifications',
+        link: url,
       },
     },
     tokens: uniqueTokens,
@@ -105,24 +123,24 @@ export const sendPushToTokens = async (tokens, payload, userId = null) => {
         ) {
           invalidTokens.push(uniqueTokens[idx]);
         } else {
-          console.warn(`FCM token push error (${uniqueTokens[idx]}):`, error.message);
+          console.warn(`⚠️ [FCM Send Notice] Token push failed index ${idx}:`, error.code || error.message);
         }
       }
     });
 
-    if (invalidTokens.length > 0 && userId) {
+    if (invalidTokens.length > 0) {
       await removeInvalidTokens(userId, invalidTokens);
     }
 
-    console.log(`📱 FCM Multicast sent: ${response.successCount} succeeded, ${response.failureCount} failed out of ${uniqueTokens.length}`);
+    console.log(`📱 [FCM Multicast] Result: ${response.successCount} succeeded, ${response.failureCount} failed out of ${uniqueTokens.length} token(s)`);
     return {
-      success: true,
+      success: response.successCount > 0,
       sentCount: response.successCount,
       failureCount: response.failureCount,
     };
   } catch (err) {
-    console.error('FCM sendEachForMulticast error:', err.message);
-    return { success: false, error: err.message };
+    console.error('❌ [FCM Multicast Error]:', err.message);
+    return { success: false, error: err.message, sentCount: 0, failureCount: uniqueTokens.length };
   }
 };
 
@@ -131,10 +149,10 @@ export const sendPushToTokens = async (tokens, payload, userId = null) => {
  */
 export const sendPushToUser = async (userId, payload) => {
   try {
-    if (!userId) return;
+    if (!userId) return { success: true, sentCount: 0, failureCount: 0 };
     const user = await User.findById(userId).select('pushTokens');
     if (!user || !user.pushTokens || user.pushTokens.length === 0) {
-      return;
+      return { success: true, sentCount: 0, failureCount: 0 };
     }
 
     const activeTokens = user.pushTokens
@@ -142,9 +160,12 @@ export const sendPushToUser = async (userId, payload) => {
       .map((t) => t.token);
 
     if (activeTokens.length > 0) {
-      await sendPushToTokens(activeTokens, payload, user._id);
+      return await sendPushToTokens(activeTokens, payload, user._id);
     }
+    return { success: true, sentCount: 0, failureCount: 0 };
   } catch (err) {
     console.error(`Failed to send push to user ${userId}:`, err.message);
+    return { success: false, error: err.message, sentCount: 0, failureCount: 0 };
   }
 };
+

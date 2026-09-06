@@ -58,11 +58,12 @@ export default function Student() {
       <div
         className="glass-card"
         style={{
-          background: 'linear-gradient(135deg, rgba(16, 28, 46, 0.9) 0%, rgba(30, 41, 59, 0.8) 100%)',
+          background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
           padding: '2.5rem 2rem',
           marginBottom: '2.5rem',
           position: 'relative',
           overflow: 'hidden',
+          border: '1px solid var(--border-color)',
         }}
       >
         <div style={{ maxWidth: '600px', position: 'relative', zIndex: 10 }}>
@@ -70,7 +71,7 @@ export default function Student() {
             style={{
               padding: '0.25rem 0.75rem',
               borderRadius: '9999px',
-              background: 'rgba(56, 189, 248, 0.15)',
+              background: '#e0f2fe',
               color: 'var(--primary)',
               fontSize: '0.8rem',
               fontWeight: '700',
@@ -94,6 +95,7 @@ export default function Student() {
           />
         </div>
       </div>
+
 
       {/* Categories Horizontal Selector */}
       <div style={{ marginBottom: '3rem' }}>

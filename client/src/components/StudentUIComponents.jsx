@@ -12,7 +12,8 @@ export function SearchBar({ value, onChange, placeholder = 'Search products, sho
         style={{
           paddingLeft: '2.5rem',
           borderRadius: 'var(--radius-md)',
-          background: 'rgba(16, 28, 46, 0.9)',
+          background: '#ffffff',
+          border: '1px solid #cbd5e1',
         }}
       />
       <svg
@@ -45,9 +46,9 @@ export function CategoryCard({ category, onClick, isSelected }) {
       style={{
         padding: '0.85rem 1.25rem',
         borderRadius: 'var(--radius-md)',
-        background: isSelected ? 'var(--primary-gradient)' : 'var(--bg-card)',
+        background: isSelected ? 'var(--primary-gradient)' : '#ffffff',
         border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border-color)'}`,
-        color: isSelected ? '#07111f' : 'var(--text-primary)',
+        color: isSelected ? '#ffffff' : 'var(--text-primary)',
         fontWeight: isSelected ? '700' : '500',
         cursor: 'pointer',
         whiteSpace: 'nowrap',
@@ -55,7 +56,7 @@ export function CategoryCard({ category, onClick, isSelected }) {
         alignItems: 'center',
         gap: '0.5rem',
         transition: 'all 0.2s ease',
-        boxShadow: isSelected ? '0 0 15px rgba(56, 189, 248, 0.3)' : 'none',
+        boxShadow: isSelected ? '0 4px 14px rgba(2, 132, 199, 0.25)' : 'none',
       }}
     >
       <span>{category.name}</span>
@@ -77,14 +78,14 @@ export function ShopCard({ shop, onClick }) {
               width: '3rem',
               height: '3rem',
               borderRadius: '0.5rem',
-              background: 'var(--surface-light)',
+              background: '#e0f2fe',
               display: 'flex',
               alignItems: 'center',
               justify: 'center',
               fontWeight: '700',
               color: 'var(--primary)',
               fontSize: '1.2rem',
-              border: '1px solid var(--border-color)',
+              border: '1px solid #bae6fd',
             }}
           >
             {shop.name.charAt(0)}
@@ -101,9 +102,9 @@ export function ShopCard({ shop, onClick }) {
             borderRadius: '9999px',
             fontSize: '0.75rem',
             fontWeight: '600',
-            background: shop.isOpen ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-            color: shop.isOpen ? 'var(--success)' : 'var(--danger)',
-            border: `1px solid ${shop.isOpen ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}`,
+            background: shop.isOpen ? '#d1fae5' : '#fee2e2',
+            color: shop.isOpen ? '#047857' : '#b91c1c',
+            border: `1px solid ${shop.isOpen ? '#a7f3d0' : '#fca5a5'}`,
           }}
         >
           {shop.isOpen ? 'OPEN' : 'CLOSED'}
@@ -165,7 +166,7 @@ export function ProductCard({ product, onClick }) {
           width: '100%',
           height: '140px',
           borderRadius: 'var(--radius-sm)',
-          background: 'rgba(7, 17, 31, 0.7)',
+          background: '#f1f5f9',
           display: 'flex',
           alignItems: 'center',
           justify: 'center',
@@ -206,7 +207,7 @@ export function ProductCard({ product, onClick }) {
           style={{
             fontSize: '0.75rem',
             fontWeight: '600',
-            color: product.stock > 0 ? 'var(--success)' : 'var(--danger)',
+            color: product.stock > 0 ? '#047857' : '#b91c1c',
           }}
         >
           {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
@@ -254,3 +255,4 @@ export function EmptyState({ message, onReset }) {
     </div>
   );
 }
+
