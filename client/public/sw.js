@@ -79,3 +79,70 @@ self.addEventListener('fetch', (event) => {
     })
   );
 });
+
+// Push Event - Handle FCM & Web Push notifications in background
+self.addEventListener('push', (event) => {
+  if (!event.data) return;
+
+  let payload = {};
+  try {
+    payload = event.data.json();
+  } catch (e) {
+    payload = {
+      notification: {
+        title: 'CampusCart Notification',
+        body: event.data.text(),
+      },
+    };
+  }
+
+  const notificationTitle =
+    payload.notification?.title ||
+    payload.data?.title ||
+    'CampusCart Notification';
+
+  const notificationOptions = {
+    body:
+      payload.notification?.body ||
+      payload.data?.body ||
+      payload.data?.message ||
+      '',
+    icon: payload.notification?.icon || '/pwa-192x192.png',
+    badge: '/favicon.svg',
+    tag: payload.data?.orderId ? `order-${payload.data.orderId}` : undefined,
+    data: {
+      url: payload.fcmOptions?.link || payload.data?.click_action || payload.data?.url || '/notifications',
+      orderId: payload.data?.orderId,
+    },
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(notificationTitle, notificationOptions)
+  );
+});
+
+// Notification Click Event - Focus or open tab & navigate to target order/notifications
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+
+  const targetUrl = event.notification.data?.url || '/notifications';
+
+  event.waitUntil(
+    clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        for (const client of windowClients) {
+          if (
+            client.url.includes(self.location.origin) &&
+            'focus' in client
+          ) {
+            client.navigate(targetUrl);
+            return client.focus();
+          }
+        }
+        if (clients.openWindow) {
+          return clients.openWindow(targetUrl);
+        }
+      })
+  );
+});

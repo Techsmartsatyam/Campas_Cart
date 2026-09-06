@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { io } from 'socket.io-client';
 import api from '../services/api';
 import { useAuth } from './AuthContext';
+import { requestAndRegisterFCMToken, setupForegroundFCMListener } from '../services/firebase';
 
 const NotificationContext = createContext();
 
@@ -70,6 +71,20 @@ export const NotificationProvider = ({ children }) => {
       console.error('Failed to mark all notifications as read:', err);
     }
   };
+
+  // Register FCM device token on authentication
+  useEffect(() => {
+    if (isAuthenticated && user) {
+      requestAndRegisterFCMToken(api);
+      const unsubscribeFCM = setupForegroundFCMListener((payload) => {
+        console.log('FCM Foreground Payload:', payload);
+        fetchNotifications();
+      });
+      return () => {
+        if (typeof unsubscribeFCM === 'function') unsubscribeFCM();
+      };
+    }
+  }, [isAuthenticated, user?._id, fetchNotifications]);
 
   // Socket.IO single global realtime connection
   useEffect(() => {

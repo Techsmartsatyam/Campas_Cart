@@ -61,6 +61,15 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    pushTokens: [
+      {
+        token: { type: String, required: true },
+        platform: { type: String, default: 'web' },
+        createdAt: { type: Date, default: Date.now },
+        updatedAt: { type: Date, default: Date.now },
+        isActive: { type: Boolean, default: true },
+      },
+    ],
   },
   {
     timestamps: true,

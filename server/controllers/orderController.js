@@ -11,6 +11,7 @@ import Notification from '../models/Notification.js';
 import User from '../models/User.js';
 import Delivery from '../models/Delivery.js';
 import { getIO } from '../config/socket.js';
+import { sendPushToUser, sendPushToTokens } from '../services/pushNotificationService.js';
 
 /**
  * Helper to generate human-readable unique order number: CC-2026-XXXXXX
@@ -427,6 +428,58 @@ try {
       'Socket notification error:',
       socketError.message
     );
+  }
+
+  // E. Send Push Notifications via FCM
+  try {
+    // Student push
+    sendPushToUser(req.user._id, {
+      title: 'Order Placed',
+      body: `Your order ${order.orderNumber} has been placed successfully.`,
+      orderId: order._id,
+      type: 'ORDER',
+      url: `/orders/${order._id}`,
+    }).catch((err) => console.warn('Student FCM push notice:', err.message));
+
+    // Shopkeeper push
+    if (shop.owner) {
+      sendPushToUser(shop.owner, {
+        title: 'New Order Received',
+        body: `Order ${order.orderNumber} has been placed for your shop.`,
+        orderId: order._id,
+        type: 'ORDER',
+        url: `/orders/${order._id}`,
+      }).catch((err) => console.warn('Shopkeeper FCM push notice:', err.message));
+    }
+
+    // Delivery Boy push
+    if (activeDeliveryBoys && activeDeliveryBoys.length > 0) {
+      const dbUserIds = activeDeliveryBoys.map((dbUser) => dbUser._id);
+      User.find({ _id: { $in: dbUserIds } })
+        .select('pushTokens')
+        .then((dbUsers) => {
+          const dbTokens = [];
+          dbUsers.forEach((u) => {
+            if (u.pushTokens && u.pushTokens.length > 0) {
+              u.pushTokens.forEach((t) => {
+                if (t.isActive !== false && t.token) dbTokens.push(t.token);
+              });
+            }
+          });
+          if (dbTokens.length > 0) {
+            sendPushToTokens(dbTokens, {
+              title: 'New Delivery Available',
+              body: `Order ${order.orderNumber} is available for delivery.`,
+              orderId: order._id,
+              type: 'DELIVERY',
+              url: `/orders/${order._id}`,
+            });
+          }
+        })
+        .catch((err) => console.warn('Delivery Boy FCM push notice:', err.message));
+    }
+  } catch (fcmErr) {
+    console.warn('FCM push dispatch notice:', fcmErr.message);
   }
 
 } catch (notifErr) {
