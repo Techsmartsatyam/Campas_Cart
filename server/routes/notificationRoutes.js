@@ -7,6 +7,7 @@ import {
   markAllAsRead,
   registerDeviceToken,
   removeDeviceToken,
+  sendTestPushNotification,
 } from '../controllers/notificationController.js';
 
 const router = express.Router();
@@ -19,5 +20,6 @@ router.patch('/read-all', markAllAsRead);
 router.patch('/:id/read', markAsRead);
 router.post('/device-token', registerDeviceToken);
 router.delete('/device-token', removeDeviceToken);
+router.post('/test-push', sendTestPushNotification);
 
 export default router;

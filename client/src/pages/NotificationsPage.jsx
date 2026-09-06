@@ -321,6 +321,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import api from '../services/api';
 import { useNotifications } from '../context/NotificationContext';
 import {
   Bell,
@@ -344,7 +345,35 @@ export default function NotificationsPage() {
   } = useNotifications();
 
   const [actionLoading, setActionLoading] = useState(false);
+  const [testPushLoading, setTestPushLoading] = useState(false);
+  const [testPushStatus, setTestPushStatus] = useState(null);
   const navigate = useNavigate();
+
+  const handleTestPush = async () => {
+    setTestPushLoading(true);
+    setTestPushStatus(null);
+    try {
+      const res = await api.post('/notifications/test-push');
+      if (res.success) {
+        setTestPushStatus({
+          type: 'success',
+          text: `🚀 Test Push Sent! (${res.sentCount} succeeded out of ${res.tokensFound} token(s))`,
+        });
+      } else {
+        setTestPushStatus({
+          type: 'error',
+          text: res.message || 'Test push failed to send.',
+        });
+      }
+    } catch (err) {
+      setTestPushStatus({
+        type: 'error',
+        text: err.message || 'Failed to trigger test push notification.',
+      });
+    } finally {
+      setTestPushLoading(false);
+    }
+  };
 
   const handleMarkAsRead = async (id) => {
     await markAsRead(id);
@@ -518,6 +547,24 @@ export default function NotificationsPage() {
           }}
         >
           <button
+            onClick={handleTestPush}
+            className="btn-secondary"
+            style={{
+              padding: '0.5rem 0.85rem',
+              fontSize: '0.85rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              color: 'var(--primary)',
+              borderColor: 'var(--primary)',
+            }}
+            disabled={testPushLoading}
+          >
+            <Bell size={14} className={testPushLoading ? 'spin' : ''} />
+            <span>{testPushLoading ? 'Sending Push...' : 'Test Device Push'}</span>
+          </button>
+
+          <button
             onClick={fetchNotifications}
             className="btn-secondary"
             style={{
@@ -557,6 +604,23 @@ export default function NotificationsPage() {
           )}
         </div>
       </div>
+
+      {testPushStatus && (
+        <div
+          style={{
+            padding: '0.85rem 1.25rem',
+            borderRadius: '0.5rem',
+            marginBottom: '1.5rem',
+            background: testPushStatus.type === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+            border: `1px solid ${testPushStatus.type === 'success' ? 'rgba(16, 185, 129, 0.25)' : 'rgba(239, 68, 68, 0.25)'}`,
+            color: testPushStatus.type === 'success' ? 'var(--success)' : '#ef4444',
+            fontSize: '0.88rem',
+            fontWeight: '600',
+          }}
+        >
+          {testPushStatus.text}
+        </div>
+      )}
 
       {/* Main Content */}
       {loading && notifications.length === 0 ? (

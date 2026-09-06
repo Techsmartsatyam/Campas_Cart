@@ -1,4 +1,6 @@
 import Notification from '../models/Notification.js';
+import User from '../models/User.js';
+import { sendPushToTokens, getFirebaseAdminStatus } from '../services/pushNotificationService.js';
 import mongoose from 'mongoose';
 
 /**
@@ -191,11 +193,62 @@ export const removeDeviceToken = async (req, res, next) => {
       $pull: { pushTokens: { token: trimmedToken } },
     });
 
+};
+
+/**
+ * @desc    Send a test FCM push notification to the logged-in user's active device tokens
+ * @route   POST /api/notifications/test-push
+ * @access  Private
+ */
+export const sendTestPushNotification = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user._id).select('pushTokens');
+    if (!user || !user.pushTokens || user.pushTokens.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No FCM device tokens registered for this user account. Allow notifications in CampusCart to register a token.',
+        firebaseInitialized: getFirebaseAdminStatus(),
+        tokensFound: 0,
+        sentCount: 0,
+        failureCount: 0,
+      });
+    }
+
+    const activeTokens = user.pushTokens
+      .filter((t) => t.isActive !== false && t.token)
+      .map((t) => t.token);
+
+    if (activeTokens.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'No active FCM device tokens found.',
+        firebaseInitialized: getFirebaseAdminStatus(),
+        tokensFound: 0,
+        sentCount: 0,
+        failureCount: 0,
+      });
+    }
+
+    const result = await sendPushToTokens(
+      activeTokens,
+      {
+        title: 'CampusCart Test Push 🚀',
+        body: 'System notification test passed successfully!',
+        type: 'TEST',
+        url: '/notifications',
+      },
+      user._id
+    );
+
     return res.status(200).json({
-      success: true,
-      message: 'Device token removed successfully',
+      success: result.success,
+      firebaseInitialized: getFirebaseAdminStatus(),
+      tokensFound: activeTokens.length,
+      sentCount: result.sentCount || 0,
+      failureCount: result.failureCount || 0,
     });
   } catch (error) {
     next(error);
   }
 };
+

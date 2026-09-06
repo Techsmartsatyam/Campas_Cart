@@ -42,6 +42,8 @@ try {
   console.warn('⚠️ [FCM Error] Failed to initialize Firebase Admin SDK:', err.message);
 }
 
+export const getFirebaseAdminStatus = () => isFirebaseAdminInitialized;
+
 /**
  * Remove invalid or unregistered device tokens from user records
  */
@@ -70,6 +72,7 @@ export const removeInvalidTokens = async (userId, invalidTokens) => {
  */
 export const sendPushToTokens = async (tokens, payload, userId = null) => {
   if (!tokens || tokens.length === 0) {
+    console.log('[FCM] Preparing push: 0 tokens target');
     return { success: true, sentCount: 0, failureCount: 0 };
   }
   if (!isFirebaseAdminInitialized) {
@@ -82,13 +85,15 @@ export const sendPushToTokens = async (tokens, payload, userId = null) => {
     return { success: true, sentCount: 0, failureCount: 0 };
   }
 
+  console.log(`[FCM] Preparing push. Target tokens: ${uniqueTokens.length}`);
+
   const title = payload.title || 'CampusCart Notification';
   const body = payload.body || payload.message || '';
   const orderId = payload.orderId ? String(payload.orderId) : '';
   const type = payload.type || 'ORDER';
   const url = payload.url || '/notifications';
 
-  // Strategy: Send data-only payload to avoid duplicate OS notifications when Service Worker handles push event
+  // Strategy: Send data-only payload so Service Worker receives push event and executes showNotification
   const message = {
     data: {
       title,
@@ -132,7 +137,8 @@ export const sendPushToTokens = async (tokens, payload, userId = null) => {
       await removeInvalidTokens(userId, invalidTokens);
     }
 
-    console.log(`📱 [FCM Multicast] Result: ${response.successCount} succeeded, ${response.failureCount} failed out of ${uniqueTokens.length} token(s)`);
+    console.log(`[FCM] Firebase send success: ${response.successCount}`);
+    console.log(`[FCM] Firebase send failure: ${response.failureCount}`);
     return {
       success: response.successCount > 0,
       sentCount: response.successCount,
@@ -168,4 +174,5 @@ export const sendPushToUser = async (userId, payload) => {
     return { success: false, error: err.message, sentCount: 0, failureCount: 0 };
   }
 };
+
 
