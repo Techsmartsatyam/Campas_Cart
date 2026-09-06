@@ -165,7 +165,7 @@ export default function Admin() {
               Admin Governance Dashboard
             </h1>
             <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-              Onboard staff members and manage user access control across CampusCart.
+              Onboard staff members and manage user access control across NearCart.
             </p>
           </div>
         </div>

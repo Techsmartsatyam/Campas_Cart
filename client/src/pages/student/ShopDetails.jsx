@@ -47,7 +47,7 @@ export default function ShopDetails() {
         <div className="glass-card" style={{ maxWidth: '500px', margin: '0 auto' }}>
           <h3 style={{ fontSize: '1.5rem', color: 'var(--danger)', marginBottom: '1rem' }}>{error || 'Shop Unavailable'}</h3>
           <button onClick={() => navigate('/student')} className="btn-secondary">
-            Back to Campus Stores
+            Back to NearCart Stores
           </button>
         </div>
       </div>

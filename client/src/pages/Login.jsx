@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
+import NearCartLogo from '../components/NearCartLogo';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -49,23 +50,11 @@ export default function Login() {
     <div className="container" style={{ padding: '4rem 1.5rem', display: 'flex', justifyContent: 'center' }}>
       <div className="glass-card" style={{ width: '100%', maxWidth: '440px', padding: '2.5rem 2rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <div
-            style={{
-              width: '3rem',
-              height: '3rem',
-              borderRadius: '50%',
-              background: 'rgba(56, 189, 248, 0.1)',
-              color: 'var(--primary)',
-              display: 'flex',
-              alignItems: 'center',
-              justify: 'center',
-              margin: '0 auto 1rem auto',
-            }}
-          >
-            <LogIn size={24} />
+          <div style={{ marginBottom: '1rem' }}>
+            <NearCartLogo size="large" />
           </div>
           <h2 style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-primary)' }}>Welcome Back</h2>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Sign in to your CampusCart account</p>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Sign in to your NearCart account</p>
         </div>
 
         {error && (

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGradient512" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+  </defs>
+  
+  <rect x="0" y="0" width="512" height="512" rx="96" fill="url(#bgGradient512)" />
+  
+  <!-- Location Pin Outline -->
+  <path d="M 256 70 C 160 70 80 150 80 246 C 80 360 256 450 256 450 C 256 450 432 360 432 246 C 432 150 352 70 256 70 Z" 
+        fill="none" stroke="#ffffff" stroke-width="28" stroke-linecap="round" stroke-linejoin="round" opacity="0.35" />
+  
+  <!-- Shopping Cart Icon -->
+  <g transform="translate(130, 135) scale(1.0)">
+    <path d="M 20 40 L 65 40 L 95 170 C 98 182 110 190 122 190 L 220 190 C 232 190 242 182 245 170 L 270 75 L 80 75" 
+          fill="none" stroke="#ffffff" stroke-width="24" stroke-linecap="round" stroke-linejoin="round" />
+    
+    <line x1="110" y1="110" x2="250" y2="110" stroke="#ffffff" stroke-width="16" stroke-linecap="round" opacity="0.9" />
+    <line x1="130" y1="145" x2="235" y2="145" stroke="#ffffff" stroke-width="16" stroke-linecap="round" opacity="0.9" />
+    
+    <circle cx="125" cy="225" r="20" fill="#ffffff" />
+    <circle cx="215" cy="225" r="20" fill="#ffffff" />
+  </g>
+</svg>

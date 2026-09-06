@@ -24,10 +24,10 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker
       .register('/sw.js')
       .then((registration) => {
-        console.log('CampusCart Service Worker registered:', registration.scope);
+        console.log('NearCart Service Worker registered:', registration.scope);
       })
       .catch((error) => {
-        console.error('CampusCart Service Worker registration failed:', error);
+        console.error('NearCart Service Worker registration failed:', error);
       });
   });
 }

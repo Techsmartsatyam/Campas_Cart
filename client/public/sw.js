@@ -90,7 +90,7 @@ self.addEventListener('push', (event) => {
   } catch (e) {
     payload = {
       data: {
-        title: 'CampusCart Notification',
+        title: 'NearCart Notification',
         body: event.data.text(),
       },
     };
@@ -102,7 +102,7 @@ self.addEventListener('push', (event) => {
   const notificationTitle =
     data.title ||
     notification.title ||
-    'CampusCart Notification';
+    'NearCart Notification';
 
   const notificationBody =
     data.body ||

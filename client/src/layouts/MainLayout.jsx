@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
-import { ShoppingBag, LogOut, User as UserIcon, Menu, X, Bell, Check, ExternalLink } from 'lucide-react';
+import { ShoppingBag, LogOut, User as UserIcon, Menu, X, Bell, Check, ExternalLink, Sparkles, Info } from 'lucide-react';
+import NearCartLogo from '../components/NearCartLogo';
 import api from '../services/api';
 
 export default function MainLayout() {
@@ -91,36 +92,8 @@ export default function MainLayout() {
           }}
         >
           {/* Logo */}
-          <Link
-            to="/"
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.6rem',
-              fontSize: '1.35rem',
-              fontWeight: '800',
-              color: 'var(--text-primary)',
-              letterSpacing: '-0.02em',
-            }}
-          >
-            <div
-              style={{
-                background: 'var(--primary-gradient)',
-                padding: '0.4rem',
-                borderRadius: '0.5rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <ShoppingBag style={{ width: '1.25rem', height: '1.25rem', color: '#ffffff' }} />
-            </div>
-            <span>
-              Campus<span style={{ color: 'var(--primary)' }}>Cart</span>
-            </span>
-            <span style={{ fontSize: '0.8rem', background: '#f1f5f9', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '0.15rem 0.45rem', borderRadius: '1rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', fontWeight: '600' }}>
-              🇮🇳 IN
-            </span>
+          <Link to="/" style={{ textDecoration: 'none' }}>
+            <NearCartLogo size="medium" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -142,6 +115,9 @@ export default function MainLayout() {
             </a>
             <a href="#features" style={{ color: 'var(--text-secondary)' }}>
               Features
+            </a>
+            <a href="#about-nearcart" style={{ color: 'var(--text-secondary)' }}>
+              About
             </a>
 
             {isAuthenticated ? (
@@ -468,31 +444,31 @@ export default function MainLayout() {
             }}
           >
             <div>
-              <h3 style={{ color: 'var(--text-primary)', fontSize: '1.1rem', marginBottom: '0.75rem' }}>CampusCart</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                Your Campus. Your Shops. Your Delivery. Connecting college students with nearby shops for fast delivery.
+              <NearCartLogo size="small" />
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.75rem', lineHeight: '1.5' }}>
+                NearCart connects customers with nearby local shops for fast, convenient, and reliable ordering & delivery.
               </p>
             </div>
             <div>
               <h4 style={{ color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: '0.75rem' }}>Platform</h4>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                <li><Link to="/student">Student Hub</Link></li>
-                <li><Link to="/shopkeeper">Shop Partner</Link></li>
-                <li><Link to="/delivery">Delivery Partner</Link></li>
+                <li><Link to="/student">Student Marketplace</Link></li>
+                <li><Link to="/shopkeeper">Shop Partner Portal</Link></li>
+                <li><Link to="/delivery">Delivery Partner Hub</Link></li>
                 <li><Link to="/admin">Admin Governance</Link></li>
               </ul>
             </div>
             <div>
-              <h4 style={{ color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: '0.75rem' }}>Legal</h4>
+              <h4 style={{ color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: '0.75rem' }}>Legal & Guidelines</h4>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
                 <li><a href="#">Privacy Policy</a></li>
                 <li><a href="#">Terms of Service</a></li>
-                <li><a href="#">Campus Guidelines</a></li>
+                <li><a href="#">Merchant Guidelines</a></li>
               </ul>
             </div>
           </div>
           <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-            <p>© {new Date().getFullYear()} CampusCart Platform. All rights reserved.</p>
+            <p>© {new Date().getFullYear()} NearCart Platform. All rights reserved.</p>
           </div>
         </div>
       </footer>

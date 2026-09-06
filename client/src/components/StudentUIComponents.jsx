@@ -133,9 +133,15 @@ export function ShopCard({ shop, onClick }) {
   );
 }
 
-export const ProductCard = React.memo(function ProductCard({ product, onClick }) {
+export const ProductCard = React.memo(function ProductCard({ product, onClick, onShopClick }) {
   const hasDiscount = product.discountPrice !== undefined && product.discountPrice !== null && product.discountPrice < product.price;
   const discountPercent = hasDiscount ? Math.round(((product.price - product.discountPrice) / product.price) * 100) : 0;
+
+  const handleShopClick = (e) => {
+    if (onShopClick && product.shop?._id) {
+      onShopClick(e, product.shop._id);
+    }
+  };
 
   return (
     <div
@@ -199,6 +205,8 @@ export const ProductCard = React.memo(function ProductCard({ product, onClick })
       </div>
 
       <span
+        onClick={handleShopClick}
+        title={product.shop?.name ? `View ${product.shop.name}` : undefined}
         style={{
           fontSize: '0.65rem',
           color: 'var(--primary)',
@@ -208,9 +216,10 @@ export const ProductCard = React.memo(function ProductCard({ product, onClick })
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           display: 'block',
+          cursor: product.shop?._id ? 'pointer' : 'default',
         }}
       >
-        {product.shop?.name || 'Campus Store'}
+        {product.shop?.name || 'Local Store'}
       </span>
 
       <h4
