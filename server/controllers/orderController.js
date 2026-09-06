@@ -401,7 +401,7 @@ try {
     notifications.push(...createdDeliveryNotifications);
   }
 
-  // D. Send notifications instantly using Socket.IO
+  // D. Send notifications & dashboard events instantly using Socket.IO
   try {
     const io = getIO();
 
@@ -420,8 +420,42 @@ try {
       );
     }
 
+    // 1. Emit to Shopkeeper Owner
+    if (shop.owner) {
+      io.to(`user:${shop.owner.toString()}`).emit('order:new', {
+        orderId: order._id,
+        orderNumber: order.orderNumber,
+        orderStatus: order.orderStatus,
+        totalAmount: order.totalAmount,
+        createdAt: order.createdAt,
+        shopId: shop._id,
+      });
+    }
+
+    // 2. Emit to Eligible Delivery Boys
+    if (activeDeliveryBoys && activeDeliveryBoys.length > 0) {
+      activeDeliveryBoys.forEach((dbUser) => {
+        io.to(`user:${dbUser._id.toString()}`).emit('delivery:order:new', {
+          orderId: order._id,
+          orderNumber: order.orderNumber,
+          orderStatus: order.orderStatus,
+          shopId: shop._id,
+          createdAt: order.createdAt,
+        });
+      });
+    }
+
+    // 3. Emit to Student
+    io.to(`user:${req.user._id.toString()}`).emit('order:created', {
+      orderId: order._id,
+      orderNumber: order.orderNumber,
+      orderStatus: order.orderStatus,
+      totalAmount: order.totalAmount,
+      createdAt: order.createdAt,
+    });
+
     console.log(
-      `🔔 Real-time notifications sent for order ${order.orderNumber}`
+      `🔔 Real-time notifications and dashboard events sent for order ${order.orderNumber}`
     );
   } catch (socketError) {
     console.warn(

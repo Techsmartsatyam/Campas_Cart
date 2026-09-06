@@ -551,6 +551,38 @@ export const updateOrderStatus = async (req, res, next) => {
       }
     }
 
+    // Broadcast Socket.IO event and FCM Push notification for status change
+    try {
+      const { getIO } = await import('../config/socket.js');
+      const { sendPushToUser } = await import('../services/pushNotificationService.js');
+      const io = getIO();
+
+      const statusPayload = {
+        orderId: order._id,
+        orderNumber: order.orderNumber,
+        orderStatus: order.orderStatus,
+        previousStatus,
+        shopId: shop._id,
+        updatedAt: order.updatedAt,
+      };
+
+      // Emit to Student
+      io.to(`user:${order.user.toString()}`).emit('order:updated', statusPayload);
+      // Emit to Shopkeeper
+      io.to(`user:${req.user._id.toString()}`).emit('order:updated', statusPayload);
+
+      // Send FCM push to Student
+      sendPushToUser(order.user, {
+        title: `Order Status: ${orderStatus.replace(/_/g, ' ')}`,
+        body: `Your order ${order.orderNumber} status changed to ${orderStatus.replace(/_/g, ' ')}.`,
+        orderId: order._id,
+        type: 'ORDER',
+        url: `/orders/${order._id}`,
+      }).catch((err) => console.warn('Student FCM status update notice:', err.message));
+    } catch (sockErr) {
+      console.warn('Socket/FCM order status update notice:', sockErr.message);
+    }
+
     res.status(200).json({
       success: true,
       message: `Order status updated to ${orderStatus}`,

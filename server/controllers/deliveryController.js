@@ -299,16 +299,37 @@ export const updateDeliveryStatus = async (req, res, next) => {
 }
         await order.save();
 
-        // Broadcast real-time status update to delivery room via Socket.IO
+        // Broadcast real-time status update to delivery room & user rooms via Socket.IO
         try {
           const { getIO } = await import('../config/socket.js');
+          const { sendPushToUser } = await import('../services/pushNotificationService.js');
           const io = getIO();
-          io.to(`delivery:${order._id}`).emit('delivery:status:update', {
+
+          const updatePayload = {
             orderId: order._id,
+            orderNumber: order.orderNumber,
             deliveryStatus: delivery.status,
             orderStatus: order.orderStatus,
+            shopId: order.shop,
             timestamp: now,
-          });
+          };
+
+          io.to(`delivery:${order._id}`).emit('delivery:status:update', updatePayload);
+          io.to(`user:${order.user.toString()}`).emit('order:updated', updatePayload);
+
+          const shopDoc = await mongoose.model('Shop').findById(order.shop).select('owner');
+          if (shopDoc && shopDoc.owner) {
+            io.to(`user:${shopDoc.owner.toString()}`).emit('order:updated', updatePayload);
+          }
+
+          // FCM Push to Student
+          sendPushToUser(order.user, {
+            title: `Delivery Status: ${delivery.status.replace(/_/g, ' ')}`,
+            body: `Order ${order.orderNumber} is now ${delivery.status.replace(/_/g, ' ')}.`,
+            orderId: order._id,
+            type: 'DELIVERY',
+            url: `/orders/${order._id}`,
+          }).catch((err) => console.warn('Delivery status FCM notice:', err.message));
         } catch (sockErr) {
           console.warn('Socket broadcast notice:', sockErr.message);
         }

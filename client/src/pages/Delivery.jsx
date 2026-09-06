@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import api from '../services/api';
 import { Truck, CheckCircle2, Clock, AlertCircle, MapPin, Package, RefreshCw, ArrowRight, DollarSign, Power, Navigation } from 'lucide-react';
 import { io } from 'socket.io-client';
 
 export default function Delivery() {
   const { user, updateUser } = useAuth();
+  const { socket: globalSocket } = useNotifications();
 
   const [availableDeliveries, setAvailableDeliveries] = useState([]);
   const [myDeliveries, setMyDeliveries] = useState([]);
@@ -47,6 +49,47 @@ export default function Delivery() {
   useEffect(() => {
     fetchAllData();
   }, []);
+
+  // Listen to real-time delivery events on global socket
+  useEffect(() => {
+    if (!globalSocket) return;
+
+    const handleNewDeliveryOrder = async (data) => {
+      console.log('⚡ [Delivery Realtime] delivery:order:new received:', data);
+      try {
+        const availRes = await api.get('/delivery/available-orders');
+        if (availRes.success && availRes.deliveries) {
+          setAvailableDeliveries(availRes.deliveries);
+        }
+      } catch (err) {
+        console.warn('Realtime delivery refresh notice:', err.message);
+      }
+    };
+
+    const handleDeliveryUpdated = async (data) => {
+      console.log('⚡ [Delivery Realtime] order/delivery update received:', data);
+      try {
+        const [availRes, myRes] = await Promise.all([
+          api.get('/delivery/available-orders'),
+          api.get('/delivery/my-deliveries'),
+        ]);
+        if (availRes.success && availRes.deliveries) setAvailableDeliveries(availRes.deliveries);
+        if (myRes.success && myRes.deliveries) setMyDeliveries(myRes.deliveries);
+      } catch (err) {
+        console.warn('Realtime delivery refresh notice:', err.message);
+      }
+    };
+
+    globalSocket.on('delivery:order:new', handleNewDeliveryOrder);
+    globalSocket.on('order:updated', handleDeliveryUpdated);
+    globalSocket.on('delivery:status:update', handleDeliveryUpdated);
+
+    return () => {
+      globalSocket.off('delivery:order:new', handleNewDeliveryOrder);
+      globalSocket.off('order:updated', handleDeliveryUpdated);
+      globalSocket.off('delivery:status:update', handleDeliveryUpdated);
+    };
+  }, [globalSocket]);
 
   // Active delivery check
   const activeDelivery = myDeliveries.find((d) =>

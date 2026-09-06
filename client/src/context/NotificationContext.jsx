@@ -12,6 +12,7 @@ export const NotificationProvider = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [socket, setSocket] = useState(null);
 
   const fetchNotifications = useCallback(async () => {
     if (!isAuthenticated) return;
@@ -91,10 +92,11 @@ export const NotificationProvider = ({ children }) => {
     if (!isAuthenticated || !user) {
       setNotifications([]);
       setUnreadCount(0);
+      setSocket(null);
       return;
     }
 
-    let socket = null;
+    let socketInstance = null;
 
     const setupSocket = async () => {
       try {
@@ -110,29 +112,32 @@ export const NotificationProvider = ({ children }) => {
           import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
         const socketUrl = apiUrl.replace(/\/api\/?$/, '');
 
-        socket = io(socketUrl, {
+        socketInstance = io(socketUrl, {
           auth: {
             token: socketToken,
           },
           withCredentials: true,
           transports: ['websocket', 'polling'],
+          reconnection: true,
+          reconnectionAttempts: 10,
+          reconnectionDelay: 2000,
         });
 
-        socket.on('connect', () => {
+        socketInstance.on('connect', () => {
           console.log(
             '🔔 Notification socket connected:',
-            socket.id
+            socketInstance.id
           );
         });
 
-        socket.on('connect_error', (err) => {
+        socketInstance.on('connect_error', (err) => {
           console.error(
             '❌ Notification socket connection error:',
             err.message
           );
         });
 
-        socket.on('notification:new', (newNotification) => {
+        socketInstance.on('notification:new', (newNotification) => {
           console.log(
             '🔔 New real-time notification:',
             newNotification
@@ -151,12 +156,14 @@ export const NotificationProvider = ({ children }) => {
           setUnreadCount((prev) => prev + 1);
         });
 
-        socket.on('disconnect', (reason) => {
+        socketInstance.on('disconnect', (reason) => {
           console.log(
             '🔌 Notification socket disconnected:',
             reason
           );
         });
+
+        setSocket(socketInstance);
       } catch (err) {
         console.error('❌ Failed to setup notification socket:', err);
       }
@@ -166,12 +173,13 @@ export const NotificationProvider = ({ children }) => {
     setupSocket();
 
     return () => {
-      if (socket) {
-        socket.off('notification:new');
-        socket.off('connect');
-        socket.off('connect_error');
-        socket.off('disconnect');
-        socket.disconnect();
+      if (socketInstance) {
+        socketInstance.off('notification:new');
+        socketInstance.off('connect');
+        socketInstance.off('connect_error');
+        socketInstance.off('disconnect');
+        socketInstance.disconnect();
+        setSocket(null);
       }
     };
   }, [isAuthenticated, user?._id]);
@@ -183,6 +191,7 @@ export const NotificationProvider = ({ children }) => {
         unreadCount,
         loading,
         error,
+        socket,
         fetchNotifications,
         fetchUnreadCount,
         markAsRead,

@@ -59,13 +59,16 @@ export const requestAndRegisterFCMToken = async (apiInstance) => {
       return null;
     }
 
-    const swRegistration = await navigator.serviceWorker.ready;
+    let swRegistration = await navigator.serviceWorker.getRegistration('/sw.js');
+    if (!swRegistration) {
+      swRegistration = await navigator.serviceWorker.ready.catch(() => null);
+    }
 
     const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY || undefined;
 
     const token = await getToken(messaging, {
       vapidKey,
-      serviceWorkerRegistration: swRegistration,
+      serviceWorkerRegistration: swRegistration || undefined,
     }).catch((err) => {
       console.warn('FCM getToken notice:', err.message);
       return null;

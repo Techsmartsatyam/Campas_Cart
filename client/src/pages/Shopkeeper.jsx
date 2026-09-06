@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/NotificationContext';
 import api from '../services/api';
 import { getCategories } from '../services/studentService';
 import {
@@ -131,6 +132,45 @@ export default function Shopkeeper() {
   useEffect(() => {
     fetchData();
   }, []);
+
+  const { socket } = useNotifications();
+
+  // Listen to real-time order events for Shopkeeper
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNewOrder = async (data) => {
+      console.log('⚡ [Shopkeeper Realtime] order:new received:', data);
+      try {
+        const ordRes = await api.get('/shopkeeper/orders');
+        if (ordRes.success) setOrders(ordRes.orders);
+        const statsRes = await api.get('/shopkeeper/stats');
+        if (statsRes.success) setStats(statsRes.stats);
+      } catch (err) {
+        console.warn('Realtime shopkeeper refresh notice:', err.message);
+      }
+    };
+
+    const handleOrderUpdated = async (data) => {
+      console.log('⚡ [Shopkeeper Realtime] order:updated received:', data);
+      try {
+        const ordRes = await api.get('/shopkeeper/orders');
+        if (ordRes.success) setOrders(ordRes.orders);
+        const statsRes = await api.get('/shopkeeper/stats');
+        if (statsRes.success) setStats(statsRes.stats);
+      } catch (err) {
+        console.warn('Realtime shopkeeper refresh notice:', err.message);
+      }
+    };
+
+    socket.on('order:new', handleNewOrder);
+    socket.on('order:updated', handleOrderUpdated);
+
+    return () => {
+      socket.off('order:new', handleNewOrder);
+      socket.off('order:updated', handleOrderUpdated);
+    };
+  }, [socket]);
 
   // Handle Shop Create / Edit
   const handleSaveShop = async (e) => {
