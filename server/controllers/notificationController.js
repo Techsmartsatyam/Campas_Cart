@@ -105,6 +105,86 @@ export const markAllAsRead = async (req, res, next) => {
     next(error);
   }
 };
+
+
+
+/**
+ * @desc    Register or update FCM device token for authenticated user
+ * @route   POST /api/notifications/device-token
+ * @access  Private
+ */
+export const registerDeviceToken = async (req, res, next) => {
+  try {
+    const { token, platform = 'web' } = req.body;
+
+    if (!token || typeof token !== 'string' || !token.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Valid FCM device token is required',
+      });
+    }
+
+    const trimmedToken = token.trim();
+
+    // Remove this token from any other user account
+    await User.updateMany(
+      {
+        _id: { $ne: req.user._id },
+        'pushTokens.token': trimmedToken,
+      },
+      {
+        $pull: {
+          pushTokens: { token: trimmedToken },
+        },
+      }
+    );
+
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    if (!user.pushTokens) {
+      user.pushTokens = [];
+    }
+
+    const existingTokenIndex = user.pushTokens.findIndex(
+      (t) => t.token === trimmedToken
+    );
+
+    if (existingTokenIndex >= 0) {
+      user.pushTokens[existingTokenIndex].updatedAt = new Date();
+      user.pushTokens[existingTokenIndex].isActive = true;
+      user.pushTokens[existingTokenIndex].platform = platform;
+    } else {
+      user.pushTokens.push({
+        token: trimmedToken,
+        platform,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        isActive: true,
+      });
+    }
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Device token registered successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+
+
 /**
  * @desc    Deactivate/remove FCM device token for authenticated user
  * @route   DELETE /api/notifications/device-token

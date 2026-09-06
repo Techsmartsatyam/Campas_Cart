@@ -1,48 +1,75 @@
-import admin from 'firebase-admin';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getMessaging } from 'firebase-admin/messaging';
+import dotenv from 'dotenv';
 import User from '../models/User.js';
+
+// Ensure environment variables are loaded regardless of ESM import order
+dotenv.config();
 
 let isFirebaseAdminInitialized = false;
 
-// Safe Firebase Admin Initialization
-try {
-  if (admin.apps.length === 0) {
-    if (process.env.FIREBASE_SERVICE_ACCOUNT) {
-      let serviceAccount;
-      try {
-        serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
-      } catch (e) {
-        serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
-      }
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
-      isFirebaseAdminInitialized = true;
-      console.log('🔥 [FCM Admin] Initialized with FIREBASE_SERVICE_ACCOUNT');
-    } else if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
-        }),
-      });
-      isFirebaseAdminInitialized = true;
-      console.log('🔥 [FCM Admin] Initialized with explicit environment credentials');
-    } else {
-      if (process.env.NODE_ENV === 'production') {
-        console.error('❌ [FCM Error] Firebase Admin SDK credentials missing in production environment! Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY');
-      } else {
-        console.warn('⚠️ [FCM Warning] Firebase Admin credentials not set. Push notifications will operate in dry-run mode.');
-      }
-    }
-  } else {
-    isFirebaseAdminInitialized = true;
+const initializeFirebaseAdmin = () => {
+  if (isFirebaseAdminInitialized && getApps().length > 0) {
+    return true;
   }
-} catch (err) {
-  console.warn('⚠️ [FCM Error] Failed to initialize Firebase Admin SDK:', err.message);
-}
 
-export const getFirebaseAdminStatus = () => isFirebaseAdminInitialized;
+  console.log('[FCM Admin] Initializing Firebase Admin');
+
+  try {
+    if (getApps().length === 0) {
+      if (process.env.FIREBASE_SERVICE_ACCOUNT) {
+        let serviceAccount;
+        try {
+          serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+        } catch (e) {
+          serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT;
+        }
+        initializeApp({
+          credential: cert(serviceAccount),
+        });
+        isFirebaseAdminInitialized = true;
+        console.log('[FCM Admin] Firebase Admin initialized successfully');
+      } else {
+        const missingVars = [];
+        if (!process.env.FIREBASE_PROJECT_ID) missingVars.push('FIREBASE_PROJECT_ID');
+        if (!process.env.FIREBASE_CLIENT_EMAIL) missingVars.push('FIREBASE_CLIENT_EMAIL');
+        if (!process.env.FIREBASE_PRIVATE_KEY) missingVars.push('FIREBASE_PRIVATE_KEY');
+
+        if (missingVars.length > 0) {
+          missingVars.forEach((vName) => {
+            console.error(`❌ [FCM Error] Missing environment variable: ${vName}`);
+          });
+        } else {
+          const formattedPrivateKey = process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n');
+          initializeApp({
+            credential: cert({
+              projectId: process.env.FIREBASE_PROJECT_ID,
+              clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+              privateKey: formattedPrivateKey,
+            }),
+          });
+          isFirebaseAdminInitialized = true;
+          console.log('[FCM Admin] Firebase Admin initialized successfully');
+        }
+      }
+    } else {
+      isFirebaseAdminInitialized = true;
+      console.log('[FCM Admin] Firebase Admin initialized successfully');
+    }
+  } catch (err) {
+    console.error('⚠️ [FCM Error] Failed to initialize Firebase Admin SDK:', err.message);
+  }
+
+  return isFirebaseAdminInitialized;
+};
+
+// Immediate module initialization attempt
+initializeFirebaseAdmin();
+
+export const getFirebaseAdminStatus = () => {
+  initializeFirebaseAdmin();
+  return isFirebaseAdminInitialized;
+};
 
 /**
  * Remove invalid or unregistered device tokens from user records
@@ -75,8 +102,11 @@ export const sendPushToTokens = async (tokens, payload, userId = null) => {
     console.log('[FCM] Preparing push: 0 tokens target');
     return { success: true, sentCount: 0, failureCount: 0 };
   }
+
+  initializeFirebaseAdmin();
+
   if (!isFirebaseAdminInitialized) {
-    console.warn(`⚠️ [FCM Dry-Run] Firebase Admin not initialized. Skipping push to ${tokens.length} token(s)`);
+    console.warn(`⚠️ [FCM Warning] Firebase Admin not initialized. Skipping push to ${tokens.length} token(s)`);
     return { success: false, message: 'Firebase Admin not configured', sentCount: 0, failureCount: tokens.length };
   }
 
@@ -116,18 +146,20 @@ export const sendPushToTokens = async (tokens, payload, userId = null) => {
   };
 
   try {
-    const response = await admin.messaging().sendEachForMulticast(message);
+    const messaging = getMessaging();
+    const response = await messaging.sendEachForMulticast(message);
     const invalidTokens = [];
 
     response.responses.forEach((resp, idx) => {
       if (!resp.success) {
         const error = resp.error;
         if (
-          error.code === 'messaging/invalid-registration-token' ||
-          error.code === 'messaging/registration-token-not-registered'
+          error &&
+          (error.code === 'messaging/invalid-registration-token' ||
+            error.code === 'messaging/registration-token-not-registered')
         ) {
           invalidTokens.push(uniqueTokens[idx]);
-        } else {
+        } else if (error) {
           console.warn(`⚠️ [FCM Send Notice] Token push failed index ${idx}:`, error.code || error.message);
         }
       }
@@ -174,5 +206,3 @@ export const sendPushToUser = async (userId, payload) => {
     return { success: false, error: err.message, sentCount: 0, failureCount: 0 };
   }
 };
-
-
