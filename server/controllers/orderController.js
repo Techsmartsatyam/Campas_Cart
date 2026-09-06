@@ -119,7 +119,7 @@ export const applyCoupon = async (req, res) => {
  */
 export const createOrder = async (req, res) => {
   try {
-    const { addressId, paymentMethod = 'COD', couponCode, notes } = req.body;
+    const { addressId, paymentMethod = 'COD', couponCode, notes, isBuyNow, buyNowItem } = req.body;
 
     if (!addressId) {
       return res.status(400).json({
@@ -144,40 +144,38 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // 2. Fetch student's cart
-    const cart = await Cart.findOne({ user: req.user._id }).populate({
-      path: 'items.product',
-    });
-
-    if (!cart || !cart.items || cart.items.length === 0) {
-      return res.status(400).json({
-        success: false,
-        message: 'Your cart is empty',
-      });
-    }
-
-    // 3. Verify shop validity
-    const shopId = cart.items[0].shop;
-    const shop = await Shop.findById(shopId);
-    if (!shop || !shop.isApproved || !shop.isActive) {
-      return res.status(400).json({
-        success: false,
-        message: 'The shop associated with your cart is not available',
-      });
-    }
-
-    // 4. Validate products, stock, & recalculate subtotal server-side
+    let orderItems = [];
+    let stockUpdates = [];
     let calculatedSubtotal = 0;
-    const orderItems = [];
-    const stockUpdates = [];
+    let shop = null;
+    let cartToClear = null;
 
-    for (const item of cart.items) {
-      const product = await Product.findById(item.product._id || item.product);
+    if (isBuyNow || buyNowItem) {
+      // -------------------------------------------------------------
+      // BUY NOW FLOW (bypasses cart, preserves existing cart items)
+      // -------------------------------------------------------------
+      const productId = buyNowItem?.productId || buyNowItem?.product?._id || buyNowItem?.product;
+      const quantity = parseInt(buyNowItem?.quantity || 1, 10);
 
-      if (!product) {
+      if (!productId) {
         return res.status(400).json({
           success: false,
-          message: `Product in cart no longer exists`,
+          message: 'Buy Now product is required',
+        });
+      }
+
+      if (isNaN(quantity) || quantity < 1) {
+        return res.status(400).json({
+          success: false,
+          message: 'Quantity must be at least 1',
+        });
+      }
+
+      const product = await Product.findById(productId).populate('shop');
+      if (!product) {
+        return res.status(404).json({
+          success: false,
+          message: 'Product not found',
         });
       }
 
@@ -188,28 +186,114 @@ export const createOrder = async (req, res) => {
         });
       }
 
-      if (product.stock < item.quantity) {
+      if (product.stock < quantity) {
         return res.status(400).json({
           success: false,
           message: `Insufficient stock for "${product.name}". Only ${product.stock} left.`,
         });
       }
 
-      const itemSubtotal = product.price * item.quantity;
-      calculatedSubtotal += itemSubtotal;
+      shop = product.shop;
+      if (!shop || !shop.isApproved || !shop.isActive) {
+        return res.status(400).json({
+          success: false,
+          message: 'The shop associated with this product is not currently available',
+        });
+      }
+
+      // Calculate server-side effective selling price
+      const effectivePrice =
+        product.discountPrice != null && product.discountPrice < product.price
+          ? product.discountPrice
+          : product.price;
+
+      const itemSubtotal = effectivePrice * quantity;
+      calculatedSubtotal = itemSubtotal;
 
       orderItems.push({
         product: product._id,
         name: product.name,
-        quantity: item.quantity,
-        price: product.price,
+        quantity,
+        price: effectivePrice,
         subtotal: itemSubtotal,
       });
 
       stockUpdates.push({
         product,
-        newStock: product.stock - item.quantity,
+        newStock: product.stock - quantity,
       });
+    } else {
+      // -------------------------------------------------------------
+      // STANDARD CART FLOW
+      // -------------------------------------------------------------
+      const cart = await Cart.findOne({ user: req.user._id }).populate({
+        path: 'items.product',
+      });
+
+      if (!cart || !cart.items || cart.items.length === 0) {
+        return res.status(400).json({
+          success: false,
+          message: 'Your cart is empty',
+        });
+      }
+
+      cartToClear = cart;
+
+      const shopId = cart.items[0].shop;
+      shop = await Shop.findById(shopId);
+      if (!shop || !shop.isApproved || !shop.isActive) {
+        return res.status(400).json({
+          success: false,
+          message: 'The shop associated with your cart is not available',
+        });
+      }
+
+      for (const item of cart.items) {
+        const product = await Product.findById(item.product._id || item.product);
+
+        if (!product) {
+          return res.status(400).json({
+            success: false,
+            message: `Product in cart no longer exists`,
+          });
+        }
+
+        if (!product.isAvailable) {
+          return res.status(400).json({
+            success: false,
+            message: `Product "${product.name}" is currently unavailable`,
+          });
+        }
+
+        if (product.stock < item.quantity) {
+          return res.status(400).json({
+            success: false,
+            message: `Insufficient stock for "${product.name}". Only ${product.stock} left.`,
+          });
+        }
+
+        // Calculate server-side effective selling price
+        const effectivePrice =
+          product.discountPrice != null && product.discountPrice < product.price
+            ? product.discountPrice
+            : product.price;
+
+        const itemSubtotal = effectivePrice * item.quantity;
+        calculatedSubtotal += itemSubtotal;
+
+        orderItems.push({
+          product: product._id,
+          name: product.name,
+          quantity: item.quantity,
+          price: effectivePrice,
+          subtotal: itemSubtotal,
+        });
+
+        stockUpdates.push({
+          product,
+          newStock: product.stock - item.quantity,
+        });
+      }
     }
 
     // Check shop minimum order amount safely
@@ -337,9 +421,11 @@ export const createOrder = async (req, res) => {
       await couponDoc.save();
     }
 
-    // 12. Clear Student's cart after successful order creation
-    cart.items = [];
-    await cart.save();
+    // 12. Clear Student's cart only if standard cart flow
+    if (cartToClear) {
+      cartToClear.items = [];
+      await cartToClear.save();
+    }
 
     await order.populate([
       { path: 'shop', select: 'name phone address bannerImage owner' },

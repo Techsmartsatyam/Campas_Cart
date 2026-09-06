@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../../services/api';
-import { MapPin, Plus, Check, Tag, CreditCard, ShoppingBag, ShieldCheck, AlertCircle, ArrowLeft, CheckCircle } from 'lucide-react';
+import { MapPin, Plus, Check, Tag, CreditCard, ShoppingBag, ShieldCheck, AlertCircle, ArrowLeft, CheckCircle, Zap } from 'lucide-react';
 
 export default function CheckoutPage() {
+  const location = useLocation();
+  const buyNowItem = location.state?.buyNowItem || null;
+
   const [cart, setCart] = useState(null);
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState('');
@@ -40,26 +43,40 @@ export default function CheckoutPage() {
     try {
       setLoading(true);
       setError('');
-      const [cartRes, addrRes] = await Promise.all([
-        api.get('/cart'),
-        api.get('/addresses'),
-      ]);
 
-      if (cartRes && cartRes.success) {
-        setCart(cartRes.data);
-        if (!cartRes.data.items || cartRes.data.items.length === 0) {
-          navigate('/cart');
-          return;
+      if (buyNowItem) {
+        // Buy Now flow: Only fetch delivery addresses
+        const addrRes = await api.get('/addresses');
+        if (addrRes && addrRes.success) {
+          const addrList = addrRes.data || [];
+          setAddresses(addrList);
+          const defaultAddr = addrList.find((a) => a.isDefault) || addrList[0];
+          if (defaultAddr) {
+            setSelectedAddressId(defaultAddr._id);
+          }
         }
-      }
+      } else {
+        // Cart flow: Fetch cart and addresses
+        const [cartRes, addrRes] = await Promise.all([
+          api.get('/cart'),
+          api.get('/addresses'),
+        ]);
 
-      if (addrRes && addrRes.success) {
-        const addrList = addrRes.data || [];
-        setAddresses(addrList);
-        // Default select default address or first address
-        const defaultAddr = addrList.find((a) => a.isDefault) || addrList[0];
-        if (defaultAddr) {
-          setSelectedAddressId(defaultAddr._id);
+        if (cartRes && cartRes.success) {
+          setCart(cartRes.data);
+          if (!cartRes.data.items || cartRes.data.items.length === 0) {
+            navigate('/cart');
+            return;
+          }
+        }
+
+        if (addrRes && addrRes.success) {
+          const addrList = addrRes.data || [];
+          setAddresses(addrList);
+          const defaultAddr = addrList.find((a) => a.isDefault) || addrList[0];
+          if (defaultAddr) {
+            setSelectedAddressId(defaultAddr._id);
+          }
         }
       }
     } catch (err) {
@@ -141,6 +158,15 @@ export default function CheckoutPage() {
         paymentMethod,
         couponCode: appliedCoupon ? appliedCoupon.code : undefined,
         notes,
+        ...(buyNowItem
+          ? {
+              isBuyNow: true,
+              buyNowItem: {
+                productId: buyNowItem.product._id,
+                quantity: buyNowItem.quantity,
+              },
+            }
+          : {}),
       };
 
       // 1. Create Order Server-Side
@@ -161,9 +187,30 @@ export default function CheckoutPage() {
     }
   };
 
-  const items = cart?.items || [];
+  let items = [];
+  let shop = null;
+
+  if (buyNowItem) {
+    const effectivePrice =
+      buyNowItem.product.discountPrice != null && buyNowItem.product.discountPrice < buyNowItem.product.price
+        ? buyNowItem.product.discountPrice
+        : buyNowItem.product.price;
+
+    items = [
+      {
+        product: buyNowItem.product,
+        quantity: buyNowItem.quantity,
+        price: effectivePrice,
+        shop: buyNowItem.shop,
+      },
+    ];
+    shop = buyNowItem.shop;
+  } else {
+    items = cart?.items || [];
+    shop = items.length > 0 ? items[0].shop : null;
+  }
+
   const subtotal = items.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
-  const shop = items.length > 0 ? items[0].shop : null;
   const deliveryFee = shop?.deliveryFee !== undefined ? shop.deliveryFee : 0;
   const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
   const finalTotal = Math.max(0, subtotal + deliveryFee - discountAmount);
@@ -181,11 +228,11 @@ export default function CheckoutPage() {
     <div className="container" style={{ padding: '2rem 1rem' }}>
       {/* Back button & Title */}
       <div style={{ marginBottom: '1.5rem' }}>
-        <Link to="/cart" style={{ color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
-          <ArrowLeft size={16} /> Back to Cart
+        <Link to={buyNowItem ? `/student/products/${buyNowItem.product._id}` : "/cart"} style={{ color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+          <ArrowLeft size={16} /> {buyNowItem ? 'Back to Product' : 'Back to Cart'}
         </Link>
-        <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
-          Checkout
+        <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          Checkout {buyNowItem && <span style={{ fontSize: '0.8rem', fontWeight: '700', padding: '0.2rem 0.6rem', borderRadius: '1rem', background: 'rgba(37, 99, 235, 0.1)', color: 'var(--primary)', border: '1px solid var(--primary)', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}><Zap size={12} /> BUY NOW</span>}
         </h1>
       </div>
 

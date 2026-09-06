@@ -205,8 +205,15 @@ export default function CartPage() {
                   <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
                     Unit: {product.unit || 'Item'}
                   </div>
-                  <div style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '1rem', marginTop: '0.4rem' }}>
-                    ₹{item.price}
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginTop: '0.4rem' }}>
+                    <span style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '1rem' }}>
+                      ₹{item.price}
+                    </span>
+                    {product.discountPrice != null && product.discountPrice < product.price && (
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
+                        ₹{product.price}
+                      </span>
+                    )}
                   </div>
                 </div>
 

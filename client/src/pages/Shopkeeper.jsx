@@ -296,6 +296,24 @@ export default function Shopkeeper() {
     e.preventDefault();
     setError('');
     setSuccess('');
+
+    if (productForm.price !== undefined && productForm.price !== '') {
+      const p = parseFloat(productForm.price);
+      if (productForm.discountPrice !== '' && productForm.discountPrice !== null && productForm.discountPrice !== undefined) {
+        const dp = parseFloat(productForm.discountPrice);
+        if (!isNaN(dp)) {
+          if (dp < 0) {
+            setError('Discount price cannot be negative.');
+            return;
+          }
+          if (dp > p) {
+            setError('Discount price cannot be greater than regular price.');
+            return;
+          }
+        }
+      }
+    }
+
     try {
       let res;
       if (editingProductId) {

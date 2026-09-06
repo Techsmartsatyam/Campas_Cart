@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getProductById } from '../../services/studentService';
 import api from '../../services/api';
 import { LoadingSpinner } from '../../components/StudentUIComponents';
-import { ArrowLeft, ChevronLeft, ChevronRight, X, Maximize2, ShoppingCart } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, X, Maximize2, ShoppingCart, Zap, Plus, Minus } from 'lucide-react';
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -12,6 +12,9 @@ export default function ProductDetails() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  // Quantity state
+  const [selectedQuantity, setSelectedQuantity] = useState(1);
 
   // Cart action state
   const [addingToCart, setAddingToCart] = useState(false);
@@ -28,7 +31,7 @@ export default function ProductDetails() {
       setShowShopConflictModal(false);
       const res = await api.post('/cart/add', {
         productId: product._id,
-        quantity: 1,
+        quantity: selectedQuantity,
         clearCartFirst,
       });
 
@@ -45,6 +48,32 @@ export default function ProductDetails() {
     } finally {
       setAddingToCart(false);
     }
+  };
+
+  const handleBuyNow = () => {
+    if (!product || product.stock <= 0) return;
+    const effectivePrice =
+      product.discountPrice != null && product.discountPrice < product.price
+        ? product.discountPrice
+        : product.price;
+
+    const buyNowItem = {
+      product: {
+        _id: product._id,
+        name: product.name,
+        price: product.price,
+        discountPrice: product.discountPrice,
+        images: product.images,
+        unit: product.unit,
+        stock: product.stock,
+        shop: product.shop,
+      },
+      quantity: selectedQuantity,
+      effectivePrice,
+      shop: product.shop,
+    };
+
+    navigate('/checkout', { state: { buyNowItem } });
   };
 
   useEffect(() => {
@@ -315,23 +344,67 @@ export default function ProductDetails() {
             </div>
           )}
 
-          {/* Add to Cart Actions */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem' }}>
+          {/* Quantity Selector & Buy Now / Add to Cart Actions */}
+          {product.stock > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem', marginTop: '1.5rem' }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-primary)' }}>Quantity:</span>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f1f5f9', padding: '0.3rem 0.6rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)' }}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedQuantity((prev) => Math.max(1, prev - 1))}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.2rem', display: 'flex', color: 'var(--text-primary)' }}
+                >
+                  <Minus size={16} />
+                </button>
+                <span style={{ fontWeight: '800', minWidth: '28px', textAlign: 'center', fontSize: '1rem', color: 'var(--text-primary)' }}>
+                  {selectedQuantity}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedQuantity((prev) => Math.min(product.stock, prev + 1))}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0.2rem', display: 'flex', color: 'var(--text-primary)' }}
+                >
+                  <Plus size={16} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
             <button
               onClick={() => handleAddToCart(false)}
               disabled={addingToCart || product.stock <= 0}
-              className="btn-primary"
+              className="btn-secondary"
               style={{
                 width: '100%',
                 padding: '0.85rem',
-                fontSize: '1.05rem',
+                fontSize: '0.95rem',
                 fontWeight: '700',
                 justifyContent: 'center',
                 opacity: addingToCart || product.stock <= 0 ? 0.6 : 1,
               }}
             >
-              <ShoppingCart size={20} />
-              {product.stock <= 0 ? 'Out of Stock' : addingToCart ? 'Adding to Cart...' : 'Add to Cart'}
+              <ShoppingCart size={18} />
+              {product.stock <= 0 ? 'Out of Stock' : addingToCart ? 'Adding...' : 'Add to Cart'}
+            </button>
+
+            <button
+              onClick={handleBuyNow}
+              disabled={product.stock <= 0}
+              className="btn-primary"
+              style={{
+                width: '100%',
+                padding: '0.85rem',
+                fontSize: '0.95rem',
+                fontWeight: '800',
+                justifyContent: 'center',
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                color: '#ffffff',
+                opacity: product.stock <= 0 ? 0.6 : 1,
+              }}
+            >
+              <Zap size={18} />
+              BUY NOW
             </button>
           </div>
         </div>

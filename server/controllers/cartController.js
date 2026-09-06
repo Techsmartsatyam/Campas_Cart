@@ -12,11 +12,10 @@ export const getCart = async (req, res) => {
     let cart = await Cart.findOne({ user: req.user._id })
       .populate({
         path: 'items.product',
-        select: 'name price images isAvailable stock unit shop',
+        select: 'name price discountPrice images isAvailable stock unit shop',
       })
       .populate({
         path: 'items.shop',
-        // select: 'name isApproved isActive deliveryFee minimumOrder',
         select: 'name isApproved isActive deliveryFee minimumOrder upiEnabled upiId upiQrImage'
       });
 
@@ -24,15 +23,20 @@ export const getCart = async (req, res) => {
       cart = await Cart.create({ user: req.user._id, items: [] });
     }
 
-    // Filter out deleted products if any, update latest prices
+    // Filter out deleted products if any, update latest effective prices
     let updated = false;
     const validItems = [];
 
     for (const item of cart.items) {
       if (item.product && item.shop) {
-        // Synchronize item price with current database product price
-        if (item.price !== item.product.price) {
-          item.price = item.product.price;
+        // Calculate server-side effective selling price
+        const effectivePrice =
+          item.product.discountPrice != null && item.product.discountPrice < item.product.price
+            ? item.product.discountPrice
+            : item.product.price;
+
+        if (item.price !== effectivePrice) {
+          item.price = effectivePrice;
           updated = true;
         }
         validItems.push(item);
@@ -114,6 +118,12 @@ export const addToCart = async (req, res) => {
       });
     }
 
+    // Calculate effective selling price
+    const effectivePrice =
+      product.discountPrice != null && product.discountPrice < product.price
+        ? product.discountPrice
+        : product.price;
+
     let cart = await Cart.findOne({ user: req.user._id });
 
     if (!cart) {
@@ -153,20 +163,20 @@ export const addToCart = async (req, res) => {
         });
       }
       cart.items[existingItemIndex].quantity = newQty;
-      cart.items[existingItemIndex].price = product.price; // Always use latest DB price
+      cart.items[existingItemIndex].price = effectivePrice; // Always use latest DB effective price
     } else {
       cart.items.push({
         product: product._id,
         shop: product.shop._id,
         quantity: qty,
-        price: product.price,
+        price: effectivePrice,
       });
     }
 
     await cart.save();
 
     await cart.populate([
-      { path: 'items.product', select: 'name price images isAvailable stock unit shop' },
+      { path: 'items.product', select: 'name price discountPrice images isAvailable stock unit shop' },
       { path: 'items.shop', select: 'name isApproved isActive deliveryFee minimumOrder upiEnabled upiId upiQrImage' },
     ]);
 
@@ -242,14 +252,19 @@ export const updateCartItem = async (req, res) => {
         });
       }
 
+      const effectivePrice =
+        product.discountPrice != null && product.discountPrice < product.price
+          ? product.discountPrice
+          : product.price;
+
       cart.items[itemIndex].quantity = qty;
-      cart.items[itemIndex].price = product.price; // Update with latest DB price
+      cart.items[itemIndex].price = effectivePrice; // Update with latest DB effective price
     }
 
     await cart.save();
 
     await cart.populate([
-      { path: 'items.product', select: 'name price images isAvailable stock unit shop' },
+      { path: 'items.product', select: 'name price discountPrice images isAvailable stock unit shop' },
       { path: 'items.shop', select: 'name isApproved isActive deliveryFee minimumOrder upiEnabled upiId upiQrImage' },
     ]);
 
@@ -292,8 +307,8 @@ export const removeCartItem = async (req, res) => {
     await cart.save();
 
     await cart.populate([
-      { path: 'items.product', select: 'name price images isAvailable stock unit shop' },
-      { path: 'items.shop',select: 'name isApproved isActive deliveryFee minimumOrder upiEnabled upiId upiQrImage' },
+      { path: 'items.product', select: 'name price discountPrice images isAvailable stock unit shop' },
+      { path: 'items.shop', select: 'name isApproved isActive deliveryFee minimumOrder upiEnabled upiId upiQrImage' },
     ]);
 
     return res.status(200).json({
