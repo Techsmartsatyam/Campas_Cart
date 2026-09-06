@@ -1,12 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../../services/api';
+import { useNotifications } from '../../context/NotificationContext';
 import { ArrowLeft, MapPin, Store, CreditCard, Clock, Package, Phone, User, ShieldCheck, Eye, EyeOff } from 'lucide-react';
-import LiveDeliveryMap from '../../components/LiveDeliveryMap';
-import { io } from 'socket.io-client';
+
+const LiveDeliveryMap = React.lazy(() => import('../../components/LiveDeliveryMap'));
 
 export default function OrderDetailsPage() {
   const { orderId } = useParams();
+  const { socket: globalSocket } = useNotifications();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -26,31 +28,23 @@ export default function OrderDetailsPage() {
     fetchOrder();
   }, [orderId]);
 
-  // Socket.IO lifecycle for live delivery tracking & status updates
+  // Socket.IO lifecycle for live delivery tracking & status updates using globalSocket
   useEffect(() => {
-    if (!orderId) return;
+    if (!orderId || !globalSocket) return;
 
-    const socket = io('http://localhost:5000', {
-      withCredentials: true,
-    });
-    socketRef.current = socket;
-
-    socket.on('connect', () => {
-      console.log('Student socket connected to live tracking');
-      socket.emit('delivery:join', { orderId });
-    });
+    globalSocket.emit('delivery:join', { orderId });
 
     // Real-time location update listener
-    socket.on('delivery:location:update', (data) => {
+    const handleLocationUpdate = (data) => {
       if (data.latitude && data.longitude) {
         setDriverLocation([data.latitude, data.longitude]);
         setLastUpdated(data.timestamp || Date.now());
         setIsLive(true);
       }
-    });
+    };
 
     // Real-time status update listener
-    socket.on('delivery:status:update', (data) => {
+    const handleStatusUpdate = (data) => {
       setOrder((prev) => {
         if (!prev) return prev;
         return {
@@ -58,10 +52,10 @@ export default function OrderDetailsPage() {
           orderStatus: data.orderStatus || prev.orderStatus,
         };
       });
-    });
+    };
 
     // Real-time delivery boy assignment listener
-    socket.on('delivery:assigned', (data) => {
+    const handleAssigned = (data) => {
       console.log('Real-time delivery partner assigned:', data);
       setOrder((prev) => {
         if (!prev) return prev;
@@ -71,16 +65,19 @@ export default function OrderDetailsPage() {
           deliveryBoy: data.deliveryBoy || prev.deliveryBoy,
         };
       });
-    });
+    };
+
+    globalSocket.on('delivery:location:update', handleLocationUpdate);
+    globalSocket.on('delivery:status:update', handleStatusUpdate);
+    globalSocket.on('delivery:assigned', handleAssigned);
 
     return () => {
-      if (socketRef.current) {
-        socketRef.current.emit('delivery:leave', { orderId });
-        socketRef.current.disconnect();
-        socketRef.current = null;
-      }
+      globalSocket.off('delivery:location:update', handleLocationUpdate);
+      globalSocket.off('delivery:status:update', handleStatusUpdate);
+      globalSocket.off('delivery:assigned', handleAssigned);
+      globalSocket.emit('delivery:leave', { orderId });
     };
-  }, [orderId]);
+  }, [orderId, globalSocket]);
 
   const fetchOrder = async () => {
     try {
@@ -439,23 +436,25 @@ export default function OrderDetailsPage() {
             </h3>
           </div>
 
-          <LiveDeliveryMap
-            driverLocation={driverLocation}
-            shopLocation={
-              shop.location && shop.location.coordinates
-                ? [shop.location.coordinates[1], shop.location.coordinates[0]]
-                : null
-            }
-            destinationLocation={
-              address.location && address.location.coordinates
-                ? [address.location.coordinates[1], address.location.coordinates[0]]
-                : null
-            }
-            lastUpdated={lastUpdated}
-            isLive={isLive}
-            shopName={shop.name}
-            destinationAddress={address.fullAddress}
-          />
+          <React.Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center', background: '#f8fafc', borderRadius: '0.75rem', border: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>Loading live tracking map...</div>}>
+            <LiveDeliveryMap
+              driverLocation={driverLocation}
+              shopLocation={
+                shop.location && shop.location.coordinates
+                  ? [shop.location.coordinates[1], shop.location.coordinates[0]]
+                  : null
+              }
+              destinationLocation={
+                address.location && address.location.coordinates
+                  ? [address.location.coordinates[1], address.location.coordinates[0]]
+                  : null
+              }
+              lastUpdated={lastUpdated}
+              isLive={isLive}
+              shopName={shop.name}
+              destinationAddress={address.fullAddress}
+            />
+          </React.Suspense>
         </div>
       )}
 

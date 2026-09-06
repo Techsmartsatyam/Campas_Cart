@@ -176,9 +176,38 @@ img, svg, video, canvas, audio {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Responsive Product Grid — 4 Columns on Mobile (360px, 390px, 414px) with zero horizontal scroll */
+.product-grid-responsive {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .product-grid-responsive {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .product-grid-responsive {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .product-grid-responsive {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 1.25rem;
+  }
+}
+
 @media (max-width: 768px) {
   .container {
-    padding: 0 1rem;
+    padding: 0 0.5rem;
   }
 
   .grid-responsive-4 {

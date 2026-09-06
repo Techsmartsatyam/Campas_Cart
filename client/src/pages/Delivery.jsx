@@ -3,7 +3,6 @@ import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import api from '../services/api';
 import { Truck, CheckCircle2, Clock, AlertCircle, MapPin, Package, RefreshCw, ArrowRight, DollarSign, Power, Navigation } from 'lucide-react';
-import { io } from 'socket.io-client';
 
 export default function Delivery() {
   const { user, updateUser } = useAuth();
@@ -99,19 +98,11 @@ export default function Delivery() {
   const isOutForDelivery = activeDelivery?.status === 'OUT_FOR_DELIVERY';
   const activeOrderId = activeDelivery?.order?._id;
 
-  // Socket connection & GPS tracking lifecycle
+  // Socket connection & GPS tracking lifecycle using globalSocket
   useEffect(() => {
-    if (isOutForDelivery && activeOrderId && isOnline) {
-      // Connect socket
-      const socket = io('http://localhost:5000', {
-        withCredentials: true,
-      });
-      socketRef.current = socket;
-
-      socket.on('connect', () => {
-        console.log('Socket connected for live GPS sharing');
-        socket.emit('delivery:join', { orderId: activeOrderId });
-      });
+    if (isOutForDelivery && activeOrderId && isOnline && globalSocket) {
+      console.log('Using global socket for live GPS sharing');
+      globalSocket.emit('delivery:join', { orderId: activeOrderId });
 
       // Start Geolocation watcher if supported
       if ('geolocation' in navigator) {
@@ -127,7 +118,7 @@ export default function Delivery() {
               setGeoStatus('LIVE');
 
               const { latitude, longitude, accuracy } = position.coords;
-              socket.emit('delivery:location', {
+              globalSocket.emit('delivery:location', {
                 orderId: activeOrderId,
                 latitude,
                 longitude,
@@ -155,17 +146,13 @@ export default function Delivery() {
           navigator.geolocation.clearWatch(geoWatchIdRef.current);
           geoWatchIdRef.current = null;
         }
-        if (socketRef.current) {
-          socketRef.current.emit('delivery:leave', { orderId: activeOrderId });
-          socketRef.current.disconnect();
-          socketRef.current = null;
-        }
+        globalSocket.emit('delivery:leave', { orderId: activeOrderId });
         setGeoStatus('OFF');
       };
     } else {
       setGeoStatus('OFF');
     }
-  }, [isOutForDelivery, activeOrderId, isOnline]);
+  }, [isOutForDelivery, activeOrderId, isOnline, globalSocket]);
 
   const handleToggleOnline = async () => {
     setTogglingOnline(true);

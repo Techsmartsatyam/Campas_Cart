@@ -32,7 +32,7 @@ export default function Student() {
       const [catRes, shopRes, prodRes] = await Promise.all([
         getCategories(),
         getShops(),
-        getProducts({ limit: 8, search, category: selectedCategory }),
+        getProducts({ limit: 24, search, category: selectedCategory }),
       ]);
 
       if (catRes.success) setCategories(catRes.categories);
@@ -172,7 +172,7 @@ export default function Student() {
             }}
           />
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
+          <div className="product-grid-responsive">
             {products.map((prod) => (
               <ProductCard
                 key={prod._id}

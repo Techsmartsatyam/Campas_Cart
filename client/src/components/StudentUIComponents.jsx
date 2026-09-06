@@ -133,28 +133,38 @@ export function ShopCard({ shop, onClick }) {
   );
 }
 
-export function ProductCard({ product, onClick }) {
+export const ProductCard = React.memo(function ProductCard({ product, onClick }) {
   const hasDiscount = product.discountPrice !== undefined && product.discountPrice !== null && product.discountPrice < product.price;
   const discountPercent = hasDiscount ? Math.round(((product.price - product.discountPrice) / product.price) * 100) : 0;
 
   return (
     <div
       onClick={onClick}
-      className="glass-card"
-      style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}
+      className="glass-card product-card-dense"
+      style={{
+        cursor: 'pointer',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        position: 'relative',
+        padding: '0.6rem',
+        borderRadius: 'var(--radius-sm)',
+        background: '#ffffff',
+      }}
     >
       {hasDiscount && (
         <span
           style={{
             position: 'absolute',
-            top: '0.85rem',
-            right: '0.85rem',
+            top: '0.4rem',
+            right: '0.4rem',
             background: 'var(--danger)',
             color: '#fff',
-            fontSize: '0.7rem',
-            fontWeight: '700',
-            padding: '0.2rem 0.5rem',
-            borderRadius: '0.25rem',
+            fontSize: '0.6rem',
+            fontWeight: '800',
+            padding: '0.15rem 0.35rem',
+            borderRadius: '0.2rem',
+            zIndex: 2,
           }}
         >
           {discountPercent}% OFF
@@ -164,65 +174,101 @@ export function ProductCard({ product, onClick }) {
       <div
         style={{
           width: '100%',
-          height: '140px',
-          borderRadius: 'var(--radius-sm)',
-          background: '#f1f5f9',
+          aspectRatio: '1 / 1',
+          borderRadius: 'calc(var(--radius-sm) - 2px)',
+          background: '#f8fafc',
           display: 'flex',
           alignItems: 'center',
-          justify: 'center',
-          marginBottom: '1rem',
+          justifyContent: 'center',
+          marginBottom: '0.4rem',
           border: '1px solid var(--border-color)',
           overflow: 'hidden',
         }}
       >
         {product.images && product.images.length > 0 ? (
-          <img src={product.images[0]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+          <img
+            src={product.images[0]}
+            alt={product.name}
+            loading="lazy"
+            decoding="async"
+            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+          />
         ) : (
-          <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No Image</span>
+          <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>No Image</span>
         )}
       </div>
 
-      <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: '600', textTransform: 'uppercase' }}>
+      <span
+        style={{
+          fontSize: '0.65rem',
+          color: 'var(--primary)',
+          fontWeight: '700',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          display: 'block',
+        }}
+      >
         {product.shop?.name || 'Campus Store'}
       </span>
 
-      <h4 style={{ fontSize: '1rem', fontWeight: '700', color: 'var(--text-primary)', margin: '0.25rem 0 0.5rem 0' }}>
+      <h4
+        style={{
+          fontSize: '0.78rem',
+          fontWeight: '700',
+          color: 'var(--text-primary)',
+          margin: '0.15rem 0 0.25rem 0',
+          lineHeight: '1.15',
+          display: '-webkit-box',
+          WebkitLineClamp: 2,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden',
+          minHeight: '1.8rem',
+        }}
+      >
         {product.name}
       </h4>
 
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', marginBottom: '1rem', flex: 1 }}>
-        <span style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)' }}>
           ₹{hasDiscount ? product.discountPrice : product.price}
         </span>
         {hasDiscount && (
-          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
+          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
             ₹{product.price}
           </span>
         )}
-        {product.unit && <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>/ {product.unit}</span>}
+        {product.unit && <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>/ {product.unit}</span>}
       </div>
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
         <span
           style={{
-            fontSize: '0.75rem',
-            fontWeight: '600',
+            fontSize: '0.65rem',
+            fontWeight: '700',
             color: product.stock > 0 ? '#047857' : '#b91c1c',
           }}
         >
-          {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
+          {product.stock > 0 ? 'In Stock' : 'Out'}
         </span>
 
         <button
           className="btn-secondary"
-          style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', pointerEvents: 'none' }}
+          style={{
+            padding: '0.2rem 0.45rem',
+            fontSize: '0.7rem',
+            pointerEvents: 'none',
+            borderRadius: '0.25rem',
+            lineHeight: '1',
+          }}
         >
-          Details →
+          + ADD
         </button>
       </div>
     </div>
   );
-}
+});
 
 export function LoadingSpinner() {
   return (

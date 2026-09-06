@@ -66,11 +66,13 @@ export const getProducts = async (req, res, next) => {
 
     const total = await Product.countDocuments(query);
     const products = await Product.find(query)
+      .select('name price discountPrice unit stock images shop category rating totalRatings createdAt')
       .populate('shop', 'name logo rating address isOpen')
       .populate('category', 'name')
       .sort(sortOptions)
       .skip(skip)
-      .limit(limitNum);
+      .limit(limitNum)
+      .lean();
 
     res.status(200).json({
       success: true,
