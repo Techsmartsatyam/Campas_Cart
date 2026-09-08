@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { ShoppingBag, LogOut, User as UserIcon, Menu, X, Bell, Check, ExternalLink, Sparkles, Info } from 'lucide-react';
 import NearCartLogo from '../components/NearCartLogo';
+import PwaInstallButton from '../components/PwaInstallButton';
 import api from '../services/api';
 
 export default function MainLayout() {
@@ -119,6 +120,8 @@ export default function MainLayout() {
             <a href="#about-nearcart" style={{ color: 'var(--text-secondary)' }}>
               About
             </a>
+
+            <PwaInstallButton />
 
             {isAuthenticated ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginLeft: '1rem' }}>
@@ -363,6 +366,7 @@ export default function MainLayout() {
             <Link to="/" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--text-primary)' }}>
               Home
             </Link>
+            <PwaInstallButton variant="mobile" />
             {isAuthenticated ? (
               <>
                 {user.role === 'STUDENT' && (
