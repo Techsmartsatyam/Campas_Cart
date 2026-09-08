@@ -82,16 +82,24 @@ self.addEventListener('fetch', (event) => {
 
 // Push Event - Handle FCM & Web Push notifications in background
 self.addEventListener('push', (event) => {
-  if (!event.data) return;
+  console.log('[ServiceWorker] Push event received');
+
+  if (!event.data) {
+    console.warn('[ServiceWorker] Push event received with empty data');
+    return;
+  }
 
   let payload = {};
   try {
     payload = event.data.json();
+    console.log('[ServiceWorker] Parsed push payload:', payload);
   } catch (e) {
+    const rawText = event.data.text();
+    console.log('[ServiceWorker] Push payload text:', rawText);
     payload = {
       data: {
         title: 'NearCart Notification',
-        body: event.data.text(),
+        body: rawText,
       },
     };
   }
@@ -102,25 +110,32 @@ self.addEventListener('push', (event) => {
   const notificationTitle =
     data.title ||
     notification.title ||
+    payload.title ||
     'NearCart Notification';
 
   const notificationBody =
     data.body ||
     notification.body ||
     data.message ||
-    '';
+    payload.body ||
+    payload.message ||
+    'You have a new notification from NearCart';
 
   const targetUrl =
     payload.fcmOptions?.link ||
     data.click_action ||
     data.url ||
+    notification.click_action ||
     (data.orderId ? `/orders/${data.orderId}` : '/notifications');
+
+  const iconUrl = notification.icon || data.icon || '/icon-192.png';
+  const badgeUrl = notification.badge || data.badge || '/favicon.svg';
 
   const notificationOptions = {
     body: notificationBody,
-    icon: notification.icon || '/pwa-192x192.png',
-    badge: '/favicon.svg',
-    tag: data.orderId ? `order-${data.orderId}` : `campuscart-${Date.now()}`,
+    icon: iconUrl,
+    badge: badgeUrl,
+    tag: data.orderId ? `order-${data.orderId}` : `nearcart-${Date.now()}`,
     renotify: true,
     vibrate: [100, 50, 100],
     data: {
@@ -129,6 +144,8 @@ self.addEventListener('push', (event) => {
     },
   };
 
+  console.log('[ServiceWorker] Displaying notification:', notificationTitle, notificationOptions);
+
   event.waitUntil(
     self.registration.showNotification(notificationTitle, notificationOptions)
   );
@@ -136,9 +153,11 @@ self.addEventListener('push', (event) => {
 
 // Notification Click Event - Focus or open tab & navigate to target order/notifications
 self.addEventListener('notificationclick', (event) => {
+  console.log('[ServiceWorker] Notification clicked:', event.notification);
   event.notification.close();
 
-  const targetUrl = event.notification.data?.url || '/notifications';
+  const rawTargetUrl = event.notification.data?.url || '/notifications';
+  const fullTargetUrl = new URL(rawTargetUrl, self.location.origin).href;
 
   event.waitUntil(
     clients
@@ -149,14 +168,15 @@ self.addEventListener('notificationclick', (event) => {
             client.url.includes(self.location.origin) &&
             'focus' in client
           ) {
-            client.navigate(targetUrl);
+            client.navigate(fullTargetUrl);
             return client.focus();
           }
         }
         if (clients.openWindow) {
-          return clients.openWindow(targetUrl);
+          return clients.openWindow(fullTargetUrl);
         }
       })
   );
 });
+
 

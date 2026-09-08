@@ -117,11 +117,19 @@ export const sendPushToTokens = async (tokens, payload, userId = null) => {
 
   console.log(`[FCM] Preparing push. Target tokens: ${uniqueTokens.length}`);
 
-  const title = payload.title || 'CampusCart Notification';
-  const body = payload.body || payload.message || '';
+  const title = String(payload.title || 'NearCart Notification');
+  const body = String(payload.body || payload.message || '');
   const orderId = payload.orderId ? String(payload.orderId) : '';
-  const type = payload.type || 'ORDER';
-  const url = payload.url || '/notifications';
+  const type = String(payload.type || 'ORDER');
+  const url = String(payload.url || '/notifications');
+
+  // Convert custom data fields to strings for FCM compatibility
+  const customData = {};
+  if (payload.data && typeof payload.data === 'object') {
+    Object.keys(payload.data).forEach((key) => {
+      customData[key] = String(payload.data[key]);
+    });
+  }
 
   // Strategy: Send data-only payload so Service Worker receives push event and executes showNotification
   const message = {
@@ -132,11 +140,14 @@ export const sendPushToTokens = async (tokens, payload, userId = null) => {
       type,
       url,
       click_action: url,
-      ...(payload.data || {}),
+      icon: '/icon-192.png',
+      badge: '/favicon.svg',
+      ...customData,
     },
     webpush: {
       headers: {
         Urgency: 'high',
+        TTL: '86400',
       },
       fcmOptions: {
         link: url,
@@ -153,14 +164,23 @@ export const sendPushToTokens = async (tokens, payload, userId = null) => {
     response.responses.forEach((resp, idx) => {
       if (!resp.success) {
         const error = resp.error;
-        if (
-          error &&
-          (error.code === 'messaging/invalid-registration-token' ||
-            error.code === 'messaging/registration-token-not-registered')
-        ) {
+        const errCode = error?.code || '';
+        const errMsg = error?.message || '';
+
+        const isInvalid =
+          errCode === 'messaging/invalid-registration-token' ||
+          errCode === 'messaging/registration-token-not-registered' ||
+          errCode === 'messaging/invalid-argument' ||
+          errCode === 'messaging/mismatched-credential' ||
+          /not-registered/i.test(errMsg) ||
+          /invalid registration token/i.test(errMsg) ||
+          /requested entity was not found/i.test(errMsg);
+
+        if (isInvalid) {
+          console.warn(`🧹 [FCM Target Stale] Dead token detected at index ${idx}: ${errCode || errMsg}`);
           invalidTokens.push(uniqueTokens[idx]);
         } else if (error) {
-          console.warn(`⚠️ [FCM Send Notice] Token push failed index ${idx}:`, error.code || error.message);
+          console.warn(`⚠️ [FCM Send Notice] Push attempt failed index ${idx}:`, errCode || errMsg);
         }
       }
     });

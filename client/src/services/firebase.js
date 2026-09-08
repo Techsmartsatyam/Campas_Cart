@@ -73,10 +73,15 @@ export const requestAndRegisterFCMToken = async (apiInstance) => {
     // Acquire active Service Worker registration
     let swRegistration = null;
     try {
-      swRegistration = await navigator.serviceWorker.ready;
-      console.log('[FCM] Service worker registered: PASS (Scope:', swRegistration.scope, ')');
+      swRegistration = await Promise.race([
+        navigator.serviceWorker.ready,
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('SW ready timeout')), 3000)
+        ),
+      ]);
+      console.log('[FCM] Service worker ready: PASS (Scope:', swRegistration.scope, ')');
     } catch (swErr) {
-      console.warn('[FCM] Waiting for navigator.serviceWorker.ready failed:', swErr.message);
+      console.warn('[FCM] SW ready notice:', swErr.message, '- falling back to direct registration');
       swRegistration = await navigator.serviceWorker.register('/sw.js').catch((err) => {
         console.error('[FCM] Direct SW registration failed:', err.message);
         return null;
