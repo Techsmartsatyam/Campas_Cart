@@ -8,6 +8,7 @@ import Student from './pages/Student';
 import Unauthorized from './pages/Unauthorized';
 import NotFound from './pages/NotFound';
 import ProtectedRoute from './components/ProtectedRoute';
+import PublicOnlyRoute from './components/PublicOnlyRoute';
 
 // Lazy-loaded routes for performance & bundle splitting
 const ShopDetails = lazy(() => import('./pages/student/ShopDetails'));
@@ -36,8 +37,22 @@ function App() {
         <Routes>
           <Route path="/" element={<MainLayout />}>
             <Route index element={<Home />} />
-            <Route path="login" element={<Login />} />
-            <Route path="register" element={<Register />} />
+            <Route
+              path="login"
+              element={
+                <PublicOnlyRoute>
+                  <Login />
+                </PublicOnlyRoute>
+              }
+            />
+            <Route
+              path="register"
+              element={
+                <PublicOnlyRoute>
+                  <Register />
+                </PublicOnlyRoute>
+              }
+            />
             <Route path="unauthorized" element={<Unauthorized />} />
 
             {/* Protected Student Routes */}

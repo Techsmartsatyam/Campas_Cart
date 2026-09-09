@@ -156,17 +156,71 @@ export const acceptDelivery = async (req, res, next) => {
       profileImage: deliveryBoy.profileImage || null,
     };
 
-    // 6. Broadcast Real-Time Socket Event to Student & Delivery Room
+    // 6. Broadcast Real-Time Socket Event, DB Notifications & FCM Push
     try {
       const { getIO } = await import('../config/socket.js');
+      const { sendPushToUser } = await import('../services/pushNotificationService.js');
       const io = getIO();
+
       io.to(`delivery:${order._id}`).emit('delivery:assigned', {
         orderId: order._id,
         orderStatus: 'DELIVERY_ASSIGNED',
         deliveryBoy: deliveryBoyData,
       });
+
+      // Create Notification for Student
+      const studentNotif = await Notification.create({
+        user: order.user,
+        title: 'Delivery Partner Assigned',
+        message: `${deliveryBoy.name} has accepted delivery for order ${order.orderNumber}.`,
+        type: 'DELIVERY',
+        relatedOrder: order._id,
+        isRead: false,
+      });
+
+      io.to(`user:${order.user.toString()}`).emit('notification:new', {
+        _id: studentNotif._id,
+        title: studentNotif.title,
+        message: studentNotif.message,
+        type: studentNotif.type,
+        relatedOrder: studentNotif.relatedOrder,
+        isRead: studentNotif.isRead,
+        createdAt: studentNotif.createdAt,
+      });
+
+      // Send FCM push to Student
+      sendPushToUser(order.user, {
+        title: studentNotif.title,
+        body: studentNotif.message,
+        orderId: order._id,
+        type: 'DELIVERY',
+        url: `/orders/${order._id}`,
+      }).catch((err) => console.warn('Student delivery acceptance FCM notice:', err.message));
+
+      // Create Notification for Shopkeeper if owner exists
+      const shopDoc = await mongoose.model('Shop').findById(order.shop).select('owner');
+      if (shopDoc && shopDoc.owner) {
+        const shopNotif = await Notification.create({
+          user: shopDoc.owner,
+          title: 'Delivery Partner Assigned',
+          message: `Delivery partner ${deliveryBoy.name} accepted delivery for order ${order.orderNumber}.`,
+          type: 'DELIVERY',
+          relatedOrder: order._id,
+          isRead: false,
+        });
+
+        io.to(`user:${shopDoc.owner.toString()}`).emit('notification:new', {
+          _id: shopNotif._id,
+          title: shopNotif.title,
+          message: shopNotif.message,
+          type: shopNotif.type,
+          relatedOrder: shopNotif.relatedOrder,
+          isRead: shopNotif.isRead,
+          createdAt: shopNotif.createdAt,
+        });
+      }
     } catch (sockErr) {
-      console.warn('Socket emit delivery:assigned error:', sockErr.message);
+      console.warn('Socket/Notification delivery:assigned error:', sockErr.message);
     }
 
     res.status(200).json({
@@ -334,12 +388,27 @@ export const updateDeliveryStatus = async (req, res, next) => {
           console.warn('Socket broadcast notice:', sockErr.message);
         }
 
-        // Create Notifications for Student & Shopkeeper
+        // Create Notifications for Student & Shopkeeper and emit real-time socket events
         try {
           const shop = await mongoose.model('Shop').findById(order.shop);
+          const { getIO } = await import('../config/socket.js');
+          const io = getIO();
+
+          const emitNotif = (notifDoc) => {
+            if (!notifDoc) return;
+            io.to(`user:${notifDoc.user.toString()}`).emit('notification:new', {
+              _id: notifDoc._id,
+              title: notifDoc.title,
+              message: notifDoc.message,
+              type: notifDoc.type,
+              relatedOrder: notifDoc.relatedOrder,
+              isRead: notifDoc.isRead,
+              createdAt: notifDoc.createdAt,
+            });
+          };
 
           if (status === 'ARRIVED_AT_SHOP') {
-            await Notification.create({
+            const sNotif = await Notification.create({
               user: order.user,
               title: 'Delivery Partner Arrived',
               message: `Your delivery partner has arrived at the shop for order ${order.orderNumber}.`,
@@ -347,9 +416,10 @@ export const updateDeliveryStatus = async (req, res, next) => {
               relatedOrder: order._id,
               isRead: false,
             });
+            emitNotif(sNotif);
 
             if (shop && shop.owner) {
-              await Notification.create({
+              const kNotif = await Notification.create({
                 user: shop.owner,
                 title: 'Delivery Partner Arrived',
                 message: `Delivery partner has arrived to collect order ${order.orderNumber}.`,
@@ -357,9 +427,10 @@ export const updateDeliveryStatus = async (req, res, next) => {
                 relatedOrder: order._id,
                 isRead: false,
               });
+              emitNotif(kNotif);
             }
           } else if (status === 'PICKED_UP') {
-            await Notification.create({
+            const sNotif = await Notification.create({
               user: order.user,
               title: 'Order Picked Up',
               message: `Your order ${order.orderNumber} has been picked up from the shop.`,
@@ -367,9 +438,10 @@ export const updateDeliveryStatus = async (req, res, next) => {
               relatedOrder: order._id,
               isRead: false,
             });
+            emitNotif(sNotif);
 
             if (shop && shop.owner) {
-              await Notification.create({
+              const kNotif = await Notification.create({
                 user: shop.owner,
                 title: 'Order Picked Up',
                 message: `Order ${order.orderNumber} has been picked up by the delivery partner.`,
@@ -377,9 +449,10 @@ export const updateDeliveryStatus = async (req, res, next) => {
                 relatedOrder: order._id,
                 isRead: false,
               });
+              emitNotif(kNotif);
             }
           } else if (status === 'OUT_FOR_DELIVERY') {
-            await Notification.create({
+            const sNotif = await Notification.create({
               user: order.user,
               title: 'Order Out for Delivery',
               message: `Your order ${order.orderNumber} is now out for delivery.`,
@@ -387,8 +460,9 @@ export const updateDeliveryStatus = async (req, res, next) => {
               relatedOrder: order._id,
               isRead: false,
             });
+            emitNotif(sNotif);
           } else if (status === 'DELIVERED') {
-            await Notification.create({
+            const sNotif = await Notification.create({
               user: order.user,
               title: 'Order Delivered',
               message: `Your order ${order.orderNumber} has been delivered successfully.`,
@@ -396,9 +470,10 @@ export const updateDeliveryStatus = async (req, res, next) => {
               relatedOrder: order._id,
               isRead: false,
             });
+            emitNotif(sNotif);
 
             if (shop && shop.owner) {
-              await Notification.create({
+              const kNotif = await Notification.create({
                 user: shop.owner,
                 title: 'Order Delivered',
                 message: `Order ${order.orderNumber} has been delivered.`,
@@ -406,6 +481,7 @@ export const updateDeliveryStatus = async (req, res, next) => {
                 relatedOrder: order._id,
                 isRead: false,
               });
+              emitNotif(kNotif);
             }
           }
         } catch (notifErr) {

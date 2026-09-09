@@ -159,13 +159,20 @@ export const sendPushToTokens = async (tokens, payload, userId = null) => {
   try {
     const messaging = getMessaging();
     const response = await messaging.sendEachForMulticast(message);
-    const invalidTokens = [];
+    const errors = [];
 
     response.responses.forEach((resp, idx) => {
       if (!resp.success) {
         const error = resp.error;
-        const errCode = error?.code || '';
-        const errMsg = error?.message || '';
+        const errCode = error?.code || 'UNKNOWN_ERROR';
+        const errMsg = error?.message || 'Unknown FCM error';
+        const affectedToken = uniqueTokens[idx];
+
+        errors.push({
+          token: affectedToken,
+          code: errCode,
+          message: errMsg,
+        });
 
         const isInvalid =
           errCode === 'messaging/invalid-registration-token' ||
@@ -177,28 +184,45 @@ export const sendPushToTokens = async (tokens, payload, userId = null) => {
           /requested entity was not found/i.test(errMsg);
 
         if (isInvalid) {
-          console.warn(`🧹 [FCM Target Stale] Dead token detected at index ${idx}: ${errCode || errMsg}`);
-          invalidTokens.push(uniqueTokens[idx]);
-        } else if (error) {
-          console.warn(`⚠️ [FCM Send Notice] Push attempt failed index ${idx}:`, errCode || errMsg);
+          console.warn(`🧹 [FCM Target Stale] Dead token detected for token ${affectedToken.substring(0, 15)}...: Code [${errCode}] - ${errMsg}`);
+          invalidTokens.push(affectedToken);
+        } else {
+          console.warn(`⚠️ [FCM Send Failure] Push failed for token ${affectedToken.substring(0, 15)}...: Code [${errCode}] - ${errMsg}`);
         }
       }
     });
 
+    let tokenCleanupOccurred = false;
     if (invalidTokens.length > 0) {
       await removeInvalidTokens(userId, invalidTokens);
+      tokenCleanupOccurred = true;
     }
 
+    console.log(`[FCM] Target tokens: ${uniqueTokens.length}`);
     console.log(`[FCM] Firebase send success: ${response.successCount}`);
     console.log(`[FCM] Firebase send failure: ${response.failureCount}`);
+    if (errors.length > 0) {
+      console.warn('[FCM Error Summary]', JSON.stringify(errors, null, 2));
+    }
+
     return {
       success: response.successCount > 0,
       sentCount: response.successCount,
       failureCount: response.failureCount,
+      errors,
+      tokenCleanupOccurred,
     };
   } catch (err) {
-    console.error('❌ [FCM Multicast Error]:', err.message);
-    return { success: false, error: err.message, sentCount: 0, failureCount: uniqueTokens.length };
+    console.error('❌ [FCM Multicast Error]:', err.code || '', err.message);
+    return {
+      success: false,
+      error: err.message,
+      errorCode: err.code || 'MULTICAST_ERROR',
+      sentCount: 0,
+      failureCount: uniqueTokens.length,
+      errors: [{ token: 'ALL', code: err.code || 'MULTICAST_ERROR', message: err.message }],
+      tokenCleanupOccurred: false,
+    };
   }
 };
 

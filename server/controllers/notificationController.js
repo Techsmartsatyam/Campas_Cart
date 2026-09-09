@@ -268,6 +268,8 @@ export const sendTestPushNotification = async (req, res, next) => {
       tokensFound: activeTokens.length,
       sentCount: result.sentCount || 0,
       failureCount: result.failureCount || 0,
+      errors: result.errors || [],
+      tokenCleanupOccurred: result.tokenCleanupOccurred || false,
     });
   } catch (error) {
     next(error);

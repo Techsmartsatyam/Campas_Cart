@@ -6,14 +6,14 @@ const sendTokenResponse = (user, statusCode, res, message = 'Success') => {
   const token = jwt.sign(
     { userId: user._id, role: user.role },
     process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+    { expiresIn: process.env.JWT_EXPIRES_IN || '15d' }
   );
 
   const cookieName = process.env.COOKIE_NAME || 'campuscart_token';
   const isProduction = process.env.NODE_ENV === 'production';
 
   const options = {
-    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    expires: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days
     httpOnly: true,
     secure: isProduction,
    sameSite: isProduction ? 'none' : 'lax',

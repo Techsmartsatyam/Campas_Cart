@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { checkHealth } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import {
   ShoppingBag,
   Store,
@@ -20,7 +21,24 @@ import {
 import NearCartLogo from '../components/NearCartLogo';
 
 export default function Home() {
+  const { user, isAuthenticated } = useAuth();
   const [apiStatus, setApiStatus] = useState({ loading: true, success: false, message: '' });
+
+  const getDashboardPath = () => {
+    if (!user) return '/student';
+    switch (user.role) {
+      case 'STUDENT':
+        return '/student';
+      case 'SHOPKEEPER':
+        return '/shopkeeper';
+      case 'DELIVERY_BOY':
+        return '/delivery';
+      case 'ADMIN':
+        return '/admin';
+      default:
+        return '/student';
+    }
+  };
 
   useEffect(() => {
     async function verifyBackend() {
@@ -182,12 +200,20 @@ export default function Home() {
               flexWrap: 'wrap',
             }}
           >
-            <Link to="/student" className="btn-primary" style={{ padding: '0.85rem 1.75rem', fontSize: '1rem' }}>
-              Browse Marketplace <ArrowRight size={18} />
-            </Link>
-            <Link to="/login" className="btn-secondary" style={{ padding: '0.85rem 1.75rem', fontSize: '1rem' }}>
-              Partner Sign In
-            </Link>
+            {isAuthenticated ? (
+              <Link to={getDashboardPath()} className="btn-primary" style={{ padding: '0.85rem 1.75rem', fontSize: '1rem' }}>
+                Go to My Portal ({user?.role}) <ArrowRight size={18} />
+              </Link>
+            ) : (
+              <>
+                <Link to="/student" className="btn-primary" style={{ padding: '0.85rem 1.75rem', fontSize: '1rem' }}>
+                  Browse Marketplace <ArrowRight size={18} />
+                </Link>
+                <Link to="/login" className="btn-secondary" style={{ padding: '0.85rem 1.75rem', fontSize: '1rem' }}>
+                  Partner Sign In
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </section>

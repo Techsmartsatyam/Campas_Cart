@@ -534,21 +534,41 @@ export const updateOrderStatus = async (req, res, next) => {
       }
     }
 
-    // Create Notification for Student if Shopkeeper rejects the order
-    if (orderStatus === 'SHOP_REJECTED') {
-      try {
+    // Create Notification document for Student on order status change
+    let studentNotification = null;
+    try {
+      let notifTitle = `Order Status: ${orderStatus.replace(/_/g, ' ')}`;
+      let notifMsg = `Your order ${order.orderNumber} status updated to ${orderStatus.replace(/_/g, ' ')}.`;
+
+      if (orderStatus === 'SHOP_ACCEPTED') {
+        notifTitle = 'Order Accepted';
+        notifMsg = `Your order ${order.orderNumber} has been accepted by the shop.`;
+      } else if (orderStatus === 'PREPARING') {
+        notifTitle = 'Order Preparing';
+        notifMsg = `The shop is now preparing your order ${order.orderNumber}.`;
+      } else if (orderStatus === 'READY_FOR_PICKUP') {
+        notifTitle = 'Order Ready';
+        notifMsg = `Your order ${order.orderNumber} is ready for pickup/delivery!`;
+      } else if (orderStatus === 'SHOP_REJECTED') {
+        notifTitle = 'Order Rejected';
         const reasonMsg = order.cancellationReason ? ` Reason: ${order.cancellationReason}` : '';
-        await Notification.create({
-          user: order.user,
-          title: 'Order Rejected',
-          message: `Your order ${order.orderNumber} was rejected by the shop.${reasonMsg}`,
-          type: 'ORDER',
-          relatedOrder: order._id,
-          isRead: false,
-        });
-      } catch (notifErr) {
-        console.warn('Shopkeeper rejection notification notice:', notifErr.message);
+        notifMsg = `Your order ${order.orderNumber} was rejected by the shop.${reasonMsg}`;
+      } else if (orderStatus === 'CANCELLED') {
+        notifTitle = 'Order Cancelled';
+        const reasonMsg = order.cancellationReason ? ` Reason: ${order.cancellationReason}` : '';
+        notifMsg = `Order ${order.orderNumber} was cancelled.${reasonMsg}`;
       }
+
+      studentNotification = await Notification.create({
+        user: order.user,
+        title: notifTitle,
+        message: notifMsg,
+        type: 'ORDER',
+        relatedOrder: order._id,
+        isRead: false,
+      });
+    } catch (notifErr) {
+      console.warn('Shopkeeper status notification creation notice:', notifErr.message);
     }
 
     // Broadcast Socket.IO event and FCM Push notification for status change
@@ -556,6 +576,18 @@ export const updateOrderStatus = async (req, res, next) => {
       const { getIO } = await import('../config/socket.js');
       const { sendPushToUser } = await import('../services/pushNotificationService.js');
       const io = getIO();
+
+      if (studentNotification) {
+        io.to(`user:${order.user.toString()}`).emit('notification:new', {
+          _id: studentNotification._id,
+          title: studentNotification.title,
+          message: studentNotification.message,
+          type: studentNotification.type,
+          relatedOrder: studentNotification.relatedOrder,
+          isRead: studentNotification.isRead,
+          createdAt: studentNotification.createdAt,
+        });
+      }
 
       const statusPayload = {
         orderId: order._id,
@@ -573,8 +605,8 @@ export const updateOrderStatus = async (req, res, next) => {
 
       // Send FCM push to Student
       sendPushToUser(order.user, {
-        title: `Order Status: ${orderStatus.replace(/_/g, ' ')}`,
-        body: `Your order ${order.orderNumber} status changed to ${orderStatus.replace(/_/g, ' ')}.`,
+        title: studentNotification?.title || `Order Status: ${orderStatus.replace(/_/g, ' ')}`,
+        body: studentNotification?.message || `Your order ${order.orderNumber} status changed to ${orderStatus.replace(/_/g, ' ')}.`,
         orderId: order._id,
         type: 'ORDER',
         url: `/orders/${order._id}`,
