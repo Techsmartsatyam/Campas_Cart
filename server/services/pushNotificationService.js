@@ -158,8 +158,13 @@ export const sendPushToTokens = async (tokens, payload, userId = null) => {
 
   try {
     const messaging = getMessaging();
-    const response = await messaging.sendEachForMulticast(message);
+    const invalidTokens = [];
     const errors = [];
+
+    console.log(`[FCM TEST] notification recipient: ${userId || 'multiple/direct'}`);
+    console.log(`[FCM TEST] target token count: ${uniqueTokens.length}`);
+
+    const response = await messaging.sendEachForMulticast(message);
 
     response.responses.forEach((resp, idx) => {
       if (!resp.success) {
@@ -173,6 +178,9 @@ export const sendPushToTokens = async (tokens, payload, userId = null) => {
           code: errCode,
           message: errMsg,
         });
+
+        console.warn(`[FCM TEST] Firebase failure: token ${affectedToken.substring(0, 10)}...`);
+        console.warn(`[FCM TEST] Firebase error code: ${errCode} - ${errMsg}`);
 
         const isInvalid =
           errCode === 'messaging/invalid-registration-token' ||
@@ -198,9 +206,9 @@ export const sendPushToTokens = async (tokens, payload, userId = null) => {
       tokenCleanupOccurred = true;
     }
 
-    console.log(`[FCM] Target tokens: ${uniqueTokens.length}`);
-    console.log(`[FCM] Firebase send success: ${response.successCount}`);
-    console.log(`[FCM] Firebase send failure: ${response.failureCount}`);
+    console.log(`[FCM TEST] target token count: ${uniqueTokens.length}`);
+    console.log(`[FCM TEST] Firebase success: ${response.successCount}`);
+    console.log(`[FCM TEST] Firebase failure: ${response.failureCount}`);
     if (errors.length > 0) {
       console.warn('[FCM Error Summary]', JSON.stringify(errors, null, 2));
     }
@@ -214,6 +222,8 @@ export const sendPushToTokens = async (tokens, payload, userId = null) => {
     };
   } catch (err) {
     console.error('❌ [FCM Multicast Error]:', err.code || '', err.message);
+    console.warn(`[FCM TEST] Firebase failure: ${err.message}`);
+    console.warn(`[FCM TEST] Firebase error code: ${err.code || 'MULTICAST_ERROR'}`);
     return {
       success: false,
       error: err.message,

@@ -5,6 +5,7 @@ import { useNotifications } from '../context/NotificationContext';
 import { ShoppingBag, LogOut, User as UserIcon, Menu, X, Bell, Check, ExternalLink, Sparkles, Info } from 'lucide-react';
 import NearCartLogo from '../components/NearCartLogo';
 import PwaInstallButton from '../components/PwaInstallButton';
+import PwaInstallBanner from '../components/PwaInstallBanner';
 import api from '../services/api';
 
 export default function MainLayout() {
@@ -428,6 +429,8 @@ export default function MainLayout() {
       <main style={{ flex: 1 }}>
         <Outlet />
       </main>
+
+      <PwaInstallBanner />
 
       {/* Footer */}
       <footer

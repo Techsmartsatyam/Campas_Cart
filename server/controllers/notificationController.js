@@ -125,6 +125,10 @@ export const registerDeviceToken = async (req, res, next) => {
     }
 
     const trimmedToken = token.trim();
+    const truncatedToken = `${trimmedToken.substring(0, 12)}...${trimmedToken.substring(trimmedToken.length - 6)}`;
+
+    console.log(`[FCM TEST] authenticated user: ${req.user._id} (${req.user.email})`);
+    console.log(`[FCM TEST] token registration: ${truncatedToken}`);
 
     // Remove this token from any other user account
     await User.updateMany(
@@ -171,6 +175,8 @@ export const registerDeviceToken = async (req, res, next) => {
     }
 
     await user.save();
+
+    console.log(`[FCM TEST] stored token count: ${user.pushTokens.filter((t) => t.isActive !== false).length}`);
 
     return res.status(200).json({
       success: true,

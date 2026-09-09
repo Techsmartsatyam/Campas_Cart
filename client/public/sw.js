@@ -1,4 +1,4 @@
-const CACHE_NAME = 'nearcart-v2';
+const CACHE_NAME = 'nearcart-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -11,6 +11,53 @@ const STATIC_ASSETS = [
   '/pwa-512x512.png',
   '/apple-touch-icon.png'
 ];
+
+// Firebase Web SDK background initialization (compat scripts for ServiceWorker)
+try {
+  importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+  importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBkbvWzVSWqxkX3TFSxL4bbzXZEk9JPpjU",
+    authDomain: "campuscart-2edf0.firebaseapp.com",
+    projectId: "campuscart-2edf0",
+    storageBucket: "campuscart-2edf0.firebasestorage.app",
+    messagingSenderId: "1005956411546",
+    appId: "1:1005956411546:web:ca546998bb3f7322e66f23"
+  };
+
+  if (firebase.apps.length === 0) {
+    firebase.initializeApp(firebaseConfig);
+  }
+  const messaging = firebase.messaging();
+  messaging.onBackgroundMessage((payload) => {
+    console.log('[ServiceWorker FCM] Background message received:', payload);
+    const data = payload.data || {};
+    const notification = payload.notification || {};
+
+    const notificationTitle = data.title || notification.title || payload.title || 'NearCart Notification';
+    const notificationBody = data.body || notification.body || data.message || payload.body || 'You have a new notification from NearCart';
+    const targetUrl = payload.fcmOptions?.link || data.click_action || data.url || (data.orderId ? `/orders/${data.orderId}` : '/notifications');
+
+    const notificationOptions = {
+      body: notificationBody,
+      icon: notification.icon || data.icon || '/icon-192.png',
+      badge: notification.badge || data.badge || '/favicon.svg',
+      tag: data.orderId ? `order-${data.orderId}` : `nearcart-${Date.now()}`,
+      renotify: true,
+      vibrate: [100, 50, 100],
+      data: {
+        url: targetUrl,
+        orderId: data.orderId || null,
+      },
+    };
+
+    return self.registration.showNotification(notificationTitle, notificationOptions);
+  });
+  console.log('[ServiceWorker FCM] Background messaging initialized');
+} catch (err) {
+  console.warn('[ServiceWorker FCM] Compat script notice:', err.message);
+}
 
 // Install Event - Pre-cache App Shell
 self.addEventListener('install', (event) => {
