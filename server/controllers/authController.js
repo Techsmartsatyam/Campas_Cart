@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import { isValidEmail, normalizeEmail } from '../utils/emailValidator.js';
 
 // Helper to generate JWT token and set HTTP-only cookie
 const sendTokenResponse = (user, statusCode, res, message = 'Success') => {
@@ -55,6 +56,13 @@ export const register = async (req, res, next) => {
       });
     }
 
+    if (!isValidEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a valid email address (e.g. student@example.com)',
+      });
+    }
+
     if (password.length < 6) {
       return res.status(400).json({
         success: false,
@@ -62,7 +70,7 @@ export const register = async (req, res, next) => {
       });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = normalizeEmail(email);
 
     // Check duplicate email
     const existingUser = await User.findOne({ email: normalizedEmail });
@@ -251,6 +259,13 @@ export const createStaff = async (req, res, next) => {
       });
     }
 
+    if (!isValidEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please enter a valid email address for staff account',
+      });
+    }
+
     if (!['SHOPKEEPER', 'DELIVERY_BOY'].includes(role)) {
       return res.status(400).json({
         success: false,
@@ -265,7 +280,7 @@ export const createStaff = async (req, res, next) => {
       });
     }
 
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = normalizeEmail(email);
 
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {

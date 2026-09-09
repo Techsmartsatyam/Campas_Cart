@@ -118,8 +118,8 @@ export const acceptDelivery = async (req, res, next) => {
     order.orderStatus = 'DELIVERY_ASSIGNED';
     await order.save();
 
-    // 4. Fetch Delivery Boy details safely (name, phone, profileImage)
-    const deliveryBoy = await User.findById(deliveryBoyId).select('name phone profileImage');
+    // 4. Fetch Delivery Boy details safely (name, phone, email, profileImage)
+    const deliveryBoy = await User.findById(deliveryBoyId).select('name phone email profileImage');
 
     // 5. Create Notifications for Student & Shopkeeper
     try {
@@ -153,6 +153,7 @@ export const acceptDelivery = async (req, res, next) => {
       _id: deliveryBoy._id,
       name: deliveryBoy.name,
       phone: deliveryBoy.phone,
+      email: deliveryBoy.email || '',
       profileImage: deliveryBoy.profileImage || null,
     };
 
@@ -198,7 +199,7 @@ export const acceptDelivery = async (req, res, next) => {
       }).catch((err) => console.warn('Student delivery acceptance FCM notice:', err.message));
 
       // Create Notification for Shopkeeper if owner exists
-      const shopDoc = await mongoose.model('Shop').findById(order.shop).select('owner');
+      const shopDoc = await mongoose.model('Shop').findById(order.shop).select('name owner address');
       if (shopDoc && shopDoc.owner) {
         const shopNotif = await Notification.create({
           user: shopDoc.owner,
@@ -218,6 +219,44 @@ export const acceptDelivery = async (req, res, next) => {
           isRead: shopNotif.isRead,
           createdAt: shopNotif.createdAt,
         });
+      }
+
+      // 7. Send Email Notification to Delivery Boy (Database-resolved recipient)
+      try {
+        console.log(`[EMAIL TRACE] Delivery resolved: PASS (${order.orderNumber})`);
+        if (deliveryBoy) {
+          console.log(`[EMAIL TRACE] Delivery boy resolved: PASS (${deliveryBoy.name})`);
+        }
+        if (deliveryBoy && deliveryBoy.email) {
+          console.log(`[EMAIL TRACE] Delivery email resolved: PASS (${deliveryBoy.email})`);
+        } else {
+          console.warn(`[EMAIL TRACE] Delivery email resolved: FAIL (Delivery boy email missing in database)`);
+        }
+
+        const { sendDeliveryAssignedEmailToDeliveryBoy } = await import('../services/emailService.js');
+        const shopInfo = shopDoc || (await mongoose.model('Shop').findById(order.shop).select('name address'));
+        const studentInfo = await User.findById(order.user).select('name');
+        const addressInfo = await mongoose.model('Address').findById(order.address);
+
+        const formattedDeliveryAddr = addressInfo
+          ? `${addressInfo.addressLine1 || addressInfo.street || ''}, ${addressInfo.city || ''}, ${addressInfo.pincode || ''}`
+          : 'Customer Address';
+
+        sendDeliveryAssignedEmailToDeliveryBoy({
+          deliveryBoyEmail: deliveryBoy.email,
+          deliveryBoyName: deliveryBoy.name,
+          orderNumber: order.orderNumber,
+          shopName: shopInfo ? shopInfo.name : 'NearCart Shop',
+          shopAddress: shopInfo ? shopInfo.address : '',
+          deliveryAddress: formattedDeliveryAddr,
+          customerName: studentInfo ? studentInfo.name : 'Student',
+          totalAmount: order.totalAmount,
+          orderId: order._id,
+        }).catch((emailErr) => {
+          console.warn('Delivery boy email dispatch notice:', emailErr.message);
+        });
+      } catch (emailTriggerErr) {
+        console.warn('[EMAIL TRACE] Delivery boy email trigger notice:', emailTriggerErr.message);
       }
     } catch (sockErr) {
       console.warn('Socket/Notification delivery:assigned error:', sockErr.message);

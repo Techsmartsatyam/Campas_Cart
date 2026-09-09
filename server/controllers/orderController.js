@@ -12,6 +12,7 @@ import User from '../models/User.js';
 import Delivery from '../models/Delivery.js';
 import { getIO } from '../config/socket.js';
 import { sendPushToUser, sendPushToTokens } from '../services/pushNotificationService.js';
+import { sendOrderPlacedEmailToShopkeeper } from '../services/emailService.js';
 
 /**
  * Helper to generate human-readable unique order number: CC-2026-XXXXXX
@@ -626,6 +627,50 @@ try {
     'Order notification creation notice:',
     notifErr.message
   );
+}
+
+// F. Send Email Notification to Shopkeeper (Database-resolved recipient)
+try {
+  console.log(`[EMAIL TRACE] Order created: PASS (${order.orderNumber})`);
+  const targetShopId = order.shop._id || order.shop;
+  const shopDoc = await Shop.findById(targetShopId).populate('owner', 'email name');
+
+  if (shopDoc) {
+    console.log(`[EMAIL TRACE] Shop resolved: PASS (${shopDoc.name})`);
+  } else {
+    console.warn(`[EMAIL TRACE] Shop resolved: FAIL (Shop document not found for ID ${targetShopId})`);
+  }
+
+  if (shopDoc && shopDoc.owner) {
+    console.log(`[EMAIL TRACE] Shop owner resolved: PASS (${shopDoc.owner.name})`);
+  } else {
+    console.warn(`[EMAIL TRACE] Shop owner resolved: FAIL (Owner not assigned to shop)`);
+  }
+
+  if (shopDoc && shopDoc.owner && shopDoc.owner.email) {
+    const formattedAddress = address
+      ? `${address.addressLine1 || address.street || ''}, ${address.city || ''}, ${address.pincode || ''}`
+      : 'Customer Delivery Address';
+
+    sendOrderPlacedEmailToShopkeeper({
+      shopkeeperEmail: shopDoc.owner.email,
+      shopName: shopDoc.name,
+      studentName: req.user.name || 'Student',
+      orderNumber: order.orderNumber,
+      items: orderItems,
+      totalAmount: order.totalAmount,
+      paymentMethod: order.paymentMethod,
+      deliveryAddress: formattedAddress,
+      orderTime: order.createdAt ? new Date(order.createdAt).toLocaleString() : new Date().toLocaleString(),
+      orderId: order._id,
+    }).catch((emailErr) => {
+      console.warn('Shopkeeper email dispatch notice:', emailErr.message);
+    });
+  } else {
+    console.warn('[EMAIL TRACE] Shopkeeper email resolved: FAIL (Shop owner email missing in database)');
+  }
+} catch (emailTriggerErr) {
+  console.warn('[EMAIL TRACE] Shopkeeper email trigger notice:', emailTriggerErr.message);
 }
 
     return res.status(201).json({
