@@ -10,13 +10,16 @@ export const createTransporter = () => {
   const host = process.env.SMTP_HOST;
   const port = parseInt(process.env.SMTP_PORT || '587', 10);
   const user = process.env.SMTP_USER;
-  const pass = process.env.SMTP_PASS;
+  // Gmail App Passwords are 16 alphanumeric chars — spaces are display-only formatting.
+  // Strip all spaces so auth works regardless of how the env var was entered.
+  const pass = process.env.SMTP_PASS ? process.env.SMTP_PASS.replace(/\s+/g, '') : undefined;
   const service = process.env.SMTP_SERVICE;
 
   if (user && pass && (host || service)) {
     const isGmail = service === 'gmail' || (host && host.includes('gmail'));
 
     if (isGmail) {
+      console.log('[SHOP EMAIL TRACE] SMTP Ready: PASS (Gmail service transporter created)');
       return nodemailer.createTransport({
         service: 'gmail',
         auth: { user, pass },
@@ -24,6 +27,7 @@ export const createTransporter = () => {
       });
     }
 
+    console.log('[SHOP EMAIL TRACE] SMTP Ready: PASS (Custom SMTP transporter created)');
     return nodemailer.createTransport({
       host,
       port,
@@ -33,6 +37,7 @@ export const createTransporter = () => {
     });
   }
 
+  console.warn('[SHOP EMAIL TRACE] SMTP Ready: FAIL (Missing SMTP_USER, SMTP_PASS, or SMTP_HOST/SERVICE)');
   return null;
 };
 
