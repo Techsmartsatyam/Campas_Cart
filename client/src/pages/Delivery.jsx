@@ -613,6 +613,57 @@ export default function Delivery() {
                         <p><strong>Pickup Shop:</strong> {order.shop?.name} ({order.shop?.address})</p>
                         <p><strong>Customer:</strong> {order.user?.name} ({order.user?.phone})</p>
                         <p><strong>Delivery Address:</strong> {order.address?.fullAddress || 'Campus Hostel Block'}</p>
+                         {order.items?.length > 0 && (
+  <div
+    style={{
+      marginTop: '0.75rem',
+      padding: '0.75rem',
+      borderRadius: '8px',
+      background: 'var(--surface-hover)',
+      border: '1px solid var(--border-color)',
+    }}
+  >
+    <strong
+      style={{
+        display: 'block',
+        marginBottom: '0.5rem',
+        color: 'var(--text-primary)',
+      }}
+    >
+      Order Items:
+    </strong>
+
+    {order.items.map((item, index) => (
+      <div
+        key={item._id || index}
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: '10px',
+          padding: '0.4rem 0',
+          borderBottom:
+            index < order.items.length - 1
+              ? '1px solid var(--border-color)'
+              : 'none',
+        }}
+      >
+        <span style={{ color: 'var(--text-secondary)' }}>
+          {item.product?.name || item.name || 'Product'}
+          {' × '}
+          {item.quantity || 0}
+        </span>
+
+        <strong style={{ color: 'var(--text-primary)' }}>
+          ₹
+          {item.subtotal ??
+            (Number(item.price) || 0) *
+              (Number(item.quantity) || 0)}
+        </strong>
+      </div>
+    ))}
+  </div>
+)}
+
                         <p><strong>Total Amount:</strong> ₹{order.totalAmount} ({order.paymentMethod})</p>
                       </div>
                     )}
