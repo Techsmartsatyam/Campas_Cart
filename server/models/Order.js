@@ -26,6 +26,13 @@ const orderItemSchema = new mongoose.Schema(
       required: [true, 'Item subtotal is required'],
       min: [0, 'Subtotal cannot be negative'],
     },
+
+  gstPercentage: {
+  type: Number,
+  default: 0,
+  min: [0, 'GST percentage cannot be negative'],
+  max: [100, 'GST percentage cannot exceed 100'],
+},
   },
   { _id: true }
 );
@@ -77,6 +84,11 @@ const orderSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'Discount cannot be negative'],
     },
+  gstAmount: {
+  type: Number,
+  default: 0,
+  min: [0, 'GST amount cannot be negative'],
+},
     totalAmount: {
       type: Number,
       required: [true, 'Total amount is required'],

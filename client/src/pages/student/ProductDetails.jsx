@@ -57,21 +57,37 @@ export default function ProductDetails() {
         ? product.discountPrice
         : product.price;
 
+    // const buyNowItem = {
+    //   product: {
+    //     _id: product._id,
+    //     name: product.name,
+    //     price: product.price,
+    //     discountPrice: product.discountPrice,
+    //     images: product.images,
+    //     unit: product.unit,
+    //     stock: product.stock,
+    //     shop: product.shop,
+    //   },
+    //   quantity: selectedQuantity,
+    //   effectivePrice,
+    //   shop: product.shop,
+    // };
     const buyNowItem = {
-      product: {
-        _id: product._id,
-        name: product.name,
-        price: product.price,
-        discountPrice: product.discountPrice,
-        images: product.images,
-        unit: product.unit,
-        stock: product.stock,
-        shop: product.shop,
-      },
-      quantity: selectedQuantity,
-      effectivePrice,
-      shop: product.shop,
-    };
+  product: {
+    _id: product._id,
+    name: product.name,
+    price: product.price,
+    discountPrice: product.discountPrice,
+    images: product.images,
+    unit: product.unit,
+    stock: product.stock,
+    gstPercentage: Number(product.gstPercentage) || 0,
+    shop: product.shop,
+  },
+  quantity: selectedQuantity,
+  effectivePrice,
+  shop: product.shop,
+};
 
     navigate('/checkout', { state: { buyNowItem } });
   };

@@ -210,10 +210,36 @@ export default function CheckoutPage() {
     shop = items.length > 0 ? items[0].shop : null;
   }
 
-  const subtotal = items.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
-  const deliveryFee = shop?.deliveryFee !== undefined ? shop.deliveryFee : 0;
-  const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
-  const finalTotal = Math.max(0, subtotal + deliveryFee - discountAmount);
+  // const subtotal = items.reduce((sum, item) => sum + (item.price || 0) * item.quantity, 0);
+  // const deliveryFee = shop?.deliveryFee !== undefined ? shop.deliveryFee : 0;
+  // const discountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  // const finalTotal = Math.max(0, subtotal + deliveryFee - discountAmount);
+
+  const subtotal = items.reduce(
+  (sum, item) => sum + (item.price || 0) * item.quantity,
+  0
+);
+
+const deliveryFee = Number(shop?.deliveryFee) || 0;
+
+const discountAmount = appliedCoupon
+  ? Number(appliedCoupon.discountAmount) || 0
+  : 0;
+
+// Calculate GST from effective selling price
+const gstAmount = items.reduce((sum, item) => {
+  const itemSubtotal = (Number(item.price) || 0) * (Number(item.quantity) || 0);
+  const gstPercentage = Number(item.product?.gstPercentage) || 0;
+
+  return sum + (itemSubtotal * gstPercentage) / 100;
+}, 0);
+
+const roundedGstAmount = Math.round(gstAmount * 100) / 100;
+
+const finalTotal = Math.max(
+  0,
+  subtotal + roundedGstAmount + deliveryFee - discountAmount
+);
 
   if (loading) {
     return (
@@ -702,6 +728,10 @@ export default function CheckoutPage() {
               <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
                 <span>Delivery Fee</span>
                 <span>{deliveryFee > 0 ? `₹${deliveryFee.toFixed(2)}` : 'FREE'}</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+                <span>GST</span>
+                <span>₹{roundedGstAmount.toFixed(2)}</span>
+                </div>
               </div>
               {appliedCoupon && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)' }}>

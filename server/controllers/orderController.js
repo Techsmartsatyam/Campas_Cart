@@ -217,6 +217,7 @@ export const createOrder = async (req, res) => {
         quantity,
         price: effectivePrice,
         subtotal: itemSubtotal,
+         gstPercentage: Number(product.gstPercentage) || 0,
       });
 
       stockUpdates.push({
@@ -288,6 +289,7 @@ export const createOrder = async (req, res) => {
           quantity: item.quantity,
           price: effectivePrice,
           subtotal: itemSubtotal,
+          gstPercentage: Number(product.gstPercentage) || 0,
         });
 
         stockUpdates.push({
@@ -340,8 +342,25 @@ export const createOrder = async (req, res) => {
     }
 
     // 7. Calculate total amount
-    const totalAmount = Math.max(0, calculatedSubtotal + deliveryFee - discountAmount);
+    // const totalAmount = Math.max(0, calculatedSubtotal + deliveryFee - discountAmount);
+// 7. Calculate GST and final total amount
+let gstAmount = 0;
 
+for (const item of orderItems) {
+  const gstPercentage = Number(item.gstPercentage) || 0;
+
+  const itemGst =
+    (Number(item.subtotal) * gstPercentage) / 100;
+
+  gstAmount += itemGst;
+}
+
+gstAmount = Math.round(gstAmount * 100) / 100;
+
+const totalAmount = Math.max(
+  0,
+  calculatedSubtotal + gstAmount + deliveryFee - discountAmount
+);
     // 8. Generate unique order number with retry on collision
     let orderNumber = generateOrderNumber();
     let isUnique = false;
@@ -357,10 +376,14 @@ export const createOrder = async (req, res) => {
     }
 
     // Capture upiQrSnapshot from shop
-    const upiQrSnapshot = {
-      upiId: shop.upiId || '',
-      imageUrl: shop.upiQrImage || '',
-      upiQrImage: shop.upiQrImage || '',
+    // const upiQrSnapshot = {
+    //   upiId: shop.upiId || '',
+    //   imageUrl: shop.upiQrImage || '',
+    //   upiQrImage: shop.upiQrImage || '',
+    // };
+  const upiQrSnapshot = {
+  upiId: shop.upiId || '',
+  imageUrl: shop.upiQrImage || '',
     };
 
     // 9. Create Order Document
@@ -373,6 +396,7 @@ export const createOrder = async (req, res) => {
       subtotal: calculatedSubtotal,
       deliveryFee,
       discount: discountAmount,
+      gstAmount,
       totalAmount,
       paymentMethod,
       paymentStatus: 'PENDING',
@@ -715,7 +739,8 @@ export const getStudentOrders = async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user._id })
       // .populate('shop', 'name bannerImage address')
-      .populate('shop', 'name bannerImage address upiEnabled upiId upiQrImage')
+      // .populate('shop', 'name bannerImage address upiEnabled upiId upiQrImage')
+      .populate('shop','name bannerImage address deliveryFee upiEnabled upiId upiQrImage')
       .populate('address')
       .sort({ createdAt: -1 });
 
@@ -741,7 +766,7 @@ export const getStudentOrders = async (req, res) => {
 export const getOrderById = async (req, res) => {
   try {
     const order = await Order.findById(req.params.id)
-      .populate('shop', 'name phone address bannerImage upiEnabled upiId upiQrImage')
+      .populate('shop','name bannerImage address deliveryFee upiEnabled upiId upiQrImage')
       .populate('address')
       .populate('items.product', 'name images unit');
 
