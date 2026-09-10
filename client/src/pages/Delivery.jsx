@@ -53,17 +53,18 @@ export default function Delivery() {
   useEffect(() => {
     if (!globalSocket) return;
 
-    // const handleNewDeliveryOrder = async (data) => {
-    //   console.log('⚡ [Delivery Realtime] delivery:order:new received:', data);
-    //   try {
-    //     const availRes = await api.get('/delivery/available-orders');
-    //     if (availRes.success && availRes.deliveries) {
-    //       setAvailableDeliveries(availRes.deliveries);
-    //     }
-    //   } catch (err) {
-    //     console.warn('Realtime delivery refresh notice:', err.message);
-    //   }
-    // };
+    const handleNewDeliveryOrder = async (data) => {
+      console.log('⚡ [Delivery Realtime] delivery:order:new received:', data);
+      try {
+        const availRes = await api.get('/delivery/available-orders');
+        if (availRes.success && availRes.deliveries) {
+          setAvailableDeliveries(availRes.deliveries);
+        }
+      } catch (err) {
+        console.warn('Realtime delivery refresh notice:', err.message);
+      }
+    };
+
     const handleDeliveryUpdated = async (data) => {
       console.log('⚡ [Delivery Realtime] order/delivery update received:', data);
       try {
