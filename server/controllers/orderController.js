@@ -546,13 +546,45 @@ try {
     // 2. Emit to Eligible Delivery Boys
     if (activeDeliveryBoys && activeDeliveryBoys.length > 0) {
       activeDeliveryBoys.forEach((dbUser) => {
-        io.to(`user:${dbUser._id.toString()}`).emit('delivery:order:new', {
-          orderId: order._id,
-          orderNumber: order.orderNumber,
-          orderStatus: order.orderStatus,
-          shopId: shop._id,
-          createdAt: order.createdAt,
-        });
+        // io.to(`user:${dbUser._id.toString()}`).emit('delivery:order:new', {
+        //   orderId: order._id,
+        //   orderNumber: order.orderNumber,
+        //   orderStatus: order.orderStatus,
+        //   shopId: shop._id,
+        //   createdAt: order.createdAt,
+        // });
+  io.to(`user:${dbUser._id.toString()}`).emit('delivery:order:new', {
+  orderId: order._id,
+  orderNumber: order.orderNumber,
+  orderStatus: order.orderStatus,
+  // Complete order details
+  items: order.items,
+  subtotal: order.subtotal,
+  gstAmount: order.gstAmount,
+  deliveryFee: order.deliveryFee,
+  discount: order.discount,
+  totalAmount: order.totalAmount,
+  paymentMethod: order.paymentMethod,
+  paymentStatus: order.paymentStatus,
+  notes: order.notes,
+  // Shop details
+  shop: {
+    _id: shop._id,
+    name: shop.name,
+    phone: shop.phone,
+    address: shop.address,
+  },
+  // Customer details
+  customer: {
+    _id: req.user._id,
+    name: req.user.name,
+    phone: req.user.phone,
+  },
+  // Delivery address
+  address: address,
+
+  createdAt: order.createdAt,
+});
       });
     }
 
