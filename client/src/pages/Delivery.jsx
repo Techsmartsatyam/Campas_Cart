@@ -53,17 +53,72 @@ export default function Delivery() {
   useEffect(() => {
     if (!globalSocket) return;
 
-    const handleNewDeliveryOrder = async (data) => {
-      console.log('⚡ [Delivery Realtime] delivery:order:new received:', data);
-      try {
-        const availRes = await api.get('/delivery/available-orders');
-        if (availRes.success && availRes.deliveries) {
-          setAvailableDeliveries(availRes.deliveries);
-        }
-      } catch (err) {
-        console.warn('Realtime delivery refresh notice:', err.message);
-      }
-    };
+    // const handleNewDeliveryOrder = async (data) => {
+    //   console.log('⚡ [Delivery Realtime] delivery:order:new received:', data);
+    //   try {
+    //     const availRes = await api.get('/delivery/available-orders');
+    //     if (availRes.success && availRes.deliveries) {
+    //       setAvailableDeliveries(availRes.deliveries);
+    //     }
+    //   } catch (err) {
+    //     console.warn('Realtime delivery refresh notice:', err.message);
+    //   }
+    // };
+
+const handleNewDeliveryOrder = (data) => {
+  console.log('⚡ [Delivery Realtime] COMPLETE ORDER RECEIVED:', data);
+
+  if (!data?.orderId) {
+    console.warn('Delivery order event missing orderId');
+    return;
+  }
+
+  // Convert socket order data into the same structure
+  // used by availableDeliveries.
+  const newDelivery = {
+    _id: `realtime-${data.orderId}`,
+    order: {
+      _id: data.orderId,
+      orderNumber: data.orderNumber,
+      orderStatus: data.orderStatus,
+
+      items: data.items || [],
+      subtotal: data.subtotal || 0,
+      gstAmount: data.gstAmount || 0,
+      deliveryFee: data.deliveryFee || 0,
+      discount: data.discount || 0,
+      totalAmount: data.totalAmount || 0,
+
+      paymentMethod: data.paymentMethod,
+      paymentStatus: data.paymentStatus,
+      notes: data.notes || '',
+
+      shop: data.shop || null,
+      user: data.customer || null,
+      address: data.address || null,
+
+      createdAt: data.createdAt,
+    },
+
+    status: 'PENDING',
+    deliveryBoy: null,
+  };
+
+  setAvailableDeliveries((prev) => {
+    // Prevent duplicate order if the API already contains it
+    const alreadyExists = prev.some(
+      (item) =>
+        item.order?._id?.toString() === data.orderId?.toString()
+    );
+
+    if (alreadyExists) {
+      return prev;
+    }
+
+    return [newDelivery, ...prev];
+  });
+};
+    
 
     const handleDeliveryUpdated = async (data) => {
       console.log('⚡ [Delivery Realtime] order/delivery update received:', data);
