@@ -607,125 +607,63 @@ export default function Delivery() {
                       </span>
                     </div>
 
-                  {order && (
-  <div
-    style={{
-      fontSize: '0.9rem',
-      color: 'var(--text-secondary)',
-      marginBottom: '1.25rem',
-    }}
-  >
-    <p>
-      <strong>Pickup Shop:</strong>{' '}
-      {order.shop?.name} ({order.shop?.address})
-    </p>
+                    {order && (
+                      <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
+                        <p><strong>Pickup Shop:</strong> {order.shop?.name} ({order.shop?.address})</p>
+                        <p><strong>Customer:</strong> {order.user?.name} ({order.user?.phone})</p>
+                        <p><strong>Delivery Address:</strong> {order.address?.fullAddress || 'Campus Hostel Block'}</p>
+                         
+                          {order.items?.length > 0 && (
+                          <div style={{
+                   marginTop: '1rem',
+                    marginBottom: '1rem',
+                 padding: '0.75rem',
+                 borderRadius: '8px',
+                 background: 'var(--surface-hover)',
+                border: '1px solid var(--border-color)'
+                }}>
+                <strong style={{
+                 display: 'block',
+          marginBottom: '0.5rem',
+          color: 'var(--text-primary)'
+        }}>
+          Order Items
+        </strong>
 
-    <p>
-      <strong>Customer:</strong>{' '}
-      {order.user?.name} ({order.user?.phone})
-    </p>
-
-    <p>
-      <strong>Delivery Address:</strong>{' '}
-      {order.address?.fullAddress || 'Campus Hostel Block'}
-    </p>
-
-    {/* ORDER ITEMS */}
-    <div
-      style={{
-        marginTop: '1rem',
-        marginBottom: '1rem',
-        padding: '1rem',
-        borderRadius: '10px',
-        background: 'var(--surface-hover)',
-        border: '1px solid var(--border-color)',
-      }}
-    >
-      <strong
-        style={{
-          display: 'block',
-          marginBottom: '0.75rem',
-          color: 'var(--text-primary)',
-        }}
-      >
-        Order Items
-      </strong>
-
-      {order.items?.length > 0 ? (
-        order.items.map((item, index) => (
+        {order.items.map((item, index) => (
           <div
             key={item._id || index}
             style={{
               display: 'flex',
               justifyContent: 'space-between',
-              gap: '12px',
-              padding: '0.6rem 0',
+              padding: '0.4rem 0',
               borderBottom:
-                index !== order.items.length - 1
+                index < order.items.length - 1
                   ? '1px solid var(--border-color)'
-                  : 'none',
+                  : 'none'
             }}
           >
-            <div>
-              <div
-                style={{
-                  fontWeight: '600',
-                  color: 'var(--text-primary)',
-                }}
-              >
-                {item.product?.name || item.name || 'Product'}
-              </div>
+            <span>
+              {item.product?.name || item.name || 'Product'}
+              {' × '}
+              {item.quantity}
+            </span>
 
-              <div
-                style={{
-                  fontSize: '0.8rem',
-                  color: 'var(--text-muted)',
-                  marginTop: '3px',
-                }}
-              >
-                Qty: {item.quantity || 0} × ₹{item.price || 0}
-              </div>
-            </div>
-
-            <div
-              style={{
-                fontWeight: '700',
-                color: 'var(--text-primary)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              ₹
-              {item.subtotal ??
+            <strong>
+              ₹{item.subtotal ?? (
                 (Number(item.price) || 0) *
-                  (Number(item.quantity) || 0)}
-            </div>
+                (Number(item.quantity) || 0)
+              )}
+            </strong>
           </div>
-        ))
-      ) : (
-        <div style={{ color: 'var(--text-muted)' }}>
-          No item details available
-        </div>
-      )}
-    </div>
+        ))}
+      </div>
+    )}
+                       
 
-    <p>
-      <strong>Subtotal:</strong> ₹{order.subtotal || 0}
-    </p>
-
-    <p>
-      <strong>GST:</strong> ₹{order.gstAmount || 0}
-    </p>
-
-    <p>
-      <strong>Delivery Fee:</strong> ₹{order.deliveryFee || 0}
-    </p>
-
-    <p>
-      <strong>Total Amount:</strong> ₹{order.totalAmount || 0}{' '}
-      ({order.paymentMethod})
-    </p>
-  </div>
-)}
+                        <p><strong>Total Amount:</strong> ₹{order.totalAmount} ({order.paymentMethod})</p>
+                      </div>
+                    )}
 
                     {action && (
                       <button
