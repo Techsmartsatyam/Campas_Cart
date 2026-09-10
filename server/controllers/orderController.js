@@ -629,65 +629,67 @@ try {
   );
 }
 
-// F. Send Email Notification to Shopkeeper (Database-resolved recipient)
-try {
-  console.log(`[SHOP EMAIL TRACE] Order ID: ${order._id}`);
-  console.log(`[SHOP EMAIL TRACE] Order Number: ${order.orderNumber}`);
-  const targetShopId = order.shop._id || order.shop;
-  console.log(`[SHOP EMAIL TRACE] Shop ID: ${targetShopId}`);
-  const shopDoc = await Shop.findById(targetShopId).populate('owner', 'email name');
+// F. Send Email Notification to Shopkeeper (fire-and-forget — must NOT block order response)
+(async () => {
+  try {
+    console.log(`[SHOP EMAIL TRACE] Order ID: ${order._id}`);
+    console.log(`[SHOP EMAIL TRACE] Order Number: ${order.orderNumber}`);
+    const targetShopId = order.shop._id || order.shop;
+    console.log(`[SHOP EMAIL TRACE] Shop ID: ${targetShopId}`);
+    const shopDoc = await Shop.findById(targetShopId).populate('owner', 'email name');
 
-  if (shopDoc) {
-    console.log(`[SHOP EMAIL TRACE] Shop resolved: PASS (${shopDoc.name})`);
-  } else {
-    console.warn(`[SHOP EMAIL TRACE] Shop resolved: FAIL (Shop document not found for ID ${targetShopId})`);
-  }
-
-  if (shopDoc && shopDoc.owner) {
-    console.log(`[SHOP EMAIL TRACE] Shop Owner ID: ${shopDoc.owner._id}`);
-    console.log(`[SHOP EMAIL TRACE] Shop owner resolved: PASS (${shopDoc.owner.name})`);
-  } else {
-    console.warn(`[SHOP EMAIL TRACE] Shop owner resolved: FAIL (Owner not assigned to shop)`);
-  }
-
-  if (shopDoc && shopDoc.owner && shopDoc.owner.email) {
-    console.log(`[SHOP EMAIL TRACE] Shopkeeper Email: ${shopDoc.owner.email}`);
-    console.log(`[SHOP EMAIL TRACE] Email Function Called: PASS`);
-
-    const formattedAddress = address
-      ? `${address.addressLine1 || address.street || ''}, ${address.city || ''}, ${address.pincode || ''}`
-      : 'Customer Delivery Address';
-
-    const emailResult = await sendOrderPlacedEmailToShopkeeper({
-      shopkeeperEmail: shopDoc.owner.email,
-      shopName: shopDoc.name,
-      studentName: req.user.name || 'Student',
-      orderNumber: order.orderNumber,
-      items: orderItems,
-      totalAmount: order.totalAmount,
-      paymentMethod: order.paymentMethod,
-      deliveryAddress: formattedAddress,
-      orderTime: order.createdAt ? new Date(order.createdAt).toLocaleString() : new Date().toLocaleString(),
-      orderId: order._id,
-    });
-
-    if (emailResult && emailResult.messageId) {
-      console.log(`[SHOP EMAIL TRACE] SMTP Send: SUCCESS`);
-      console.log(`[SHOP EMAIL TRACE] Message ID: ${emailResult.messageId}`);
-    } else if (emailResult && emailResult.loggedOnly) {
-      console.warn(`[SHOP EMAIL TRACE] SMTP Send: LOGGED_ONLY (SMTP not configured in runtime)`);
+    if (shopDoc) {
+      console.log(`[SHOP EMAIL TRACE] Shop resolved: PASS (${shopDoc.name})`);
     } else {
-      console.warn(`[SHOP EMAIL TRACE] SMTP Send: FAIL (${emailResult?.error?.message || 'Unknown error'})`);
+      console.warn(`[SHOP EMAIL TRACE] Shop resolved: FAIL (Shop document not found for ID ${targetShopId})`);
     }
-  } else {
-    console.warn('[SHOP EMAIL TRACE] Shopkeeper Email: MISSING');
-    console.warn('[SHOP EMAIL TRACE] Email Function Called: SKIPPED (Shop owner email missing in database)');
+
+    if (shopDoc && shopDoc.owner) {
+      console.log(`[SHOP EMAIL TRACE] Shop Owner ID: ${shopDoc.owner._id}`);
+      console.log(`[SHOP EMAIL TRACE] Shop owner resolved: PASS (${shopDoc.owner.name})`);
+    } else {
+      console.warn(`[SHOP EMAIL TRACE] Shop owner resolved: FAIL (Owner not assigned to shop)`);
+    }
+
+    if (shopDoc && shopDoc.owner && shopDoc.owner.email) {
+      console.log(`[SHOP EMAIL TRACE] Shopkeeper Email: ${shopDoc.owner.email}`);
+      console.log(`[SHOP EMAIL TRACE] Email Function Called: PASS`);
+
+      const formattedAddress = address
+        ? `${address.addressLine1 || address.street || ''}, ${address.city || ''}, ${address.pincode || ''}`
+        : 'Customer Delivery Address';
+
+      const emailResult = await sendOrderPlacedEmailToShopkeeper({
+        shopkeeperEmail: shopDoc.owner.email,
+        shopName: shopDoc.name,
+        studentName: req.user.name || 'Student',
+        orderNumber: order.orderNumber,
+        items: orderItems,
+        totalAmount: order.totalAmount,
+        paymentMethod: order.paymentMethod,
+        deliveryAddress: formattedAddress,
+        orderTime: order.createdAt ? new Date(order.createdAt).toLocaleString() : new Date().toLocaleString(),
+        orderId: order._id,
+      });
+
+      if (emailResult && emailResult.messageId) {
+        console.log(`[SHOP EMAIL TRACE] SMTP Send: SUCCESS`);
+        console.log(`[SHOP EMAIL TRACE] Message ID: ${emailResult.messageId}`);
+      } else if (emailResult && emailResult.loggedOnly) {
+        console.warn(`[SHOP EMAIL TRACE] SMTP Send: LOGGED_ONLY (SMTP not configured in runtime)`);
+      } else {
+        console.warn(`[SHOP EMAIL TRACE] SMTP Send: FAIL (${emailResult?.error?.message || 'Unknown error'})`);
+      }
+    } else {
+      console.warn('[SHOP EMAIL TRACE] Shopkeeper Email: MISSING');
+      console.warn('[SHOP EMAIL TRACE] Email Function Called: SKIPPED (Shop owner email missing in database)');
+    }
+  } catch (emailTriggerErr) {
+    // Email failure must NEVER rollback a successful order
+    console.warn('[SHOP EMAIL TRACE] Email Function Called: ERROR');
+    console.warn(`[SHOP EMAIL TRACE] SMTP Send: FAIL (${emailTriggerErr.message})`);
   }
-} catch (emailTriggerErr) {
-  // Email failure must NEVER rollback a successful order
-  console.warn('[SHOP EMAIL TRACE] Email Function Called: ERROR');
-  console.warn(`[SHOP EMAIL TRACE] SMTP Send: FAIL (${emailTriggerErr.message})`);
-}
+})(); // No await — email runs in the background, order response is immediate
 
     return res.status(201).json({
       success: true,

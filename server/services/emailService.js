@@ -4,7 +4,48 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 /**
- * Configure Nodemailer Transporter from environment variables
+ * Send email via Brevo HTTP API (HTTPS port 443).
+ * Used when BREVO_API_KEY is set — works on Render free tier where SMTP is blocked.
+ * @private
+ */
+const sendViaBrevoApi = async ({ to, subject, htmlContent, fromEmail, fromName }) => {
+  const apiKey = process.env.BREVO_API_KEY;
+  if (!apiKey) return null; // Not configured — caller falls back to SMTP
+
+  const senderEmail = fromEmail || process.env.SMTP_FROM_EMAIL || process.env.SMTP_USER || 'noreply@nearcart.app';
+  const senderName = fromName || process.env.SMTP_FROM_NAME || 'NearCart Platform';
+
+  const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+    method: 'POST',
+    headers: {
+      'api-key': apiKey,
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+    },
+    body: JSON.stringify({
+      sender: { name: senderName, email: senderEmail },
+      to: [{ email: to }],
+      subject,
+      htmlContent,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const err = new Error(data.message || 'Brevo API error');
+    err.code = 'BREVO_API_ERROR';
+    err.responseCode = response.status;
+    throw err;
+  }
+
+  // Brevo returns { messageId: '...' }
+  return { messageId: data.messageId || 'brevo-sent', response: `${response.status} OK` };
+};
+
+/**
+ * Configure Nodemailer Transporter from environment variables.
+ * connectionTimeout of 5 s ensures fast failure if SMTP is network-blocked (e.g. Render free tier).
  */
 export const createTransporter = () => {
   const host = process.env.SMTP_HOST;
@@ -24,6 +65,8 @@ export const createTransporter = () => {
         service: 'gmail',
         auth: { user, pass },
         tls: { rejectUnauthorized: false },
+        connectionTimeout: 5000,  // Fail fast if SMTP port is blocked
+        socketTimeout: 10000,
       });
     }
 
@@ -34,6 +77,8 @@ export const createTransporter = () => {
       secure: port === 465,
       auth: { user, pass },
       tls: { rejectUnauthorized: false },
+      connectionTimeout: 5000,  // Fail fast if SMTP port is blocked
+      socketTimeout: 10000,
     });
   }
 
@@ -178,6 +223,21 @@ export const sendOrderPlacedEmailToShopkeeper = async ({
   `;
 
   try {
+    // --- Primary: Brevo HTTP API (works on Render free tier, SMTP is blocked there) ---
+    if (process.env.BREVO_API_KEY) {
+      console.log('[EMAIL TRACE] Transport: Brevo HTTP API');
+      const info = await sendViaBrevoApi({
+        to: shopkeeperEmail,
+        subject,
+        htmlContent,
+      });
+      console.log(`[EMAIL TRACE] SMTP send: SUCCESS (via Brevo API)`);
+      console.log(`[EMAIL TRACE] Message ID: ${info.messageId}`);
+      console.log(`[EMAIL] Send status: SUCCESS (MessageId: ${info.messageId})`);
+      return { success: true, messageId: info.messageId, response: info.response };
+    }
+
+    // --- Fallback: Nodemailer SMTP (local dev / non-Render environments) ---
     const transporter = createTransporter();
     if (!transporter) {
       console.log('[EMAIL TRACE] SMTP send: LOGGED_ONLY (SMTP environment credentials not configured in runtime)');
@@ -267,6 +327,21 @@ export const sendDeliveryAssignedEmailToDeliveryBoy = async ({
   `;
 
   try {
+    // --- Primary: Brevo HTTP API (works on Render free tier, SMTP is blocked there) ---
+    if (process.env.BREVO_API_KEY) {
+      console.log('[EMAIL TRACE] Transport: Brevo HTTP API');
+      const info = await sendViaBrevoApi({
+        to: deliveryBoyEmail,
+        subject,
+        htmlContent,
+      });
+      console.log(`[EMAIL TRACE] SMTP send: SUCCESS (via Brevo API)`);
+      console.log(`[EMAIL TRACE] Message ID: ${info.messageId}`);
+      console.log(`[EMAIL] Send status: SUCCESS (MessageId: ${info.messageId})`);
+      return { success: true, messageId: info.messageId, response: info.response };
+    }
+
+    // --- Fallback: Nodemailer SMTP (local dev / non-Render environments) ---
     const transporter = createTransporter();
     if (!transporter) {
       console.log('[EMAIL TRACE] SMTP send: LOGGED_ONLY (SMTP environment credentials not configured in runtime)');
