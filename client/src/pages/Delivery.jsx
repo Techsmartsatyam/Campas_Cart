@@ -64,62 +64,6 @@ export default function Delivery() {
     //     console.warn('Realtime delivery refresh notice:', err.message);
     //   }
     // };
-
-const handleNewDeliveryOrder = (data) => {
-  console.log('⚡ [Delivery Realtime] COMPLETE ORDER RECEIVED:', data);
-
-  if (!data?.orderId) {
-    console.warn('Delivery order event missing orderId');
-    return;
-  }
-
-  // Convert socket order data into the same structure
-  // used by availableDeliveries.
-  const newDelivery = {
-    _id: `realtime-${data.orderId}`,
-    order: {
-      _id: data.orderId,
-      orderNumber: data.orderNumber,
-      orderStatus: data.orderStatus,
-
-      items: data.items || [],
-      subtotal: data.subtotal || 0,
-      gstAmount: data.gstAmount || 0,
-      deliveryFee: data.deliveryFee || 0,
-      discount: data.discount || 0,
-      totalAmount: data.totalAmount || 0,
-
-      paymentMethod: data.paymentMethod,
-      paymentStatus: data.paymentStatus,
-      notes: data.notes || '',
-
-      shop: data.shop || null,
-      user: data.customer || null,
-      address: data.address || null,
-
-      createdAt: data.createdAt,
-    },
-
-    status: 'PENDING',
-    deliveryBoy: null,
-  };
-
-  setAvailableDeliveries((prev) => {
-    // Prevent duplicate order if the API already contains it
-    const alreadyExists = prev.some(
-      (item) =>
-        item.order?._id?.toString() === data.orderId?.toString()
-    );
-
-    if (alreadyExists) {
-      return prev;
-    }
-
-    return [newDelivery, ...prev];
-  });
-};
-    
-
     const handleDeliveryUpdated = async (data) => {
       console.log('⚡ [Delivery Realtime] order/delivery update received:', data);
       try {
@@ -663,14 +607,125 @@ const handleNewDeliveryOrder = (data) => {
                       </span>
                     </div>
 
-                    {order && (
-                      <div style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-                        <p><strong>Pickup Shop:</strong> {order.shop?.name} ({order.shop?.address})</p>
-                        <p><strong>Customer:</strong> {order.user?.name} ({order.user?.phone})</p>
-                        <p><strong>Delivery Address:</strong> {order.address?.fullAddress || 'Campus Hostel Block'}</p>
-                        <p><strong>Total Amount:</strong> ₹{order.totalAmount} ({order.paymentMethod})</p>
-                      </div>
-                    )}
+                  {order && (
+  <div
+    style={{
+      fontSize: '0.9rem',
+      color: 'var(--text-secondary)',
+      marginBottom: '1.25rem',
+    }}
+  >
+    <p>
+      <strong>Pickup Shop:</strong>{' '}
+      {order.shop?.name} ({order.shop?.address})
+    </p>
+
+    <p>
+      <strong>Customer:</strong>{' '}
+      {order.user?.name} ({order.user?.phone})
+    </p>
+
+    <p>
+      <strong>Delivery Address:</strong>{' '}
+      {order.address?.fullAddress || 'Campus Hostel Block'}
+    </p>
+
+    {/* ORDER ITEMS */}
+    <div
+      style={{
+        marginTop: '1rem',
+        marginBottom: '1rem',
+        padding: '1rem',
+        borderRadius: '10px',
+        background: 'var(--surface-hover)',
+        border: '1px solid var(--border-color)',
+      }}
+    >
+      <strong
+        style={{
+          display: 'block',
+          marginBottom: '0.75rem',
+          color: 'var(--text-primary)',
+        }}
+      >
+        Order Items
+      </strong>
+
+      {order.items?.length > 0 ? (
+        order.items.map((item, index) => (
+          <div
+            key={item._id || index}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              gap: '12px',
+              padding: '0.6rem 0',
+              borderBottom:
+                index !== order.items.length - 1
+                  ? '1px solid var(--border-color)'
+                  : 'none',
+            }}
+          >
+            <div>
+              <div
+                style={{
+                  fontWeight: '600',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                {item.product?.name || item.name || 'Product'}
+              </div>
+
+              <div
+                style={{
+                  fontSize: '0.8rem',
+                  color: 'var(--text-muted)',
+                  marginTop: '3px',
+                }}
+              >
+                Qty: {item.quantity || 0} × ₹{item.price || 0}
+              </div>
+            </div>
+
+            <div
+              style={{
+                fontWeight: '700',
+                color: 'var(--text-primary)',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              ₹
+              {item.subtotal ??
+                (Number(item.price) || 0) *
+                  (Number(item.quantity) || 0)}
+            </div>
+          </div>
+        ))
+      ) : (
+        <div style={{ color: 'var(--text-muted)' }}>
+          No item details available
+        </div>
+      )}
+    </div>
+
+    <p>
+      <strong>Subtotal:</strong> ₹{order.subtotal || 0}
+    </p>
+
+    <p>
+      <strong>GST:</strong> ₹{order.gstAmount || 0}
+    </p>
+
+    <p>
+      <strong>Delivery Fee:</strong> ₹{order.deliveryFee || 0}
+    </p>
+
+    <p>
+      <strong>Total Amount:</strong> ₹{order.totalAmount || 0}{' '}
+      ({order.paymentMethod})
+    </p>
+  </div>
+)}
 
                     {action && (
                       <button
