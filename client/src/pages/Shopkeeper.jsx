@@ -72,6 +72,7 @@ export default function Shopkeeper() {
     sku: '',
     isAvailable: true,
     images: [],
+    gstPercentage: 0,
   });
 
   const [imageInput, setImageInput] = useState('');
@@ -219,6 +220,7 @@ export default function Shopkeeper() {
         sku: product.sku || '',
         isAvailable: product.isAvailable,
         images: Array.isArray(product.images) ? [...product.images] : [],
+        gstPercentage: product.gstPercentage || 0,
       });
     } else {
       setEditingProductId(null);
@@ -233,6 +235,7 @@ export default function Shopkeeper() {
         sku: '',
         isAvailable: true,
         images: [],
+        gstPercentage: 0,
       });
     }
     setShowProductModal(true);
@@ -1123,8 +1126,39 @@ export default function Shopkeeper() {
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="form-group"><label className="form-label">Unit</label><input type="text" className="form-input" placeholder="e.g. 500ml, packet, pc" value={productForm.unit} onChange={(e) => setProductForm({ ...productForm, unit: e.target.value })} required /></div>
+                <div className="form-group"><label className="form-label">Unit / Portion</label>
+                  <select className="form-input" value={['piece','kg','gram','litre','ml','packet','bottle','plate','half','full','box','dozen'].includes(productForm.unit) ? productForm.unit : '_custom'} onChange={(e) => { if (e.target.value === '_custom') { setProductForm({ ...productForm, unit: '' }); } else { setProductForm({ ...productForm, unit: e.target.value }); } }} required>
+                    <option value="piece">Piece</option>
+                    <option value="kg">Kg</option>
+                    <option value="gram">Gram</option>
+                    <option value="litre">Litre</option>
+                    <option value="ml">ml</option>
+                    <option value="packet">Packet</option>
+                    <option value="bottle">Bottle</option>
+                    <option value="plate">Plate</option>
+                    <option value="half">Half</option>
+                    <option value="full">Full</option>
+                    <option value="box">Box</option>
+                    <option value="dozen">Dozen</option>
+                    <option value="_custom">Custom...</option>
+                  </select>
+                  {!['piece','kg','gram','litre','ml','packet','bottle','plate','half','full','box','dozen'].includes(productForm.unit) && (
+                    <input type="text" className="form-input" style={{ marginTop: '0.5rem' }} placeholder="Enter custom unit" value={productForm.unit} onChange={(e) => setProductForm({ ...productForm, unit: e.target.value })} required />
+                  )}
+                </div>
                 <div className="form-group"><label className="form-label">Stock Quantity</label><input type="number" className="form-input" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })} required /></div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">GST (included in price)</label>
+                <select className="form-input" value={productForm.gstPercentage} onChange={(e) => setProductForm({ ...productForm, gstPercentage: Number(e.target.value) })}>
+                  <option value={0}>No GST (0%)</option>
+                  <option value={5}>5% GST</option>
+                  <option value={12}>12% GST</option>
+                  <option value={18}>18% GST</option>
+                  <option value={28}>28% GST</option>
+                </select>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>GST is informational — the product price already includes GST.</span>
               </div>
 
               {/* Multi-Image Upload & Preview Section */}

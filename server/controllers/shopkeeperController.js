@@ -249,6 +249,7 @@ export const createProduct = async (req, res, next) => {
       sku,
       isAvailable,
       images,
+      gstPercentage,
     } = req.body;
 
     if (!name || price === undefined || !category || !unit) {
@@ -288,6 +289,7 @@ export const createProduct = async (req, res, next) => {
       sku: sku ? sku.trim() : '',
       isAvailable: isAvailable !== undefined ? isAvailable : numStock > 0,
       images: Array.isArray(images) ? images : [],
+      gstPercentage: gstPercentage !== undefined && gstPercentage !== '' ? Math.min(100, Math.max(0, Number(gstPercentage) || 0)) : 0,
       isActive: true,
     });
 
@@ -335,6 +337,7 @@ export const updateProduct = async (req, res, next) => {
       sku,
       isAvailable,
       images,
+      gstPercentage,
     } = req.body;
 
     if (price !== undefined && Number(price) < 0) {
@@ -357,6 +360,7 @@ export const updateProduct = async (req, res, next) => {
     if (sku !== undefined) product.sku = sku.trim();
     if (isAvailable !== undefined) product.isAvailable = isAvailable;
     if (images && Array.isArray(images)) product.images = images;
+    if (gstPercentage !== undefined) product.gstPercentage = Math.min(100, Math.max(0, Number(gstPercentage) || 0));
 
     if (product.stock === 0) {
       product.isAvailable = false;

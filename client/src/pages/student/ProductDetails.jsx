@@ -292,6 +292,15 @@ export default function ProductDetails() {
             {product.unit && <span style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>per {product.unit}</span>}
           </div>
 
+          {/* GST Info */}
+          {product.gstPercentage > 0 && (
+            <div style={{ marginBottom: '0.75rem' }}>
+              <span style={{ fontSize: '0.8rem', color: '#6b7280', background: '#f3f4f6', padding: '0.2rem 0.6rem', borderRadius: '0.25rem', display: 'inline-block' }}>
+                Price inclusive of {product.gstPercentage}% GST
+              </span>
+            </div>
+          )}
+
           {/* Status badge */}
           <div style={{ marginBottom: '1.5rem' }}>
             <span

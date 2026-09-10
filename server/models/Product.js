@@ -77,6 +77,12 @@ const productSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'Total ratings cannot be negative'],
     },
+    gstPercentage: {
+      type: Number,
+      default: 0,
+      min: [0, 'GST percentage cannot be negative'],
+      max: [100, 'GST percentage cannot exceed 100'],
+    },
   },
   {
     timestamps: true,

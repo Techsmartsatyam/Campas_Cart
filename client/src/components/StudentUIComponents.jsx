@@ -239,7 +239,7 @@ export const ProductCard = React.memo(function ProductCard({ product, onClick, o
         {product.name}
       </h4>
 
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.2rem', flexWrap: 'wrap' }}>
         <span style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)' }}>
           ₹{hasDiscount ? product.discountPrice : product.price}
         </span>
@@ -250,6 +250,12 @@ export const ProductCard = React.memo(function ProductCard({ product, onClick, o
         )}
         {product.unit && <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>/ {product.unit}</span>}
       </div>
+
+      {product.gstPercentage > 0 && (
+        <span style={{ fontSize: '0.6rem', color: '#6b7280', background: '#f3f4f6', padding: '0.1rem 0.3rem', borderRadius: '0.2rem', marginBottom: '0.25rem', display: 'inline-block' }}>
+          incl. {product.gstPercentage}% GST
+        </span>
+      )}
 
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
         <span
