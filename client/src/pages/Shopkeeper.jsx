@@ -23,6 +23,7 @@ import {
   List,
   Upload,
   X,
+  Star,
 } from 'lucide-react';
 
 export default function Shopkeeper() {
@@ -489,6 +490,7 @@ export default function Shopkeeper() {
               { id: 'PRODUCTS', label: 'Products', icon: Package },
               { id: 'INVENTORY', label: 'Inventory', icon: Layers },
               { id: 'ORDERS', label: 'Orders', icon: ShoppingBag },
+              { id: 'REVIEWS', label: 'Reviews & Ratings', icon: Star },
               { id: 'PAYMENT_SETTINGS', label: 'Payment Settings', icon: DollarSign },
               { id: 'MY_SHOP', label: 'Shop Settings', icon: Store },
               { id: 'PROFILE', label: 'My Profile', icon: User },
@@ -534,6 +536,9 @@ export default function Shopkeeper() {
               </div>
             </div>
           )}
+
+          {/* REVIEWS & RATINGS TAB */}
+          {activeTab === 'REVIEWS' && <ShopkeeperReviewsTab shop={shop} />}
 
           {/* TAB 2: PRODUCTS MANAGEMENT */}
           {activeTab === 'PRODUCTS' && (
@@ -1252,6 +1257,118 @@ export default function Shopkeeper() {
               </div>
             </form>
           </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function ShopkeeperReviewsTab({ shop }) {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [shopRating, setShopRating] = useState(shop?.rating || 0);
+  const [totalRatings, setTotalRatings] = useState(shop?.totalRatings || 0);
+
+  useEffect(() => {
+    async function fetchReviews() {
+      try {
+        setLoading(true);
+        const res = await api.get('/reviews/shopkeeper/overview');
+        if (res && res.success) {
+          setReviews(res.data || []);
+          if (res.shopRating !== undefined) setShopRating(res.shopRating);
+          if (res.totalShopRatings !== undefined) setTotalRatings(res.totalShopRatings);
+        }
+      } catch (err) {
+        console.error('Failed to load shopkeeper reviews:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchReviews();
+  }, []);
+
+  return (
+    <div className="glass-card" style={{ padding: '2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h3 style={{ fontSize: '1.3rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
+            Customer Ratings & Feedback
+          </h3>
+          <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            Reviews for your shop and products left by campus students
+          </p>
+        </div>
+
+        <div style={{ background: '#f8fafc', border: '1px solid var(--border-color)', padding: '0.75rem 1.25rem', borderRadius: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <Star size={24} fill="#f59e0b" style={{ color: '#f59e0b' }} />
+          <div>
+            <div style={{ fontWeight: '900', fontSize: '1.25rem', color: 'var(--text-primary)' }}>
+              {shopRating > 0 ? shopRating.toFixed(1) : '0.0'} / 5.0
+            </div>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{totalRatings} Total Shop Ratings</span>
+          </div>
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '3rem' }}>
+          <div className="spinner" style={{ margin: '0 auto 0.5rem auto' }}></div>
+          <p style={{ color: 'var(--text-muted)' }}>Loading reviews...</p>
+        </div>
+      ) : reviews.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '3rem', background: '#f8fafc', borderRadius: '0.75rem', border: '1px dashed var(--border-color)' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: 0 }}>
+            No customer reviews received yet for your shop or products.
+          </p>
+        </div>
+      ) : (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          {reviews.map((rev) => {
+            const uName = rev.user?.name || 'Verified Student';
+            const uImg = rev.user?.profileImage;
+            const targetName = rev.type === 'SHOP' ? 'Shop Feedback' : rev.product?.name ? `Product: ${rev.product.name}` : 'Product Review';
+            const dateStr = new Date(rev.createdAt).toLocaleDateString('en-IN', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit',
+            });
+
+            return (
+              <div key={rev._id} style={{ padding: '1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)', background: '#ffffff' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '50%', background: 'var(--primary-gradient)', color: '#ffffff', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', overflow: 'hidden' }}>
+                      {uImg ? <img src={uImg} alt={uName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : uName.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '700', color: 'var(--text-primary)' }}>{uName}</h4>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{dateStr}</span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '800', background: rev.type === 'SHOP' ? '#e0f2fe' : '#fef3c7', color: rev.type === 'SHOP' ? '#0369a1' : '#b45309', padding: '0.15rem 0.6rem', borderRadius: '1rem' }}>
+                      {targetName}
+                    </span>
+                    <div style={{ display: 'flex', gap: '0.15rem', color: '#f59e0b' }}>
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star key={s} size={15} fill={s <= rev.rating ? '#f59e0b' : 'none'} strokeWidth={1.5} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {rev.comment && (
+                  <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                    "{rev.comment}"
+                  </p>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

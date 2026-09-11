@@ -151,6 +151,112 @@ export default function ShopDetails() {
           </div>
         )}
       </div>
+
+      {/* Shop Reviews Section */}
+      <ShopReviewsSection shopId={id} shopName={shop.name} />
+    </div>
+  );
+}
+
+function ShopReviewsSection({ shopId, shopName }) {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({ avgRating: 0, totalRatings: 0 });
+
+  useEffect(() => {
+    async function fetchShopReviews() {
+      try {
+        setLoading(true);
+        const res = await api.get(`/reviews/shop/${shopId}`);
+        if (res && res.success) {
+          setReviews(res.data || []);
+          setStats({
+            avgRating: res.avgRating || 0,
+            totalRatings: res.totalRatings || 0,
+          });
+        }
+      } catch (err) {
+        console.error('Failed to load shop reviews:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    if (shopId) fetchShopReviews();
+  }, [shopId]);
+
+  return (
+    <div
+      style={{
+        marginTop: '3rem',
+        background: 'var(--surface, #ffffff)',
+        border: '1px solid var(--border-color, #e2e8f0)',
+        borderRadius: '1rem',
+        padding: '1.75rem',
+      }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Star size={20} fill="#f59e0b" style={{ color: '#f59e0b' }} /> Customer Reviews for {shopName}
+        </h3>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '800', fontSize: '1.1rem', color: '#f59e0b' }}>
+          <span>{stats.avgRating > 0 ? stats.avgRating.toFixed(1) : '0.0'}</span>
+          <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600' }}>({stats.totalRatings} ratings)</span>
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '1.5rem' }}>
+          <div className="spinner" style={{ margin: '0 auto 0.5rem auto' }}></div>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading shop reviews...</p>
+        </div>
+      ) : reviews.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '2rem 1rem', background: '#f8fafc', borderRadius: '0.75rem', border: '1px dashed var(--border-color)' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>
+            No shop reviews submitted yet.
+          </p>
+        </div>
+      ) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+          {reviews.map((rev) => {
+            const uName = rev.user?.name || 'Verified Student';
+            const uImg = rev.user?.profileImage;
+            const dateStr = new Date(rev.createdAt).toLocaleDateString('en-IN', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric',
+            });
+
+            return (
+              <div key={rev._id} style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)', background: '#ffffff' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', background: 'var(--primary-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontWeight: '800', fontSize: '0.85rem', overflow: 'hidden' }}>
+                      {uImg ? <img src={uImg} alt={uName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : uName.charAt(0).toUpperCase()}
+                    </div>
+                    <div>
+                      <h4 style={{ margin: 0, fontSize: '0.875rem', fontWeight: '700', color: 'var(--text-primary)' }}>{uName}</h4>
+                      <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{dateStr}</span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '0.1rem', color: '#f59e0b' }}>
+                    {[1, 2, 3, 4, 5].map((s) => (
+                      <Star key={s} size={13} fill={s <= rev.rating ? '#f59e0b' : 'none'} strokeWidth={1.5} />
+                    ))}
+                  </div>
+                </div>
+
+                {rev.comment && (
+                  <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                    "{rev.comment}"
+                  </p>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

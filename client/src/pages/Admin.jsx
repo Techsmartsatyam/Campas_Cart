@@ -12,6 +12,8 @@ import {
   CreditCard,
   DollarSign,
   TrendingUp,
+  Star,
+  Trash2,
 } from 'lucide-react';
 
 export default function Admin() {
@@ -203,7 +205,15 @@ export default function Admin() {
         >
           <CreditCard size={18} /> Payment Management
         </button>
+        <button
+          onClick={() => setActiveTab('REVIEWS_MANAGEMENT')}
+          className={activeTab === 'REVIEWS_MANAGEMENT' ? 'btn-primary' : 'btn-secondary'}
+        >
+          <Star size={18} /> Reviews Moderation
+        </button>
       </div>
+
+      {activeTab === 'REVIEWS_MANAGEMENT' && <AdminReviewsTab />}
 
       {/* SECTION 1: Staff Onboarding */}
       {activeTab === 'STAFF_CREATE' && (
@@ -494,6 +504,171 @@ export default function Admin() {
               </table>
             </div>
           )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdminReviewsTab() {
+  const [reviews, setReviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [typeFilter, setTypeFilter] = useState('ALL');
+  const [deletingId, setDeletingId] = useState(null);
+
+  const fetchReviews = async () => {
+    try {
+      setLoading(true);
+      const url = typeFilter === 'ALL' ? '/reviews/admin/all' : `/reviews/admin/all?type=${typeFilter}`;
+      const res = await api.get(url);
+      if (res && res.success) {
+        setReviews(res.data || []);
+      }
+    } catch (err) {
+      console.error('Failed to load admin reviews:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchReviews();
+  }, [typeFilter]);
+
+  const handleDeleteReview = async (reviewId) => {
+    if (!window.confirm('Are you sure you want to remove this review?')) return;
+
+    try {
+      setDeletingId(reviewId);
+      const res = await api.delete(`/reviews/${reviewId}`);
+      if (res && res.success) {
+        setReviews((prev) => prev.filter((r) => r._id !== reviewId));
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to delete review');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  return (
+    <div className="glass-card" style={{ padding: '2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h3 style={{ fontSize: '1.3rem', fontWeight: '700', margin: 0, color: 'var(--text-primary)' }}>
+            Review Moderation & Feedback Stream
+          </h3>
+          <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            Monitor student ratings and feedback across NearCart
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+          {['ALL', 'PRODUCT', 'SHOP', 'DELIVERY'].map((t) => (
+            <button
+              key={t}
+              onClick={() => setTypeFilter(t)}
+              className={typeFilter === t ? 'btn-primary' : 'btn-secondary'}
+              style={{ padding: '0.35rem 0.85rem', fontSize: '0.8rem' }}
+            >
+              {t}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '3rem' }}>
+          <div className="spinner" style={{ margin: '0 auto 0.5rem auto' }}></div>
+          <p style={{ color: 'var(--text-muted)' }}>Loading reviews...</p>
+        </div>
+      ) : reviews.length === 0 ? (
+        <div style={{ textAlign: 'center', padding: '3rem', background: '#f8fafc', borderRadius: '0.75rem', border: '1px dashed var(--border-color)' }}>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: 0 }}>
+            No reviews matching filter ({typeFilter}).
+          </p>
+        </div>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+            <thead>
+              <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
+                <th style={{ padding: '0.75rem' }}>Type</th>
+                <th style={{ padding: '0.75rem' }}>Student</th>
+                <th style={{ padding: '0.75rem' }}>Target Name</th>
+                <th style={{ padding: '0.75rem' }}>Rating</th>
+                <th style={{ padding: '0.75rem' }}>Comment</th>
+                <th style={{ padding: '0.75rem' }}>Date</th>
+                <th style={{ padding: '0.75rem', textAlign: 'center' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reviews.map((rev) => {
+                const targetText =
+                  rev.type === 'PRODUCT'
+                    ? rev.product?.name || 'Product'
+                    : rev.type === 'SHOP'
+                    ? rev.shop?.name || 'Shop'
+                    : rev.deliveryBoy?.name || 'Delivery Partner';
+
+                const dateStr = new Date(rev.createdAt).toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric',
+                });
+
+                return (
+                  <tr key={rev._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                    <td style={{ padding: '0.75rem' }}>
+                      <span
+                        style={{
+                          fontWeight: '800',
+                          fontSize: '0.7rem',
+                          padding: '0.15rem 0.5rem',
+                          borderRadius: '1rem',
+                          background: rev.type === 'PRODUCT' ? '#fef3c7' : rev.type === 'SHOP' ? '#e0f2fe' : '#d1fae5',
+                          color: rev.type === 'PRODUCT' ? '#b45309' : rev.type === 'SHOP' ? '#0369a1' : '#047857',
+                        }}
+                      >
+                        {rev.type}
+                      </span>
+                    </td>
+                    <td style={{ padding: '0.75rem', fontWeight: '600' }}>
+                      {rev.user?.name || 'Student'}
+                    </td>
+                    <td style={{ padding: '0.75rem', fontWeight: '600' }}>
+                      {targetText}
+                    </td>
+                    <td style={{ padding: '0.75rem' }}>
+                      <div style={{ display: 'flex', gap: '0.1rem', color: '#f59e0b' }}>
+                        {[1, 2, 3, 4, 5].map((s) => (
+                          <Star key={s} size={12} fill={s <= rev.rating ? '#f59e0b' : 'none'} strokeWidth={1.5} />
+                        ))}
+                        <span style={{ marginLeft: '0.2rem', fontWeight: '700', color: '#f59e0b' }}>{rev.rating}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: '0.75rem', color: 'var(--text-secondary)', maxWidth: '250px' }}>
+                      {rev.comment ? `"${rev.comment}"` : '—'}
+                    </td>
+                    <td style={{ padding: '0.75rem', color: 'var(--text-muted)' }}>
+                      {dateStr}
+                    </td>
+                    <td style={{ padding: '0.75rem', textAlign: 'center' }}>
+                      <button
+                        onClick={() => handleDeleteReview(rev._id)}
+                        disabled={deletingId === rev._id}
+                        className="btn-secondary"
+                        style={{ color: 'var(--danger)', padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
+                        title="Delete Review"
+                      >
+                        <Trash2 size={14} /> Remove
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

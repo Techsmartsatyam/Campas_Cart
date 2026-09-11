@@ -70,6 +70,17 @@ const userSchema = new mongoose.Schema(
         isActive: { type: Boolean, default: true },
       },
     ],
+    rating: {
+      type: Number,
+      default: 0,
+      min: [0, 'Rating cannot be below 0'],
+      max: [5, 'Rating cannot exceed 5'],
+    },
+    totalRatings: {
+      type: Number,
+      default: 0,
+      min: [0, 'Total ratings cannot be negative'],
+    },
   },
   {
     timestamps: true,
@@ -78,6 +89,7 @@ const userSchema = new mongoose.Schema(
 
 // Indexes
 userSchema.index({ role: 1 });
+userSchema.index({ rating: -1 });
 
 // Pre-save hook to hash password if modified
 userSchema.pre('save', async function (next) {

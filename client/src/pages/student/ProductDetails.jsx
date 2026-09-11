@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { getProductById } from '../../services/studentService';
 import api from '../../services/api';
 import { LoadingSpinner } from '../../components/StudentUIComponents';
-import { ArrowLeft, ChevronLeft, ChevronRight, X, Maximize2, ShoppingCart, Zap, Plus, Minus } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, X, Maximize2, ShoppingCart, Zap, Plus, Minus, Star, MessageSquare, User } from 'lucide-react';
 
 export default function ProductDetails() {
   const { id } = useParams();
@@ -92,6 +92,11 @@ export default function ProductDetails() {
     navigate('/checkout', { state: { buyNowItem } });
   };
 
+  // Reviews state
+  const [reviews, setReviews] = useState([]);
+  const [reviewStats, setReviewStats] = useState({ avgRating: 0, totalRatings: 0, starCounts: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } });
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+
   useEffect(() => {
     async function fetchProduct() {
       setLoading(true);
@@ -110,7 +115,28 @@ export default function ProductDetails() {
         setLoading(false);
       }
     }
+
+    async function fetchReviews() {
+      try {
+        setReviewsLoading(true);
+        const res = await api.get(`/reviews/product/${id}`);
+        if (res && res.success) {
+          setReviews(res.data || []);
+          setReviewStats({
+            avgRating: res.avgRating || 0,
+            totalRatings: res.totalRatings || 0,
+            starCounts: res.starCounts || { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 },
+          });
+        }
+      } catch (err) {
+        console.error('Failed to fetch product reviews:', err);
+      } finally {
+        setReviewsLoading(false);
+      }
+    }
+
     fetchProduct();
+    fetchReviews();
   }, [id]);
 
   if (loading) return <LoadingSpinner />;
@@ -433,6 +459,105 @@ export default function ProductDetails() {
             </button>
           </div>
         </div>
+      </div>
+
+      {/* Product Reviews & Ratings Section */}
+      <div
+        style={{
+          marginTop: '2.5rem',
+          background: 'var(--surface, #ffffff)',
+          border: '1px solid var(--border-color, #e2e8f0)',
+          borderRadius: '1rem',
+          padding: '1.75rem',
+        }}
+      >
+        <h2 style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '1.25rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <MessageSquare size={20} style={{ color: 'var(--primary)' }} /> Customer Reviews & Ratings
+        </h2>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
+          {/* Aggregate Card */}
+          <div style={{ background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: '0.75rem', padding: '1.25rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '3rem', fontWeight: '900', color: 'var(--text-primary)', lineHeight: '1' }}>
+              {reviewStats.avgRating > 0 ? reviewStats.avgRating.toFixed(1) : (product.rating || 0).toFixed(1)}
+              <span style={{ fontSize: '1.5rem', color: '#f59e0b', marginLeft: '0.2rem' }}>★</span>
+            </div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', margin: '0.5rem 0 0 0' }}>
+              Based on {reviewStats.totalRatings || product.totalRatings || 0} customer ratings
+            </p>
+          </div>
+
+          {/* Star Distribution Breakdown */}
+          <div style={{ background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: '0.75rem', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', justifyContent: 'center' }}>
+            {[5, 4, 3, 2, 1].map((star) => {
+              const count = reviewStats.starCounts[star] || 0;
+              const pct = reviewStats.totalRatings > 0 ? Math.round((count / reviewStats.totalRatings) * 100) : 0;
+              return (
+                <div key={star} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.8rem' }}>
+                  <span style={{ width: '35px', color: 'var(--text-secondary)', fontWeight: '600' }}>{star} ★</span>
+                  <div style={{ flex: 1, height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${pct}%`, height: '100%', background: '#f59e0b', borderRadius: '4px' }}></div>
+                  </div>
+                  <span style={{ width: '35px', textAlign: 'right', color: 'var(--text-muted)' }}>{count}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Reviews List */}
+        {reviewsLoading ? (
+          <div style={{ textAlign: 'center', padding: '2rem' }}>
+            <div className="spinner" style={{ margin: '0 auto 0.5rem auto' }}></div>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Loading reviews...</p>
+          </div>
+        ) : reviews.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '2.5rem 1rem', background: '#f8fafc', borderRadius: '0.75rem', border: '1px dashed var(--border-color)' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>
+              No reviews submitted for this product yet.
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {reviews.map((rev) => {
+              const uName = rev.user?.name || 'Verified Student';
+              const uImg = rev.user?.profileImage;
+              const dateStr = new Date(rev.createdAt).toLocaleDateString('en-IN', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              });
+
+              return (
+                <div key={rev._id} style={{ padding: '1rem 1.25rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)', background: '#ffffff' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ width: '2.25rem', height: '2.25rem', borderRadius: '50%', background: 'var(--primary-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ffffff', fontWeight: '800', fontSize: '0.9rem', overflow: 'hidden' }}>
+                        {uImg ? <img src={uImg} alt={uName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : uName.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: '0.925rem', fontWeight: '700', color: 'var(--text-primary)' }}>{uName}</h4>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{dateStr}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.15rem', color: '#f59e0b' }}>
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star key={s} size={15} fill={s <= rev.rating ? '#f59e0b' : 'none'} strokeWidth={1.5} />
+                      ))}
+                    </div>
+                  </div>
+
+                  {rev.comment && (
+                    <p style={{ margin: '0.75rem 0 0 0', fontSize: '0.875rem', color: 'var(--text-secondary)', lineHeight: '1.5' }}>
+                      "{rev.comment}"
+                    </p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Different Shop Confirmation Modal */}

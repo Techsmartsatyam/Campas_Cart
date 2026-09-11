@@ -7,6 +7,14 @@ const reviewSchema = new mongoose.Schema(
       ref: 'User',
       required: [true, 'User reference is required'],
     },
+    type: {
+      type: String,
+      enum: {
+        values: ['PRODUCT', 'SHOP', 'DELIVERY'],
+        message: '{VALUE} is not a valid review type',
+      },
+      required: [true, 'Review type is required'],
+    },
     shop: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Shop',
@@ -15,6 +23,11 @@ const reviewSchema = new mongoose.Schema(
     product: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Product',
+      default: null,
+    },
+    deliveryBoy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
       default: null,
     },
     order: {
@@ -31,6 +44,7 @@ const reviewSchema = new mongoose.Schema(
     comment: {
       type: String,
       trim: true,
+      maxlength: [500, 'Comment cannot exceed 500 characters'],
       default: '',
     },
     isActive: {
@@ -43,20 +57,42 @@ const reviewSchema = new mongoose.Schema(
   }
 );
 
-// Schema validation: Review must reference at least shop OR product
+// Schema validation: Verify required fields based on review type
 reviewSchema.pre('validate', function (next) {
-  if (!this.shop && !this.product) {
-    this.invalidate('shop', 'A review must reference at least one of shop or product');
-    this.invalidate('product', 'A review must reference at least one of shop or product');
+  if (this.type === 'PRODUCT' && !this.product) {
+    this.invalidate('product', 'Product reference is required for a PRODUCT review');
+  }
+  if (this.type === 'SHOP' && !this.shop) {
+    this.invalidate('shop', 'Shop reference is required for a SHOP review');
+  }
+  if (this.type === 'DELIVERY' && !this.deliveryBoy) {
+    this.invalidate('deliveryBoy', 'Delivery boy reference is required for a DELIVERY review');
   }
   next();
 });
 
-// Indexes
+// Compound Unique Indexes to prevent duplicate reviews per order target
+reviewSchema.index(
+  { user: 1, order: 1, product: 1, type: 1 },
+  { unique: true, partialFilterExpression: { type: 'PRODUCT', product: { $exists: true, $ne: null } } }
+);
+reviewSchema.index(
+  { user: 1, order: 1, shop: 1, type: 1 },
+  { unique: true, partialFilterExpression: { type: 'SHOP', shop: { $exists: true, $ne: null } } }
+);
+reviewSchema.index(
+  { user: 1, order: 1, deliveryBoy: 1, type: 1 },
+  { unique: true, partialFilterExpression: { type: 'DELIVERY', deliveryBoy: { $exists: true, $ne: null } } }
+);
+
+// Standard Lookup Indexes
 reviewSchema.index({ user: 1 });
 reviewSchema.index({ shop: 1 });
 reviewSchema.index({ product: 1 });
+reviewSchema.index({ deliveryBoy: 1 });
+reviewSchema.index({ order: 1 });
 
 const Review = mongoose.models.Review || mongoose.model('Review', reviewSchema);
 
 export default Review;
+

@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../../services/api';
-import { Package, Clock, ChevronRight, ShoppingBag, ArrowLeft } from 'lucide-react';
+import { Package, Clock, ChevronRight, ShoppingBag, ArrowLeft, Star } from 'lucide-react';
+import RateOrderModal from '../../components/RateOrderModal';
 
 export default function OrderHistoryPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [ratingOrder, setRatingOrder] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -151,7 +153,29 @@ export default function OrderHistoryPage() {
                 </div>
 
                 {/* Footer Action */}
-                <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '0.25rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.25rem' }}>
+                  <div>
+                    {order.orderStatus === 'DELIVERED' && (
+                      <button
+                        onClick={() => setRatingOrder(order)}
+                        className="btn-primary"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem',
+                          padding: '0.35rem 0.8rem',
+                          fontSize: '0.8rem',
+                          fontWeight: '700',
+                          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                          color: '#ffffff',
+                          borderRadius: '0.5rem',
+                        }}
+                      >
+                        <Star size={14} fill="#ffffff" /> Rate Order
+                      </button>
+                    )}
+                  </div>
+
                   <Link
                     to={`/orders/${order._id}`}
                     style={{
@@ -171,6 +195,16 @@ export default function OrderHistoryPage() {
             );
           })}
         </div>
+      )}
+
+      {/* Rate Order Modal */}
+      {ratingOrder && (
+        <RateOrderModal
+          order={ratingOrder}
+          isOpen={!!ratingOrder}
+          onClose={() => setRatingOrder(null)}
+          onReviewSubmitted={() => fetchOrders()}
+        />
       )}
     </div>
   );

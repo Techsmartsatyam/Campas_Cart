@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import api from '../../services/api';
 import { useNotifications } from '../../context/NotificationContext';
-import { ArrowLeft, MapPin, Store, CreditCard, Clock, Package, Phone, User, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, MapPin, Store, CreditCard, Clock, Package, Phone, User, ShieldCheck, Eye, EyeOff, Star } from 'lucide-react';
+import RateOrderModal from '../../components/RateOrderModal';
 
 const LiveDeliveryMap = React.lazy(() => import('../../components/LiveDeliveryMap'));
 
@@ -17,6 +18,7 @@ export default function OrderDetailsPage() {
   const [cancelReasonOption, setCancelReasonOption] = useState('Ordered by mistake');
   const [customReason, setCustomReason] = useState('');
   const [showPhone, setShowPhone] = useState(false);
+  const [showRateModal, setShowRateModal] = useState(false);
 
   // Socket & Live Tracking state
   const [driverLocation, setDriverLocation] = useState(null);
@@ -169,6 +171,25 @@ export default function OrderDetailsPage() {
             }}>
               {order.orderStatus}
             </span>
+            {order.orderStatus === 'DELIVERED' && (
+              <button
+                onClick={() => setShowRateModal(true)}
+                className="btn-primary"
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.4rem 0.9rem',
+                  fontSize: '0.85rem',
+                  fontWeight: '700',
+                  background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                  color: '#ffffff',
+                  boxShadow: '0 4px 12px rgba(245, 158, 11, 0.3)',
+                }}
+              >
+                <Star size={16} fill="#ffffff" /> Rate Your Order
+              </button>
+            )}
             {isCancellable && (
               <button
                 onClick={() => setShowCancelModal(true)}
@@ -728,6 +749,13 @@ export default function OrderDetailsPage() {
           </div>
         </div>
       )}
+      {/* Rate Order Modal */}
+      <RateOrderModal
+        order={order}
+        isOpen={showRateModal}
+        onClose={() => setShowRateModal(false)}
+        onReviewSubmitted={() => fetchOrder()}
+      />
     </div>
   );
 }

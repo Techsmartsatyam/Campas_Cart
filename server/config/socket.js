@@ -155,8 +155,5 @@ export const initSocket = (httpServer, corsOptions) => {
 };
 
 export const getIO = () => {
-  if (!ioInstance) {
-    throw new Error('Socket.io instance has not been initialized');
-  }
-  return ioInstance;
+  return ioInstance || null;
 };

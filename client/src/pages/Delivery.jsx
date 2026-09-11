@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import api from '../services/api';
-import { Truck, CheckCircle2, Clock, AlertCircle, MapPin, Package, RefreshCw, ArrowRight, DollarSign, Power, Navigation } from 'lucide-react';
+import { Truck, CheckCircle2, Clock, AlertCircle, MapPin, Package, RefreshCw, ArrowRight, DollarSign, Power, Navigation, Star, MessageSquare } from 'lucide-react';
 
 export default function Delivery() {
   const { user, updateUser } = useAuth();
@@ -18,6 +18,8 @@ export default function Delivery() {
   const [isOnline, setIsOnline] = useState(user?.isOnline ?? true);
   const [togglingOnline, setTogglingOnline] = useState(false);
   const [geoStatus, setGeoStatus] = useState('OFF');
+  const [deliveryReviews, setDeliveryReviews] = useState([]);
+  const [deliveryRatingStats, setDeliveryRatingStats] = useState({ avgRating: 0, totalRatings: 0 });
 
   const socketRef = useRef(null);
   const geoWatchIdRef = useRef(null);
@@ -26,17 +28,26 @@ export default function Delivery() {
     setLoading(true);
     setError('');
     try {
-      const [availRes, myRes] = await Promise.all([
+      const [availRes, myRes, reviewRes] = await Promise.all([
         api.get('/delivery/available-orders'),
         api.get('/delivery/my-deliveries'),
+        user?._id ? api.get(`/reviews/delivery/${user._id}`) : Promise.resolve(null),
       ]);
 
-      if (availRes.success && availRes.deliveries) {
+      if (availRes && availRes.success && availRes.deliveries) {
         setAvailableDeliveries(availRes.deliveries);
       }
 
-      if (myRes.success && myRes.deliveries) {
+      if (myRes && myRes.success && myRes.deliveries) {
         setMyDeliveries(myRes.deliveries);
+      }
+
+      if (reviewRes && reviewRes.success) {
+        setDeliveryReviews(reviewRes.data || []);
+        setDeliveryRatingStats({
+          avgRating: reviewRes.avgRating || 0,
+          totalRatings: reviewRes.totalRatings || 0,
+        });
       }
     } catch (err) {
       setError(err.message || 'Failed to load delivery data');
@@ -363,6 +374,16 @@ export default function Delivery() {
         <div className="glass-card" style={{ padding: '1.25rem' }}>
           <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block' }}>Total Earnings</span>
           <strong style={{ fontSize: '1.7rem', color: '#059669' }}>₹{totalEarnings}</strong>
+        </div>
+        <div className="glass-card" style={{ padding: '1.25rem' }}>
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'block' }}>My Rating</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            <strong style={{ fontSize: '1.7rem', color: '#f59e0b' }}>
+              {deliveryRatingStats.avgRating > 0 ? deliveryRatingStats.avgRating.toFixed(1) : (user?.rating || 0).toFixed(1)}
+            </strong>
+            <Star size={18} fill="#f59e0b" style={{ color: '#f59e0b' }} />
+          </div>
+          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({deliveryRatingStats.totalRatings || user?.totalRatings || 0} ratings)</span>
         </div>
       </div>
 
@@ -732,6 +753,74 @@ export default function Delivery() {
                       Earned: ₹{order?.deliveryFee || 20}
                     </span>
                   </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Recent Delivery Reviews Section */}
+      <div className="glass-card" style={{ padding: '2rem', marginTop: '2.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
+          <div>
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <MessageSquare size={18} style={{ color: 'var(--primary)' }} /> Student Delivery Reviews
+            </h3>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.825rem', color: 'var(--text-muted)' }}>
+              Feedback submitted by students for completed deliveries
+            </p>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontWeight: '800', fontSize: '1.1rem', color: '#f59e0b' }}>
+            <span>{deliveryRatingStats.avgRating > 0 ? deliveryRatingStats.avgRating.toFixed(1) : '0.0'}</span>
+            <Star size={18} fill="#f59e0b" />
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontWeight: '600' }}>({deliveryRatingStats.totalRatings} ratings)</span>
+          </div>
+        </div>
+
+        {deliveryReviews.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '2rem', background: '#f8fafc', borderRadius: '0.75rem', border: '1px dashed var(--border-color)' }}>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: 0 }}>
+              No delivery reviews received yet. Deliver orders on time to receive ratings!
+            </p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
+            {deliveryReviews.map((rev) => {
+              const uName = rev.user?.name || 'Verified Student';
+              const uImg = rev.user?.profileImage;
+              const dateStr = new Date(rev.createdAt).toLocaleDateString('en-IN', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              });
+
+              return (
+                <div key={rev._id} style={{ padding: '1rem', borderRadius: '0.75rem', border: '1px solid var(--border-color)', background: '#ffffff' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                      <div style={{ width: '2rem', height: '2rem', borderRadius: '50%', background: 'var(--primary-gradient)', color: '#ffffff', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', overflow: 'hidden' }}>
+                        {uImg ? <img src={uImg} alt={uName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : uName.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <h4 style={{ margin: 0, fontSize: '0.875rem', fontWeight: '700', color: 'var(--text-primary)' }}>{uName}</h4>
+                        <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{dateStr}</span>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.1rem', color: '#f59e0b' }}>
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <Star key={s} size={13} fill={s <= rev.rating ? '#f59e0b' : 'none'} strokeWidth={1.5} />
+                      ))}
+                    </div>
+                  </div>
+
+                  {rev.comment && (
+                    <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.825rem', color: 'var(--text-secondary)', lineHeight: '1.4' }}>
+                      "{rev.comment}"
+                    </p>
+                  )}
                 </div>
               );
             })}
