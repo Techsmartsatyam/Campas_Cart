@@ -134,17 +134,59 @@ export const previewCleanData = async (req, res, next) => {
  */
 export const executeCleanData = async (req, res, next) => {
   try {
-    const { targets = [], confirmation, password } = req.body;
+    const { targets = [], confirmation, adminEmail, password } = req.body;
 
-    // 1. Confirm strict ADMIN authorization
-    if (!req.user || req.user.role !== 'ADMIN') {
-      return res.status(403).json({
+    // ── STEP 1: Validate admin email is provided ──
+    if (!adminEmail || typeof adminEmail !== 'string' || !adminEmail.trim()) {
+      return res.status(400).json({
         success: false,
-        message: 'Access denied: Admin authorization required.',
+        message: 'Admin email and password are required.',
       });
     }
 
-    // 2. Validate confirmation phrase
+    // ── STEP 2: Validate password is provided ──
+    if (!password || typeof password !== 'string' || !password.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Admin email and password are required.',
+      });
+    }
+
+    // ── STEP 3: Find user by supplied email ──
+    const adminUser = await User.findOne({ email: adminEmail.trim().toLowerCase() }).select('+password');
+    if (!adminUser) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid admin email or password.',
+      });
+    }
+
+    // ── STEP 4: Verify user has ADMIN role ──
+    if (adminUser.role !== 'ADMIN') {
+      return res.status(403).json({
+        success: false,
+        message: 'Invalid admin email or password.',
+      });
+    }
+
+    // ── STEP 5: Verify admin account is active ──
+    if (!adminUser.isActive) {
+      return res.status(403).json({
+        success: false,
+        message: 'This admin account has been deactivated.',
+      });
+    }
+
+    // ── STEP 6: Verify password using existing bcrypt comparePassword ──
+    const isPasswordValid = await adminUser.comparePassword(password);
+    if (!isPasswordValid) {
+      return res.status(401).json({
+        success: false,
+        message: 'Invalid admin email or password.',
+      });
+    }
+
+    // ── STEP 7: Validate "CLEAN NEARCART" confirmation phrase ──
     if (confirmation !== 'CLEAN NEARCART') {
       return res.status(400).json({
         success: false,
@@ -152,22 +194,7 @@ export const executeCleanData = async (req, res, next) => {
       });
     }
 
-    // 3. Re-authenticate Admin password if provided or required
-    if (password) {
-      const adminUser = await User.findById(req.user._id).select('+password');
-      if (!adminUser) {
-        return res.status(401).json({ success: false, message: 'Admin account not found.' });
-      }
-      const isPasswordValid = await adminUser.comparePassword(password);
-      if (!isPasswordValid) {
-        return res.status(401).json({
-          success: false,
-          message: 'Invalid administrator password confirmation.',
-        });
-      }
-    }
-
-    // 4. Validate targets array
+    // ── STEP 8: Validate targets array ──
     const validTargetKeys = ['orders', 'deliveries', 'reviews', 'notifications', 'carts', 'testUsers'];
     const selectedTargets = (Array.isArray(targets) ? targets : []).filter((t) =>
       validTargetKeys.includes(t)
@@ -180,6 +207,7 @@ export const executeCleanData = async (req, res, next) => {
       });
     }
 
+    // ── STEP 9: All checks passed — proceed with cleanup ──
     const Order = mongoose.model('Order');
     const Delivery = mongoose.model('Delivery');
     const Review = mongoose.model('Review');
@@ -199,8 +227,6 @@ export const executeCleanData = async (req, res, next) => {
       testUsers: 0,
       payments: 0,
     };
-
-    // 5. Ordered Deletion Execution
 
     // A. ORDERS
     if (selectedTargets.includes('orders')) {
@@ -268,8 +294,8 @@ export const executeCleanData = async (req, res, next) => {
       }
     }
 
-    // Audit Logging (Safe server log)
-    console.log(`[AUDIT CLEANUP] Admin ${req.user._id} (${req.user.email}) performed pre-launch data cleanup.`);
+    // Audit Logging (Safe server log — no credentials logged)
+    console.log(`[AUDIT CLEANUP] Admin ${adminUser._id} (${adminUser.email}) performed pre-launch data cleanup.`);
     console.log(`[AUDIT CLEANUP] Targets: ${selectedTargets.join(', ')} | Summary:`, deletedSummary);
 
     return res.status(200).json({

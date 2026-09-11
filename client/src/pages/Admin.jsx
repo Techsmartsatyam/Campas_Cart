@@ -706,6 +706,7 @@ function AdminCleanDataTab({ onDataCleaned }) {
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [confirmInput, setConfirmInput] = useState('');
+  const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [cleaning, setCleaning] = useState(false);
   const [cleanResult, setCleanResult] = useState(null);
@@ -756,6 +757,7 @@ function AdminCleanDataTab({ onDataCleaned }) {
       return;
     }
     setConfirmInput('');
+    setAdminEmail('');
     setAdminPassword('');
     setErrorMsg('');
     setShowConfirmModal(true);
@@ -763,6 +765,11 @@ function AdminCleanDataTab({ onDataCleaned }) {
 
   const handleExecuteCleanup = async (e) => {
     e.preventDefault();
+    if (!adminEmail.trim() || !adminPassword.trim()) {
+      setErrorMsg('Admin email and password are required.');
+      return;
+    }
+
     if (confirmInput !== 'CLEAN NEARCART') {
       setErrorMsg('You must type "CLEAN NEARCART" exactly to confirm.');
       return;
@@ -777,6 +784,7 @@ function AdminCleanDataTab({ onDataCleaned }) {
       const res = await api.post('/admin/clean-data', {
         targets,
         confirmation: confirmInput,
+        adminEmail: adminEmail.trim(),
         password: adminPassword,
       });
 
@@ -1041,7 +1049,35 @@ function AdminCleanDataTab({ onDataCleaned }) {
             <form onSubmit={handleExecuteCleanup} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
-                  Type <span style={{ color: '#ef4444', fontFamily: 'monospace' }}>CLEAN NEARCART</span> to confirm:
+                  Admin Email <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  type="email"
+                  required
+                  placeholder="admin@nearcart.com"
+                  value={adminEmail}
+                  onChange={(e) => setAdminEmail(e.target.value)}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: '0.4rem', border: '1px solid #cbd5e1', fontSize: '0.875rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+                  Admin Password <span style={{ color: '#ef4444' }}>*</span>
+                </label>
+                <input
+                  type="password"
+                  required
+                  placeholder="Enter your admin password"
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: '0.4rem', border: '1px solid #cbd5e1', fontSize: '0.875rem' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+                  Type <span style={{ color: '#ef4444', fontFamily: 'monospace' }}>CLEAN NEARCART</span> to confirm: <span style={{ color: '#ef4444' }}>*</span>
                 </label>
                 <input
                   type="text"
@@ -1053,32 +1089,19 @@ function AdminCleanDataTab({ onDataCleaned }) {
                 />
               </div>
 
-              <div>
-                <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
-                  Admin Password Re-authentication (Optional / Security Check):
-                </label>
-                <input
-                  type="password"
-                  placeholder="Enter your admin password..."
-                  value={adminPassword}
-                  onChange={(e) => setAdminPassword(e.target.value)}
-                  style={{ width: '100%', padding: '0.6rem', borderRadius: '0.4rem', border: '1px solid #cbd5e1', fontSize: '0.875rem' }}
-                />
-              </div>
-
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
                 <button type="button" onClick={() => setShowConfirmModal(false)} className="btn-secondary" style={{ padding: '0.55rem 1rem' }}>
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={cleaning || confirmInput !== 'CLEAN NEARCART'}
+                  disabled={cleaning || !adminEmail.trim() || !adminPassword.trim() || confirmInput !== 'CLEAN NEARCART'}
                   className="btn-primary"
                   style={{
                     background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
                     padding: '0.55rem 1.25rem',
                     fontWeight: '800',
-                    opacity: cleaning || confirmInput !== 'CLEAN NEARCART' ? 0.6 : 1,
+                    opacity: cleaning || !adminEmail.trim() || !adminPassword.trim() || confirmInput !== 'CLEAN NEARCART' ? 0.6 : 1,
                   }}
                 >
                   {cleaning ? 'Cleaning Data...' : 'Confirm & Clean Data'}
