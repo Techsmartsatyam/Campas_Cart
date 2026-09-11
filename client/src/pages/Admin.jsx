@@ -14,6 +14,8 @@ import {
   TrendingUp,
   Star,
   Trash2,
+  AlertTriangle,
+  Eye,
 } from 'lucide-react';
 
 export default function Admin() {
@@ -211,7 +213,20 @@ export default function Admin() {
         >
           <Star size={18} /> Reviews Moderation
         </button>
+        <button
+          onClick={() => setActiveTab('CLEAN_DATA')}
+          className={activeTab === 'CLEAN_DATA' ? 'btn-primary' : 'btn-secondary'}
+          style={{
+            background: activeTab === 'CLEAN_DATA' ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : undefined,
+            borderColor: activeTab === 'CLEAN_DATA' ? '#dc2626' : undefined,
+            color: activeTab === 'CLEAN_DATA' ? '#ffffff' : 'var(--danger)',
+          }}
+        >
+          🧹 Clean App Data
+        </button>
       </div>
+
+      {activeTab === 'CLEAN_DATA' && <AdminCleanDataTab onDataCleaned={() => { fetchUsers(); fetchPayments(); }} />}
 
       {activeTab === 'REVIEWS_MANAGEMENT' && <AdminReviewsTab />}
 
@@ -669,6 +684,477 @@ function AdminReviewsTab() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdminCleanDataTab({ onDataCleaned }) {
+  const [selectedTargets, setSelectedTargets] = useState({
+    orders: true,
+    deliveries: true,
+    reviews: true,
+    notifications: true,
+    carts: true,
+    testUsers: false,
+  });
+
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [previewCounts, setPreviewCounts] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [confirmInput, setConfirmInput] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
+  const [cleaning, setCleaning] = useState(false);
+  const [cleanResult, setCleanResult] = useState(null);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const targetLabels = {
+    orders: 'Orders & Transaction Records',
+    deliveries: 'Delivery Records',
+    reviews: 'Reviews & Ratings (Resets aggregate scores to 0)',
+    notifications: 'Notifications Stream',
+    carts: 'Student Active & Abandoned Carts',
+    testUsers: 'Test / Student User Accounts (Preserves Admins, Shopkeepers & Delivery Boys)',
+  };
+
+  const getActiveTargetsList = () =>
+    Object.keys(selectedTargets).filter((k) => selectedTargets[k]);
+
+  const handleToggleTarget = (key) => {
+    setSelectedTargets({ ...selectedTargets, [key]: !selectedTargets[key] });
+  };
+
+  const handlePreview = async () => {
+    const targets = getActiveTargetsList();
+    if (targets.length === 0) {
+      alert('Please select at least one cleanup target.');
+      return;
+    }
+
+    try {
+      setPreviewLoading(true);
+      setErrorMsg('');
+      const res = await api.post('/admin/clean-data/preview', { targets });
+      if (res && res.success) {
+        setPreviewCounts(res.counts);
+        setShowPreviewModal(true);
+      }
+    } catch (err) {
+      alert(err.message || 'Failed to fetch cleanup preview');
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  const handleOpenConfirm = () => {
+    const targets = getActiveTargetsList();
+    if (targets.length === 0) {
+      alert('Please select at least one cleanup target.');
+      return;
+    }
+    setConfirmInput('');
+    setAdminPassword('');
+    setErrorMsg('');
+    setShowConfirmModal(true);
+  };
+
+  const handleExecuteCleanup = async (e) => {
+    e.preventDefault();
+    if (confirmInput !== 'CLEAN NEARCART') {
+      setErrorMsg('You must type "CLEAN NEARCART" exactly to confirm.');
+      return;
+    }
+
+    const targets = getActiveTargetsList();
+
+    try {
+      setCleaning(true);
+      setErrorMsg('');
+
+      const res = await api.post('/admin/clean-data', {
+        targets,
+        confirmation: confirmInput,
+        password: adminPassword,
+      });
+
+      if (res && res.success) {
+        setCleanResult(res);
+        setShowConfirmModal(false);
+        setShowPreviewModal(false);
+        if (onDataCleaned) onDataCleaned();
+      }
+    } catch (err) {
+      setErrorMsg(err.message || 'Data cleanup failed');
+    } finally {
+      setCleaning(false);
+    }
+  };
+
+  return (
+    <div className="glass-card" style={{ padding: '2rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+        <div
+          style={{
+            width: '2.5rem',
+            height: '2.5rem',
+            borderRadius: '0.5rem',
+            background: 'rgba(239, 68, 68, 0.15)',
+            color: '#ef4444',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center',
+          }}
+        >
+          <AlertTriangle size={24} />
+        </div>
+        <div>
+          <h3 style={{ fontSize: '1.4rem', fontWeight: '800', margin: 0, color: 'var(--text-primary)' }}>
+            🧹 Clean App Data (Pre-Launch Cleanup)
+          </h3>
+          <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+            Safely remove test and demo transactional data before NearCart enters public market launch.
+          </p>
+        </div>
+      </div>
+
+      {/* Danger Notice Banner */}
+      <div
+        style={{
+          background: 'rgba(239, 68, 68, 0.08)',
+          border: '1px solid rgba(239, 68, 68, 0.3)',
+          borderRadius: '0.75rem',
+          padding: '1rem 1.25rem',
+          marginBottom: '1.5rem',
+          color: '#b91c1c',
+          fontSize: '0.875rem',
+          lineHeight: '1.5',
+        }}
+      >
+        <strong style={{ display: 'block', fontSize: '0.95rem', marginBottom: '0.25rem' }}>
+          ⚠️ DESTRUCTIVE ACTION WARNING
+        </strong>
+        Selected transactional records will be permanently removed from MongoDB. Master store structures, admin accounts, and product catalogs will remain untouched.
+      </div>
+
+      {/* Target Options Grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem', marginBottom: '2rem' }}>
+        <div style={{ background: '#ffffff', border: '1px solid var(--border-color)', borderRadius: '0.75rem', padding: '1.25rem' }}>
+          <h4 style={{ margin: '0 0 1rem 0', fontSize: '1rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+            Select Deletion Targets
+          </h4>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            {Object.keys(targetLabels).map((key) => (
+              <label key={key} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.875rem' }}>
+                <input
+                  type="checkbox"
+                  checked={selectedTargets[key]}
+                  onChange={() => handleToggleTarget(key)}
+                  style={{ marginTop: '0.2rem', width: '16px', height: '16px', accentColor: '#ef4444' }}
+                />
+                <span style={{ color: 'var(--text-primary)', fontWeight: selectedTargets[key] ? '600' : 'normal' }}>
+                  {targetLabels[key]}
+                </span>
+              </label>
+            ))}
+          </div>
+        </div>
+
+        {/* Protected Master Data List */}
+        <div style={{ background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: '0.75rem', padding: '1.25rem' }}>
+          <h4 style={{ margin: '0 0 0.75rem 0', fontSize: '1rem', fontWeight: '700', color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <ShieldCheck size={18} style={{ color: 'var(--success)' }} /> Protected Master Data
+          </h4>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.85rem' }}>
+            The following essential master collections are always preserved to keep your store operational:
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            <div>✓ Admin Accounts & Current Logged-in Session</div>
+            <div>✓ Shopkeeper Accounts & Store Profiles</div>
+            <div>✓ Delivery Partner Accounts</div>
+            <div>✓ Shop UPI Configuration & QR Snapshots</div>
+            <div>✓ Products, Inventories & Images</div>
+            <div>✓ Categories & Store Tax Structures</div>
+            <div>✓ Firebase FCM & Socket.IO Configurations</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Action Buttons */}
+      <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+        <button
+          type="button"
+          onClick={handlePreview}
+          disabled={previewLoading}
+          className="btn-secondary"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', padding: '0.6rem 1.25rem', fontSize: '0.9rem' }}
+        >
+          <Eye size={16} /> {previewLoading ? 'Calculating Preview...' : 'Preview Cleanup'}
+        </button>
+
+        <button
+          type="button"
+          onClick={handleOpenConfirm}
+          className="btn-primary"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.6rem 1.5rem',
+            fontSize: '0.9rem',
+            fontWeight: '800',
+            background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)',
+            color: '#ffffff',
+            boxShadow: '0 4px 14px rgba(239, 68, 68, 0.3)',
+          }}
+        >
+          <Trash2 size={16} /> Clean Selected Data
+        </button>
+      </div>
+
+      {/* PREVIEW MODAL */}
+      {showPreviewModal && previewCounts && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(15, 23, 42, 0.65)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center',
+            zIndex: 1100,
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              border: '1px solid var(--border-color)',
+              borderRadius: '0.75rem',
+              padding: '1.75rem',
+              maxWidth: '480px',
+              width: '100%',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+            }}
+          >
+            <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+              📊 Cleanup Preview Summary
+            </h3>
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '1.25rem' }}>
+              Estimated document counts that will be deleted upon execution. No data has been modified yet.
+            </p>
+
+            <div style={{ background: '#f8fafc', borderRadius: '0.5rem', border: '1px solid var(--border-color)', padding: '1rem', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.875rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Orders to delete:</span>
+                <strong>{previewCounts.orders}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Deliveries to delete:</span>
+                <strong>{previewCounts.deliveries}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Reviews to delete:</span>
+                <strong>{previewCounts.reviews}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Notifications to delete:</span>
+                <strong>{previewCounts.notifications}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Carts to delete:</span>
+                <strong>{previewCounts.carts}</strong>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <span>Test Student accounts to delete:</span>
+                <strong>{previewCounts.testUsers}</strong>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button onClick={() => setShowPreviewModal(false)} className="btn-secondary" style={{ padding: '0.5rem 1rem' }}>
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowPreviewModal(false);
+                  handleOpenConfirm();
+                }}
+                className="btn-primary"
+                style={{ background: 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)', padding: '0.5rem 1.25rem' }}
+              >
+                Proceed to Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CONFIRMATION MODAL */}
+      {showConfirmModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center',
+            zIndex: 1200,
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              border: '2px solid #ef4444',
+              borderRadius: '0.75rem',
+              padding: '1.75rem',
+              maxWidth: '480px',
+              width: '100%',
+              boxShadow: '0 25px 50px -12px rgba(239, 68, 68, 0.25)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#b91c1c', marginBottom: '0.75rem' }}>
+              <AlertTriangle size={24} />
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '900', margin: 0 }}>
+                CONFIRM PRE-LAUNCH CLEANUP
+              </h3>
+            </div>
+
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', lineHeight: '1.5', marginBottom: '1.25rem' }}>
+              This operation will permanently delete selected test data. This action <strong>cannot be undone</strong>.
+            </p>
+
+            {errorMsg && (
+              <div style={{ background: '#fee2e2', border: '1px solid #fca5a5', color: '#b91c1c', padding: '0.65rem 0.85rem', borderRadius: '0.4rem', fontSize: '0.825rem', marginBottom: '1rem' }}>
+                {errorMsg}
+              </div>
+            )}
+
+            <form onSubmit={handleExecuteCleanup} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+                  Type <span style={{ color: '#ef4444', fontFamily: 'monospace' }}>CLEAN NEARCART</span> to confirm:
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="CLEAN NEARCART"
+                  value={confirmInput}
+                  onChange={(e) => setConfirmInput(e.target.value)}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: '0.4rem', border: '1px solid #cbd5e1', fontSize: '0.875rem', fontFamily: 'monospace' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.825rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
+                  Admin Password Re-authentication (Optional / Security Check):
+                </label>
+                <input
+                  type="password"
+                  placeholder="Enter your admin password..."
+                  value={adminPassword}
+                  onChange={(e) => setAdminPassword(e.target.value)}
+                  style={{ width: '100%', padding: '0.6rem', borderRadius: '0.4rem', border: '1px solid #cbd5e1', fontSize: '0.875rem' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button type="button" onClick={() => setShowConfirmModal(false)} className="btn-secondary" style={{ padding: '0.55rem 1rem' }}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={cleaning || confirmInput !== 'CLEAN NEARCART'}
+                  className="btn-primary"
+                  style={{
+                    background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                    padding: '0.55rem 1.25rem',
+                    fontWeight: '800',
+                    opacity: cleaning || confirmInput !== 'CLEAN NEARCART' ? 0.6 : 1,
+                  }}
+                >
+                  {cleaning ? 'Cleaning Data...' : 'Confirm & Clean Data'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* RESULTS SUMMARY MODAL */}
+      {cleanResult && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(15, 23, 42, 0.75)',
+            backdropFilter: 'blur(5px)',
+            display: 'flex',
+            alignItems: 'center',
+            justify: 'center',
+            zIndex: 1300,
+            padding: '1rem',
+          }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              border: '1px solid var(--border-color)',
+              borderRadius: '0.75rem',
+              padding: '1.75rem',
+              maxWidth: '500px',
+              width: '100%',
+              boxShadow: '0 25px 50px -12px rgba(0,0,0,0.2)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#047857', marginBottom: '0.75rem' }}>
+              <CheckCircle2 size={24} />
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0 }}>
+                NearCart Pre-Launch Cleanup Complete
+              </h3>
+            </div>
+
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginBottom: '1.25rem' }}>
+              {cleanResult.message}
+            </p>
+
+            <div style={{ background: '#f8fafc', borderRadius: '0.5rem', border: '1px solid var(--border-color)', padding: '1rem', marginBottom: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.85rem' }}>
+              <strong style={{ color: 'var(--text-primary)', marginBottom: '0.2rem' }}>Deleted Summary:</strong>
+              <div>Orders deleted: <strong>{cleanResult.deletedCounts?.orders || 0}</strong></div>
+              <div>Deliveries deleted: <strong>{cleanResult.deletedCounts?.deliveries || 0}</strong></div>
+              <div>Reviews deleted: <strong>{cleanResult.deletedCounts?.reviews || 0}</strong></div>
+              <div>Notifications deleted: <strong>{cleanResult.deletedCounts?.notifications || 0}</strong></div>
+              <div>Carts deleted: <strong>{cleanResult.deletedCounts?.carts || 0}</strong></div>
+              <div>Test Students deleted: <strong>{cleanResult.deletedCounts?.testUsers || 0}</strong></div>
+            </div>
+
+            <div style={{ background: '#ecfdf5', borderRadius: '0.5rem', border: '1px solid #a7f3d0', padding: '0.75rem 1rem', marginBottom: '1.5rem', fontSize: '0.825rem', color: '#047857' }}>
+              <strong>Preserved Master Data:</strong>
+              <div style={{ marginTop: '0.25rem' }}>
+                ✓ Admin, Shopkeeper & Delivery Partner accounts<br />
+                ✓ Shops, Products, Images & Categories<br />
+                ✓ App Configuration & UPI QR structures
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setCleanResult(null)}
+                className="btn-primary"
+                style={{ padding: '0.55rem 1.5rem', background: 'var(--primary-gradient)' }}
+              >
+                Close & Refresh Dashboard
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
