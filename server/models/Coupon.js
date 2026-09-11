@@ -74,6 +74,11 @@ const couponSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    shopId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Shop',
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -81,6 +86,7 @@ const couponSchema = new mongoose.Schema(
 );
 
 couponSchema.index({ isActive: 1 });
+couponSchema.index({ shopId: 1, isActive: 1 });
 
 const Coupon = mongoose.models.Coupon || mongoose.model('Coupon', couponSchema);
 

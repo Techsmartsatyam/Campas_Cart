@@ -11,6 +11,11 @@ import {
   getInventory,
   getShopkeeperOrders,
   updateOrderStatus,
+  getShopkeeperCoupons,
+  createShopkeeperCoupon,
+  updateShopkeeperCoupon,
+  toggleShopkeeperCoupon,
+  deleteShopkeeperCoupon,
 } from '../controllers/shopkeeperController.js';
 import { protect, authorizeRoles } from '../middleware/authMiddleware.js';
 
@@ -41,5 +46,12 @@ router.get('/orders', getShopkeeperOrders);
 router.patch('/orders/:id/status', updateOrderStatus);
 router.patch('/orders/:orderId/verify-payment', verifyShopkeeperUpiPayment);
 router.patch('/orders/:orderId/reject-payment', rejectShopkeeperUpiPayment);
+
+// Coupon management routes
+router.get('/coupons', getShopkeeperCoupons);
+router.post('/coupons', createShopkeeperCoupon);
+router.put('/coupons/:id', updateShopkeeperCoupon);
+router.patch('/coupons/:id/toggle', toggleShopkeeperCoupon);
+router.delete('/coupons/:id', deleteShopkeeperCoupon);
 
 export default router;

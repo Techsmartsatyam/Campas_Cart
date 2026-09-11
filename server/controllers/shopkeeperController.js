@@ -3,6 +3,7 @@ import Shop from '../models/Shop.js';
 import Product from '../models/Product.js';
 import Order from '../models/Order.js';
 import Notification from '../models/Notification.js';
+import Coupon from '../models/Coupon.js';
 
 // @route   GET /api/shopkeeper/stats
 // @desc    Get real-time dashboard statistics for logged-in shopkeeper
@@ -628,3 +629,264 @@ export const updateOrderStatus = async (req, res, next) => {
     next(error);
   }
 };
+
+// ==========================================
+// COUPON MANAGEMENT FOR SHOPKEEPERS
+// ==========================================
+
+// @route   GET /api/shopkeeper/coupons
+// @desc    Get all coupons for logged-in shopkeeper's shop
+// @access  Private/Shopkeeper
+export const getShopkeeperCoupons = async (req, res, next) => {
+  try {
+    const shop = await Shop.findOne({ owner: req.user._id });
+    if (!shop) {
+      return res.status(200).json({
+        success: true,
+        coupons: [],
+      });
+    }
+
+    const coupons = await Coupon.find({ shopId: shop._id }).sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      coupons,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @route   POST /api/shopkeeper/coupons
+// @desc    Create a new coupon for shopkeeper's shop
+// @access  Private/Shopkeeper
+export const createShopkeeperCoupon = async (req, res, next) => {
+  try {
+    const shop = await Shop.findOne({ owner: req.user._id });
+    if (!shop) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please create and setup your shop first before creating coupons',
+      });
+    }
+
+    const {
+      code,
+      description,
+      discountType,
+      discountValue,
+      minimumOrderAmount,
+      maximumDiscount,
+      usageLimit,
+      startDate,
+      endDate,
+    } = req.body;
+
+    if (!code || !code.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: 'Coupon code is required',
+      });
+    }
+
+    const formattedCode = code.trim().toUpperCase();
+
+    // Check if code already exists globally
+    const existingCoupon = await Coupon.findOne({ code: formattedCode });
+    if (existingCoupon) {
+      return res.status(400).json({
+        success: false,
+        message: 'A coupon with this code already exists. Please choose a different code.',
+      });
+    }
+
+    if (!discountType || !['PERCENTAGE', 'FIXED'].includes(discountType)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Discount type must be either PERCENTAGE or FIXED',
+      });
+    }
+
+    const numValue = Number(discountValue);
+    if (isNaN(numValue) || numValue <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Discount value must be greater than 0',
+      });
+    }
+
+    if (discountType === 'PERCENTAGE' && numValue > 100) {
+      return res.status(400).json({
+        success: false,
+        message: 'Percentage discount cannot exceed 100%',
+      });
+    }
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'Start date and end date are required',
+      });
+    }
+
+    if (new Date(endDate) < new Date(startDate)) {
+      return res.status(400).json({
+        success: false,
+        message: 'End date must be greater than or equal to start date',
+      });
+    }
+
+    const newCoupon = await Coupon.create({
+      code: formattedCode,
+      description: description ? description.trim() : '',
+      discountType,
+      discountValue: numValue,
+      minimumOrderAmount: Number(minimumOrderAmount) || 0,
+      maximumDiscount: maximumDiscount !== undefined && maximumDiscount !== '' && maximumDiscount !== null ? Number(maximumDiscount) : null,
+      usageLimit: usageLimit !== undefined && usageLimit !== '' && usageLimit !== null ? Number(usageLimit) : null,
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      shopId: shop._id,
+      isActive: true,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Coupon created successfully',
+      coupon: newCoupon,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @route   PUT /api/shopkeeper/coupons/:id
+// @desc    Update an existing coupon
+// @access  Private/Shopkeeper
+export const updateShopkeeperCoupon = async (req, res, next) => {
+  try {
+    const shop = await Shop.findOne({ owner: req.user._id });
+    if (!shop) {
+      return res.status(404).json({ success: false, message: 'Shop not found' });
+    }
+
+    const coupon = await Coupon.findOne({ _id: req.params.id, shopId: shop._id });
+    if (!coupon) {
+      return res.status(404).json({ success: false, message: 'Coupon not found or access denied' });
+    }
+
+    const {
+      code,
+      description,
+      discountType,
+      discountValue,
+      minimumOrderAmount,
+      maximumDiscount,
+      usageLimit,
+      startDate,
+      endDate,
+      isActive,
+    } = req.body;
+
+    if (code && code.trim().toUpperCase() !== coupon.code) {
+      const formattedCode = code.trim().toUpperCase();
+      const existing = await Coupon.findOne({ code: formattedCode });
+      if (existing) {
+        return res.status(400).json({
+          success: false,
+          message: 'A coupon with this code already exists',
+        });
+      }
+      coupon.code = formattedCode;
+    }
+
+    if (description !== undefined) coupon.description = description.trim();
+    if (discountType && ['PERCENTAGE', 'FIXED'].includes(discountType)) coupon.discountType = discountType;
+    if (discountValue !== undefined) {
+      const val = Number(discountValue);
+      if (val > 0) {
+        if (coupon.discountType === 'PERCENTAGE' && val > 100) {
+          return res.status(400).json({ success: false, message: 'Percentage discount cannot exceed 100%' });
+        }
+        coupon.discountValue = val;
+      }
+    }
+    if (minimumOrderAmount !== undefined) coupon.minimumOrderAmount = Number(minimumOrderAmount) || 0;
+    if (maximumDiscount !== undefined) coupon.maximumDiscount = maximumDiscount !== '' && maximumDiscount !== null ? Number(maximumDiscount) : null;
+    if (usageLimit !== undefined) coupon.usageLimit = usageLimit !== '' && usageLimit !== null ? Number(usageLimit) : null;
+    if (startDate) coupon.startDate = new Date(startDate);
+    if (endDate) coupon.endDate = new Date(endDate);
+    if (isActive !== undefined) coupon.isActive = Boolean(isActive);
+
+    if (coupon.endDate < coupon.startDate) {
+      return res.status(400).json({
+        success: false,
+        message: 'End date must be greater than or equal to start date',
+      });
+    }
+
+    await coupon.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Coupon updated successfully',
+      coupon,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @route   PATCH /api/shopkeeper/coupons/:id/toggle
+// @desc    Toggle coupon active status
+// @access  Private/Shopkeeper
+export const toggleShopkeeperCoupon = async (req, res, next) => {
+  try {
+    const shop = await Shop.findOne({ owner: req.user._id });
+    if (!shop) {
+      return res.status(404).json({ success: false, message: 'Shop not found' });
+    }
+
+    const coupon = await Coupon.findOne({ _id: req.params.id, shopId: shop._id });
+    if (!coupon) {
+      return res.status(404).json({ success: false, message: 'Coupon not found or access denied' });
+    }
+
+    coupon.isActive = !coupon.isActive;
+    await coupon.save();
+
+    res.status(200).json({
+      success: true,
+      message: `Coupon ${coupon.isActive ? 'activated' : 'deactivated'} successfully`,
+      coupon,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @route   DELETE /api/shopkeeper/coupons/:id
+// @desc    Delete a coupon
+// @access  Private/Shopkeeper
+export const deleteShopkeeperCoupon = async (req, res, next) => {
+  try {
+    const shop = await Shop.findOne({ owner: req.user._id });
+    if (!shop) {
+      return res.status(404).json({ success: false, message: 'Shop not found' });
+    }
+
+    const coupon = await Coupon.findOneAndDelete({ _id: req.params.id, shopId: shop._id });
+    if (!coupon) {
+      return res.status(404).json({ success: false, message: 'Coupon not found or access denied' });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Coupon deleted successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+

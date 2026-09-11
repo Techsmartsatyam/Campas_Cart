@@ -29,7 +29,7 @@ const generateOrderNumber = () => {
  */
 export const applyCoupon = async (req, res) => {
   try {
-    const { couponCode, subtotal } = req.body;
+    const { couponCode, subtotal, shopId } = req.body;
 
     if (!couponCode || !couponCode.trim()) {
       return res.status(400).json({
@@ -46,15 +46,28 @@ export const applyCoupon = async (req, res) => {
       });
     }
 
-    const coupon = await Coupon.findOne({
+    const query = {
       code: couponCode.trim().toUpperCase(),
       isActive: true,
-    });
+    };
+
+    if (shopId) {
+      query.$or = [{ shopId: null }, { shopId: shopId }];
+    }
+
+    const coupon = await Coupon.findOne(query);
 
     if (!coupon) {
       return res.status(404).json({
         success: false,
         message: 'Invalid or inactive coupon code',
+      });
+    }
+
+    if (shopId && coupon.shopId && coupon.shopId.toString() !== shopId.toString()) {
+      return res.status(400).json({
+        success: false,
+        message: 'This coupon is not valid for items in your cart',
       });
     }
 
@@ -318,6 +331,7 @@ export const createOrder = async (req, res) => {
       couponDoc = await Coupon.findOne({
         code: couponCode.trim().toUpperCase(),
         isActive: true,
+        $or: [{ shopId: null }, { shopId: shop._id }],
       });
 
       if (couponDoc) {
@@ -325,8 +339,9 @@ export const createOrder = async (req, res) => {
         const validDates = now >= new Date(couponDoc.startDate) && now <= new Date(couponDoc.endDate);
         const validLimit = couponDoc.usageLimit === null || couponDoc.usedCount < couponDoc.usageLimit;
         const validMinOrder = calculatedSubtotal >= couponDoc.minimumOrderAmount;
+        const validShop = !couponDoc.shopId || couponDoc.shopId.toString() === shop._id.toString();
 
-        if (validDates && validLimit && validMinOrder) {
+        if (validDates && validLimit && validMinOrder && validShop) {
           if (couponDoc.discountType === 'PERCENTAGE') {
             discountAmount = (calculatedSubtotal * couponDoc.discountValue) / 100;
             if (couponDoc.maximumDiscount && couponDoc.maximumDiscount > 0) {

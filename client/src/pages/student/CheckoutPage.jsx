@@ -95,6 +95,7 @@ export default function CheckoutPage() {
       const res = await api.post('/orders/apply-coupon', {
         couponCode: couponCode.trim(),
         subtotal,
+        shopId: shop?._id,
       });
 
       if (res && res.success) {
@@ -728,10 +729,10 @@ const finalTotal = Math.max(
               <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
                 <span>Delivery Fee</span>
                 <span>{deliveryFee > 0 ? `₹${deliveryFee.toFixed(2)}` : 'FREE'}</span>
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
                 <span>GST</span>
                 <span>₹{roundedGstAmount.toFixed(2)}</span>
-                </div>
               </div>
               {appliedCoupon && (
                 <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)' }}>

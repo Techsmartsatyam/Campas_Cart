@@ -24,7 +24,9 @@ import {
   Upload,
   X,
   Star,
+  Tag,
 } from 'lucide-react';
+import CouponManagement from '../components/CouponManagement';
 
 export default function Shopkeeper() {
   const { user, refreshUser } = useAuth();
@@ -490,6 +492,7 @@ export default function Shopkeeper() {
               { id: 'PRODUCTS', label: 'Products', icon: Package },
               { id: 'INVENTORY', label: 'Inventory', icon: Layers },
               { id: 'ORDERS', label: 'Orders', icon: ShoppingBag },
+              { id: 'COUPONS', label: 'Coupons', icon: Tag },
               { id: 'REVIEWS', label: 'Reviews & Ratings', icon: Star },
               { id: 'PAYMENT_SETTINGS', label: 'Payment Settings', icon: DollarSign },
               { id: 'MY_SHOP', label: 'Shop Settings', icon: Store },
@@ -536,6 +539,9 @@ export default function Shopkeeper() {
               </div>
             </div>
           )}
+
+          {/* COUPONS TAB */}
+          {activeTab === 'COUPONS' && <CouponManagement shop={shop} />}
 
           {/* REVIEWS & RATINGS TAB */}
           {activeTab === 'REVIEWS' && <ShopkeeperReviewsTab shop={shop} />}
