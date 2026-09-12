@@ -13,7 +13,7 @@ export const getCategories = async (req, res, next) => {
       query.name = { $regex: search.trim(), $options: 'i' };
     }
 
-    const categories = await Category.find(query).sort({ name: 1 });
+    const categories = await Category.find(query).sort({ sortOrder: 1, name: 1 });
 
     res.status(200).json({
       success: true,
