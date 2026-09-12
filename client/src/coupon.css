@@ -38,39 +38,8 @@
   --cpn-modal-overlay: rgba(15, 23, 42, 0.55);
 }
 
-/* ── Dark Mode ── */
-@media (prefers-color-scheme: dark) {
-  :root {
-    --cpn-bg: #1e293b;
-    --cpn-bg-subtle: #0f172a;
-    --cpn-bg-hover: #334155;
-    --cpn-border: #334155;
-    --cpn-border-light: #1e293b;
-    --cpn-text: #f1f5f9;
-    --cpn-text-secondary: #cbd5e1;
-    --cpn-text-muted: #64748b;
-    --cpn-accent: #34d399;
-    --cpn-accent-light: rgba(52, 211, 153, 0.15);
-    --cpn-accent-bg: rgba(16, 185, 129, 0.1);
-    --cpn-accent-border: rgba(52, 211, 153, 0.3);
-    --cpn-accent-dark: #6ee7b7;
-    --cpn-danger: #f87171;
-    --cpn-danger-light: rgba(239, 68, 68, 0.12);
-    --cpn-danger-border: rgba(239, 68, 68, 0.3);
-    --cpn-warning: #fbbf24;
-    --cpn-warning-light: rgba(245, 158, 11, 0.12);
-    --cpn-warning-border: rgba(245, 158, 11, 0.3);
-    --cpn-blue: #38bdf8;
-    --cpn-blue-light: rgba(56, 189, 248, 0.12);
-    --cpn-gray-badge: #94a3b8;
-    --cpn-gray-badge-bg: #334155;
-    --cpn-gray-badge-border: #475569;
-    --cpn-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
-    --cpn-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
-    --cpn-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.4);
-    --cpn-modal-overlay: rgba(0, 0, 0, 0.65);
-  }
-}
+
+
 
 /* ============================================================
    SHOPKEEPER — COUPON MANAGEMENT
