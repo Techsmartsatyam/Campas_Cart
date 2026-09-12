@@ -6,6 +6,7 @@ import { ShoppingBag, LogOut, User as UserIcon, Menu, X, Bell, Check, ExternalLi
 import NearCartLogo from '../components/NearCartLogo';
 import PwaInstallButton from '../components/PwaInstallButton';
 import PwaInstallBanner from '../components/PwaInstallBanner';
+import Footer from '../components/Footer';
 import { registerPwaInstallation } from '../utils/pwaInstallTracker';
 import api from '../services/api';
 
@@ -445,52 +446,7 @@ export default function MainLayout() {
       <PwaInstallBanner />
 
       {/* Footer */}
-      <footer
-        style={{
-          borderTop: '1px solid var(--border-color)',
-          background: '#ffffff',
-          padding: '3rem 0 2rem 0',
-          marginTop: 'auto',
-        }}
-      >
-        <div className="container">
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-              gap: '2rem',
-              marginBottom: '2rem',
-            }}
-          >
-            <div>
-              <NearCartLogo size="small" />
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.75rem', lineHeight: '1.5' }}>
-                NearCart connects customers with nearby local shops for fast, convenient, and reliable ordering & delivery.
-              </p>
-            </div>
-            <div>
-              <h4 style={{ color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: '0.75rem' }}>Platform</h4>
-              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                <li><Link to="/student">Student Marketplace</Link></li>
-                <li><Link to="/shopkeeper">Shop Partner Portal</Link></li>
-                <li><Link to="/delivery">Delivery Partner Hub</Link></li>
-                <li><Link to="/admin">Admin Governance</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 style={{ color: 'var(--text-primary)', fontSize: '0.95rem', marginBottom: '0.75rem' }}>Legal & Guidelines</h4>
-              <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '0.4rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                <li><a href="#">Privacy Policy</a></li>
-                <li><a href="#">Terms of Service</a></li>
-                <li><a href="#">Merchant Guidelines</a></li>
-              </ul>
-            </div>
-          </div>
-          <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '1.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-            <p>© {new Date().getFullYear()} NearCart Platform. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }
