@@ -22,6 +22,7 @@ const NotificationsPage = lazy(() => import('./pages/NotificationsPage'));
 const Shopkeeper = lazy(() => import('./pages/Shopkeeper'));
 const Delivery = lazy(() => import('./pages/Delivery'));
 const Admin = lazy(() => import('./pages/Admin'));
+const About = lazy(() => import('./pages/About'));
 
 const PageFallback = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh', padding: '2rem' }}>
@@ -54,6 +55,7 @@ function App() {
               }
             />
             <Route path="unauthorized" element={<Unauthorized />} />
+            <Route path="about" element={<About />} />
 
             {/* Protected Student Routes */}
             <Route

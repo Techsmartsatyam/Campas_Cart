@@ -131,9 +131,9 @@ export default function MainLayout() {
             <a href="#features" style={{ color: 'var(--text-secondary)' }}>
               Features
             </a>
-            <a href="#about-nearcart" style={{ color: 'var(--text-secondary)' }}>
+            <Link to="/about" style={{ color: 'var(--text-secondary)' }}>
               About
-            </a>
+            </Link>
 
             <PwaInstallButton />
 
@@ -379,6 +379,9 @@ export default function MainLayout() {
           >
             <Link to="/" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--text-primary)' }}>
               Home
+            </Link>
+            <Link to="/about" onClick={() => setMobileMenuOpen(false)} style={{ color: 'var(--text-primary)' }}>
+              About
             </Link>
             <PwaInstallButton variant="mobile" />
             {isAuthenticated ? (

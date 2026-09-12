@@ -200,6 +200,11 @@ export default function Footer() {
                   Notifications
                 </Link>
               </li>
+              <li>
+                <Link to="/about" className="footer-link">
+                  About NearCart
+                </Link>
+              </li>
             </ul>
           </div>
 
