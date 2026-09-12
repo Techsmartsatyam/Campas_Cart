@@ -31,13 +31,28 @@ export const getOrderPaymentQr = async (req, res, next) => {
     const qrImage = order.upiQrSnapshot?.imageUrl || shop.upiQrImage || '';
     const upiId = order.upiQrSnapshot?.upiId || shop.upiId || '';
 
+    // Build UPI intent URI with server-calculated amount (security: never from request body)
+    let upiPaymentUri = '';
+    const amount = order.totalAmount;
+    const formattedAmount = (typeof amount === 'number' && amount > 0)
+      ? amount.toFixed(2)
+      : '';
+
+    if (upiId && formattedAmount) {
+      const shopName = shop.name || 'Campus Shop';
+      const txnNote = `NearCart-Order-${order.orderNumber}`;
+      upiPaymentUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(shopName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(txnNote)}`;
+    }
+
     return res.status(200).json({
       success: true,
       shopName: shop.name || 'Campus Shop',
       totalAmount: order.totalAmount,
+      formattedAmount,
       upiEnabled: shop.upiEnabled !== false,
       upiId,
       upiQrImage: qrImage,
+      upiPaymentUri,
       orderNumber: order.orderNumber,
       paymentStatus: order.paymentStatus,
     });

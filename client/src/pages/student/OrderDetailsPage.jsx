@@ -4,6 +4,7 @@ import api from '../../services/api';
 import { useNotifications } from '../../context/NotificationContext';
 import { ArrowLeft, MapPin, Store, CreditCard, Clock, Package, Phone, User, ShieldCheck, Eye, EyeOff, Star } from 'lucide-react';
 import RateOrderModal from '../../components/RateOrderModal';
+import { QRCodeSVG } from 'qrcode.react';
 
 const LiveDeliveryMap = React.lazy(() => import('../../components/LiveDeliveryMap'));
 
@@ -19,6 +20,9 @@ export default function OrderDetailsPage() {
   const [customReason, setCustomReason] = useState('');
   const [showPhone, setShowPhone] = useState(false);
   const [showRateModal, setShowRateModal] = useState(false);
+
+  // UPI payment data from server (amount-locked URI)
+  const [upiPaymentData, setUpiPaymentData] = useState(null);
 
   // Socket & Live Tracking state
   const [driverLocation, setDriverLocation] = useState(null);
@@ -95,6 +99,26 @@ export default function OrderDetailsPage() {
       setLoading(false);
     }
   };
+
+  // Fetch server-built UPI payment URI (with exact amount) when order is UPI and unpaid
+  useEffect(() => {
+    if (!order) return;
+    if (order.paymentMethod !== 'UPI') return;
+    if (order.paymentStatus === 'PAID') return;
+    if (['CANCELLED', 'SHOP_REJECTED'].includes(order.orderStatus)) return;
+
+    const fetchUpiPayment = async () => {
+      try {
+        const res = await api.get(`/payments/qr/${order._id}`);
+        if (res && res.success) {
+          setUpiPaymentData(res);
+        }
+      } catch (err) {
+        console.warn('Could not fetch UPI payment data:', err.message);
+      }
+    };
+    fetchUpiPayment();
+  }, [order?._id, order?.paymentMethod, order?.paymentStatus, order?.orderStatus]);
 
   const handleConfirmCancel = async () => {
     try {
@@ -588,41 +612,90 @@ export default function OrderDetailsPage() {
               </a>
             </div>
 
-            {/* UPI QR Code Payment Box */}
+            {/* UPI Payment Box — Dynamic QR with Server-Calculated Amount */}
             {order.paymentMethod === 'UPI' && order.paymentStatus !== 'PAID' && !['CANCELLED', 'SHOP_REJECTED'].includes(order.orderStatus) && (
               <div style={{
                 marginTop: '1rem',
-                padding: '1rem',
-                borderRadius: '0.5rem',
-                background: 'rgba(56, 189, 248, 0.05)',
-                border: '1px solid rgba(56, 189, 248, 0.2)',
+                padding: '1.25rem',
+                borderRadius: '0.75rem',
+                background: '#f0fdf4',
+                border: '1px solid #bbf7d0',
               }}>
-                <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: 'var(--text-primary)', textAlign: 'center' }}>
-                  Shopkeeper UPI QR Code
-                </h4>
+                {/* Amount Header */}
+                <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>Pay to {upiPaymentData?.shopName || order.shop?.name || 'Shopkeeper'}</div>
+                  <div style={{ fontSize: '1.5rem', fontWeight: '800', color: '#059669' }}>
+                    ₹{upiPaymentData?.formattedAmount || order.totalAmount?.toFixed(2) || '0.00'}
+                  </div>
+                </div>
 
-                {order.upiQrSnapshot?.upiQrImage ? (
-                  <div style={{ textAlignment: 'center', textAlign: 'center', marginBottom: '0.75rem' }}>
-                    <img
-                      src={order.upiQrSnapshot.upiQrImage}
-                      alt="UPI QR"
-                      style={{ width: '160px', height: '160px', borderRadius: '0.5rem', border: '2px solid var(--border-color)', margin: '0 auto' }}
-                    />
+                {/* Dynamic QR Code (with amount baked in) */}
+                {upiPaymentData?.upiPaymentUri ? (
+                  <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                    <div style={{ fontSize: '0.75rem', color: '#047857', fontWeight: '600', marginBottom: '0.5rem' }}>
+                      Order Payment QR — Amount Included
+                    </div>
+                    <div style={{
+                      display: 'inline-block',
+                      padding: '0.75rem',
+                      background: '#ffffff',
+                      borderRadius: '0.75rem',
+                      border: '2px solid #a7f3d0',
+                    }}>
+                      <QRCodeSVG
+                        value={upiPaymentData.upiPaymentUri}
+                        size={200}
+                        level="M"
+                        includeMargin={false}
+                      />
+                    </div>
+                    <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>
+                      Scan with any UPI app — amount auto-fills to ₹{upiPaymentData.formattedAmount}
+                    </div>
                   </div>
                 ) : (
-                  <div style={{ padding: '0.75rem', textAlign: 'center', background: 'rgba(0,0,0,0.2)', borderRadius: '0.4rem', marginBottom: '0.75rem' }}>
-                    <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', margin: 0 }}>QR Image unavailable</p>
-                  </div>
+                  /* Static QR Fallback if no dynamic URI */
+                  order.upiQrSnapshot?.imageUrl ? (
+                    <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+                      <div style={{ fontSize: '0.75rem', color: '#92400e', fontWeight: '600', marginBottom: '0.5rem' }}>
+                        Shopkeeper's General QR — Enter amount manually
+                      </div>
+                      <img
+                        src={order.upiQrSnapshot.imageUrl}
+                        alt="Shopkeeper UPI QR"
+                        style={{ width: '180px', height: '180px', objectFit: 'contain', borderRadius: '0.5rem', border: '2px solid var(--border-color)', margin: '0 auto' }}
+                        onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                      />
+                      <div style={{ fontSize: '0.7rem', color: '#b45309', marginTop: '0.5rem' }}>
+                        ⚠ This QR does not include the amount. Enter ₹{order.totalAmount?.toFixed(2)} manually.
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ padding: '0.75rem', textAlign: 'center', background: '#fef3c7', borderRadius: '0.4rem', marginBottom: '0.75rem' }}>
+                      <p style={{ color: '#92400e', fontSize: '0.8rem', margin: 0 }}>QR unavailable — use UPI ID below to pay</p>
+                    </div>
+                  )
                 )}
 
-                {order.upiQrSnapshot?.upiId && (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                {/* UPI ID Display */}
+                {(upiPaymentData?.upiId || order.upiQrSnapshot?.upiId) && (
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.5rem',
+                    marginBottom: '0.75rem',
+                    padding: '0.5rem 0.75rem',
+                    background: '#ffffff',
+                    borderRadius: '0.5rem',
+                    border: '1px solid var(--border-color)',
+                  }}>
                     <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', fontFamily: 'monospace' }}>
-                      UPI ID: <strong>{order.upiQrSnapshot.upiId}</strong>
+                      UPI ID: <strong>{upiPaymentData?.upiId || order.upiQrSnapshot.upiId}</strong>
                     </span>
                     <button
                       onClick={() => {
-                        navigator.clipboard.writeText(order.upiQrSnapshot.upiId);
+                        navigator.clipboard.writeText(upiPaymentData?.upiId || order.upiQrSnapshot?.upiId || '');
                         alert('UPI ID copied to clipboard!');
                       }}
                       style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline' }}
@@ -632,6 +705,31 @@ export default function OrderDetailsPage() {
                   </div>
                 )}
 
+                {/* Pay via UPI Deeplink Button (mobile) */}
+                {upiPaymentData?.upiPaymentUri && order.paymentStatus === 'PENDING' && (
+                  <a
+                    href={upiPaymentData.upiPaymentUri}
+                    style={{
+                      display: 'block',
+                      width: '100%',
+                      padding: '0.65rem',
+                      fontSize: '0.9rem',
+                      fontWeight: '700',
+                      color: '#ffffff',
+                      background: 'linear-gradient(135deg, #7c3aed 0%, #5b21b6 100%)',
+                      border: 'none',
+                      borderRadius: '0.5rem',
+                      textAlign: 'center',
+                      textDecoration: 'none',
+                      cursor: 'pointer',
+                      marginBottom: '0.5rem',
+                    }}
+                  >
+                    💳 Pay ₹{upiPaymentData.formattedAmount} via UPI App
+                  </a>
+                )}
+
+                {/* I Have Paid Button */}
                 {order.paymentStatus === 'PENDING' && (
                   <button
                     onClick={async () => {
@@ -659,9 +757,9 @@ export default function OrderDetailsPage() {
                   <div style={{
                     padding: '0.5rem',
                     borderRadius: '0.4rem',
-                    background: 'rgba(245, 158, 11, 0.15)',
-                    border: '1px solid rgba(245, 158, 11, 0.4)',
-                    color: '#fbbf24',
+                    background: 'rgba(245, 158, 11, 0.12)',
+                    border: '1px solid rgba(245, 158, 11, 0.3)',
+                    color: '#b45309',
                     fontSize: '0.8rem',
                     textAlign: 'center',
                     fontWeight: '600'
