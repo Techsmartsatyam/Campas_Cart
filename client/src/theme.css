@@ -176,31 +176,38 @@ img, svg, video, canvas, audio {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Responsive Product Grid — 4 Columns on Mobile (360px, 390px, 414px) with zero horizontal scroll */
+/* Responsive Product Grid — Compact & Adaptive Across Mobile, Tablet, Desktop */
 .product-grid-responsive {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0.5rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.65rem;
   width: 100%;
+}
+
+@media (min-width: 480px) {
+  .product-grid-responsive {
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 0.75rem;
+  }
 }
 
 @media (min-width: 640px) {
   .product-grid-responsive {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 0.75rem;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.85rem;
   }
 }
 
 @media (min-width: 768px) {
   .product-grid-responsive {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
     gap: 1rem;
   }
 }
 
-@media (min-width: 1024px) {
+@media (min-width: 1200px) {
   .product-grid-responsive {
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(215px, 1fr));
     gap: 1.25rem;
   }
 }

@@ -153,9 +153,11 @@ export const ProductCard = React.memo(function ProductCard({ product, onClick, o
         flexDirection: 'column',
         height: '100%',
         position: 'relative',
-        padding: '0.6rem',
-        borderRadius: 'var(--radius-sm)',
+        padding: '0.65rem',
+        borderRadius: 'var(--radius-sm, 0.5rem)',
         background: '#ffffff',
+        boxSizing: 'border-box',
+        transition: 'transform 0.15s ease, box-shadow 0.15s ease',
       }}
     >
       {hasDiscount && (
@@ -164,31 +166,35 @@ export const ProductCard = React.memo(function ProductCard({ product, onClick, o
             position: 'absolute',
             top: '0.4rem',
             right: '0.4rem',
-            background: 'var(--danger)',
+            background: 'var(--danger, #ef4444)',
             color: '#fff',
-            fontSize: '0.6rem',
+            fontSize: '0.625rem',
             fontWeight: '800',
-            padding: '0.15rem 0.35rem',
-            borderRadius: '0.2rem',
+            padding: '0.15rem 0.4rem',
+            borderRadius: '0.25rem',
             zIndex: 2,
+            boxShadow: '0 2px 4px rgba(239, 68, 68, 0.25)',
           }}
         >
           {discountPercent}% OFF
         </span>
       )}
 
+      {/* Compact Image Frame */}
       <div
         style={{
           width: '100%',
-          aspectRatio: '1 / 1',
-          borderRadius: 'calc(var(--radius-sm) - 2px)',
+          height: '135px',
+          maxHeight: '140px',
+          borderRadius: '0.35rem',
           background: '#f8fafc',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          marginBottom: '0.4rem',
-          border: '1px solid var(--border-color)',
+          marginBottom: '0.45rem',
+          border: '1px solid var(--border-color, #e2e8f0)',
           overflow: 'hidden',
+          flexShrink: 0,
         }}
       >
         {product.images && product.images.length > 0 ? (
@@ -197,19 +203,20 @@ export const ProductCard = React.memo(function ProductCard({ product, onClick, o
             alt={product.name}
             loading="lazy"
             decoding="async"
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '0.25rem' }}
           />
         ) : (
           <span style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>No Image</span>
         )}
       </div>
 
+      {/* Shop Name Badge */}
       <span
         onClick={handleShopClick}
         title={product.shop?.name ? `View ${product.shop.name}` : undefined}
         style={{
-          fontSize: '0.65rem',
-          color: 'var(--primary)',
+          fontSize: '0.68rem',
+          color: 'var(--primary, #0284c7)',
           fontWeight: '700',
           textTransform: 'uppercase',
           whiteSpace: 'nowrap',
@@ -217,65 +224,71 @@ export const ProductCard = React.memo(function ProductCard({ product, onClick, o
           textOverflow: 'ellipsis',
           display: 'block',
           cursor: product.shop?._id ? 'pointer' : 'default',
+          marginBottom: '0.15rem',
         }}
       >
         {product.shop?.name || 'Local Store'}
       </span>
 
+      {/* Clamped Product Title */}
       <h4
         style={{
-          fontSize: '0.78rem',
+          fontSize: '0.825rem',
           fontWeight: '700',
-          color: 'var(--text-primary)',
-          margin: '0.15rem 0 0.25rem 0',
-          lineHeight: '1.15',
+          color: 'var(--text-primary, #0f172a)',
+          margin: '0 0 0.35rem 0',
+          lineHeight: '1.2',
           display: '-webkit-box',
           WebkitLineClamp: 2,
           WebkitBoxOrient: 'vertical',
           overflow: 'hidden',
-          minHeight: '1.8rem',
+          minHeight: '2.0rem',
         }}
       >
         {product.name}
       </h4>
 
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.3rem', marginBottom: '0.2rem', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: '0.9rem', fontWeight: '800', color: 'var(--text-primary)' }}>
+      {/* Price & Discount */}
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.35rem', marginBottom: '0.25rem', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '0.95rem', fontWeight: '800', color: 'var(--text-primary, #0f172a)' }}>
           ₹{hasDiscount ? product.discountPrice : product.price}
         </span>
         {hasDiscount && (
-          <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
+          <span style={{ fontSize: '0.725rem', color: 'var(--text-muted, #94a3b8)', textDecoration: 'line-through' }}>
             ₹{product.price}
           </span>
         )}
-        {product.unit && <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>/ {product.unit}</span>}
+        {product.unit && <span style={{ fontSize: '0.68rem', color: 'var(--text-muted, #94a3b8)' }}>/ {product.unit}</span>}
       </div>
 
       {product.gstPercentage > 0 && (
-        <span style={{ fontSize: '0.6rem', color: '#6b7280', background: '#f3f4f6', padding: '0.1rem 0.3rem', borderRadius: '0.2rem', marginBottom: '0.25rem', display: 'inline-block' }}>
+        <span style={{ fontSize: '0.625rem', color: '#475569', background: '#f1f5f9', padding: '0.1rem 0.35rem', borderRadius: '0.2rem', marginBottom: '0.35rem', display: 'inline-block', width: 'fit-content' }}>
           incl. {product.gstPercentage}% GST
         </span>
       )}
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+      {/* Card Footer Action */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '0.4rem', borderTop: '1px dashed #f1f5f9' }}>
         <span
           style={{
-            fontSize: '0.65rem',
+            fontSize: '0.68rem',
             fontWeight: '700',
             color: product.stock > 0 ? '#047857' : '#b91c1c',
           }}
         >
-          {product.stock > 0 ? 'In Stock' : 'Out'}
+          {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
         </span>
 
         <button
-          className="btn-secondary"
+          className="btn-primary"
           style={{
-            padding: '0.2rem 0.45rem',
-            fontSize: '0.7rem',
+            padding: '0.25rem 0.55rem',
+            fontSize: '0.725rem',
+            fontWeight: '700',
             pointerEvents: 'none',
-            borderRadius: '0.25rem',
+            borderRadius: '0.3rem',
             lineHeight: '1',
+            boxShadow: 'none',
           }}
         >
           + ADD

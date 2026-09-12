@@ -68,16 +68,15 @@ export default function ShopDetails() {
       <div
         className="glass-card"
         style={{
-          padding: '2rem',
+          padding: '1.75rem',
           marginBottom: '2.5rem',
-          display: 'flex',
-          justify: 'space-between',
-          alignItems: 'flex-start',
-          flexWrap: 'wrap',
-          gap: '1.5rem',
+          width: '100%',
+          boxSizing: 'border-box',
+          overflow: 'hidden',
+          maxWidth: '100%',
         }}
       >
-        <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-start', flexWrap: 'wrap', minWidth: 0, width: '100%' }}>
           <div
             style={{
               width: '4rem',
@@ -91,13 +90,16 @@ export default function ShopDetails() {
               color: 'var(--primary)',
               fontSize: '1.8rem',
               border: '1px solid var(--border-color)',
+              flexShrink: 0,
             }}
           >
             {shop.name.charAt(0)}
           </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.25rem' }}>
-              <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: 'var(--text-primary)' }}>{shop.name}</h1>
+          <div style={{ flex: 1, minWidth: 0, maxWidth: '100%', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem', flexWrap: 'wrap', minWidth: 0 }}>
+              <h1 style={{ fontSize: '1.6rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0, overflowWrap: 'anywhere', wordBreak: 'break-word', minWidth: 0 }}>
+                {shop.name}
+              </h1>
               <span
                 style={{
                   padding: '0.2rem 0.6rem',
@@ -106,18 +108,37 @@ export default function ShopDetails() {
                   fontWeight: '700',
                   background: shop.isOpen ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
                   color: shop.isOpen ? 'var(--success)' : 'var(--danger)',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
                 }}
               >
                 {shop.isOpen ? 'OPEN' : 'CLOSED'}
               </span>
             </div>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', marginBottom: '0.5rem' }}>
+
+            <p style={{
+              color: 'var(--text-secondary)',
+              fontSize: '0.95rem',
+              marginBottom: '0.75rem',
+              lineHeight: '1.5',
+              overflowWrap: 'anywhere',
+              wordBreak: 'break-word',
+              maxWidth: '100%',
+            }}>
               {shop.description || 'Campus partner store'}
             </p>
-            <div style={{ display: 'flex', gap: '1.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-              <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <MapPin size={14} /> {shop.address}
-              </span>
+
+            <div style={{ display: 'flex', gap: '0.75rem 1.5rem', flexWrap: 'wrap', fontSize: '0.85rem', color: 'var(--text-muted)', overflowWrap: 'anywhere', wordBreak: 'break-word', maxWidth: '100%' }}>
+              {shop.address && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
+                  <MapPin size={14} style={{ flexShrink: 0 }} /> <span>{shop.address}</span>
+                </span>
+              )}
+              {shop.phone && (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <Phone size={14} style={{ flexShrink: 0 }} /> <span>{shop.phone}</span>
+                </span>
+              )}
               <span>⭐ {shop.rating?.toFixed(1) || '4.5'} ({shop.totalRatings || 0} ratings)</span>
               <span>Min Order: ₹{shop.minimumOrderAmount || 0}</span>
               <span>Delivery: ₹{shop.deliveryFee || 0}</span>
@@ -140,7 +161,7 @@ export default function ShopDetails() {
         {products.length === 0 ? (
           <EmptyState message="No available products found in this store." />
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '1.5rem' }}>
+          <div className="product-grid-responsive">
             {products.map((prod) => (
               <ProductCard
                 key={prod._id}
