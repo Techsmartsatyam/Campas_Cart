@@ -6,6 +6,7 @@ import { ShoppingBag, LogOut, User as UserIcon, Menu, X, Bell, Check, ExternalLi
 import NearCartLogo from '../components/NearCartLogo';
 import PwaInstallButton from '../components/PwaInstallButton';
 import PwaInstallBanner from '../components/PwaInstallBanner';
+import { registerPwaInstallation } from '../utils/pwaInstallTracker';
 import api from '../services/api';
 
 export default function MainLayout() {
@@ -17,6 +18,17 @@ export default function MainLayout() {
   const navigate = useNavigate();
 
   const recentNotifications = notifications.slice(0, 5);
+
+  useEffect(() => {
+    // Check if app is running in standalone mode (already installed PWA app icon launch)
+    const isStandalone =
+      window.matchMedia('(display-mode: standalone)').matches ||
+      window.navigator.standalone === true;
+
+    if (isStandalone) {
+      registerPwaInstallation();
+    }
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (event) => {

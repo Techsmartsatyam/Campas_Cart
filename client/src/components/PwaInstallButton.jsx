@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Download } from 'lucide-react';
+import { registerPwaInstallation } from '../utils/pwaInstallTracker';
 
 /**
  * PwaInstallButton Component
@@ -33,6 +34,7 @@ export default function PwaInstallButton({ style, className, variant = 'navbar' 
       setIsInstallable(false);
       setDeferredPrompt(null);
       setIsStandalone(true);
+      registerPwaInstallation();
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -53,6 +55,7 @@ export default function PwaInstallButton({ style, className, variant = 'navbar' 
       if (choiceResult.outcome === 'accepted') {
         setIsInstallable(false);
         setDeferredPrompt(null);
+        registerPwaInstallation();
       }
     } catch (err) {
       console.warn('⚠️ [PWA] Install prompt error:', err);

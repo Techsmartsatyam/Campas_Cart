@@ -71,3 +71,26 @@ export const authorizeRoles = (...roles) => {
     next();
   };
 };
+
+// Optional protect middleware - sets req.user if valid token present, otherwise continues without error
+export const optionalProtect = async (req, res, next) => {
+  try {
+    const cookieName = process.env.COOKIE_NAME || 'campuscart_token';
+    let token = req.cookies?.[cookieName];
+
+    if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+      token = req.headers.authorization.split(' ')[1];
+    }
+
+    if (token) {
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      const user = await User.findById(decoded.userId);
+      if (user && user.isActive) {
+        req.user = user;
+      }
+    }
+  } catch (err) {
+    // Ignore token errors for optional protection
+  }
+  next();
+};

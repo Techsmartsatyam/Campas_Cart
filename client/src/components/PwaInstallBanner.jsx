@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Download, X, Sparkles, Smartphone } from 'lucide-react';
+import { registerPwaInstallation } from '../utils/pwaInstallTracker';
 
 /**
  * PwaInstallBanner Component
@@ -39,6 +40,7 @@ export default function PwaInstallBanner() {
       console.log('🎉 [PWA Banner] App installed successfully');
       setIsVisible(false);
       setDeferredPrompt(null);
+      registerPwaInstallation();
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);

@@ -16,6 +16,7 @@ import {
   Trash2,
   AlertTriangle,
   Eye,
+  Smartphone,
 } from 'lucide-react';
 
 export default function Admin() {
@@ -44,6 +45,9 @@ export default function Admin() {
   const [paymentsList, setPaymentsList] = useState([]);
   const [paymentStats, setPaymentStats] = useState(null);
   const [loadingPayments, setLoadingPayments] = useState(false);
+
+  // PWA App Installation Analytics State
+  const [installStats, setInstallStats] = useState(null);
 
   const fetchUsers = async () => {
     setLoadingUsers(true);
@@ -74,9 +78,21 @@ export default function Admin() {
     }
   };
 
+  const fetchInstallStats = async () => {
+    try {
+      const res = await api.get('/admin/analytics/installations');
+      if (res && res.success) {
+        setInstallStats(res);
+      }
+    } catch (err) {
+      console.warn('Could not fetch installation stats:', err.message || err);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
     fetchPayments();
+    fetchInstallStats();
   }, []);
 
   const handleFormChange = (e) => {
@@ -149,28 +165,67 @@ export default function Admin() {
     <div className="container" style={{ padding: '3rem 1.5rem 5rem 1.5rem' }}>
       {/* Header Banner */}
       <div className="glass-card" style={{ padding: '2rem', marginBottom: '2.5rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <div
-            style={{
-              width: '3.5rem',
-              height: '3.5rem',
-              borderRadius: '0.75rem',
-              background: 'rgba(168, 85, 247, 0.15)',
-              color: '#a855f7',
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <div
+              style={{
+                width: '3.5rem',
+                height: '3.5rem',
+                borderRadius: '0.75rem',
+                background: 'rgba(168, 85, 247, 0.15)',
+                color: '#a855f7',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <ShieldCheck size={32} />
+            </div>
+            <div>
+              <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
+                Admin Governance Dashboard
+              </h1>
+              <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', margin: '0.25rem 0 0 0' }}>
+                Onboard staff members and manage user access control across NearCart.
+              </p>
+            </div>
+          </div>
+
+          {/* App Installs Analytics Card */}
+          <div style={{
+            background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
+            color: '#ffffff',
+            padding: '1rem 1.4rem',
+            borderRadius: '0.85rem',
+            boxShadow: '0 8px 24px rgba(37, 99, 235, 0.22)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1rem',
+            minWidth: '220px',
+          }}>
+            <div style={{
+              width: '2.75rem',
+              height: '2.75rem',
+              borderRadius: '0.65rem',
+              background: 'rgba(255, 255, 255, 0.2)',
               display: 'flex',
               alignItems: 'center',
-              justify: 'center',
-            }}
-          >
-            <ShieldCheck size={32} />
-          </div>
-          <div>
-            <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-              Admin Governance Dashboard
-            </h1>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-              Onboard staff members and manage user access control across NearCart.
-            </p>
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}>
+              <Smartphone size={24} color="#ffffff" />
+            </div>
+            <div>
+              <div style={{ fontSize: '0.78rem', fontWeight: '700', opacity: 0.9, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                App Installs
+              </div>
+              <div style={{ fontSize: '1.75rem', fontWeight: '800', lineHeight: 1.1 }}>
+                {installStats ? installStats.totalInstalls : '—'}
+              </div>
+              <div style={{ fontSize: '0.72rem', opacity: 0.85, marginTop: '0.15rem' }}>
+                Unique installations
+              </div>
+            </div>
           </div>
         </div>
       </div>
