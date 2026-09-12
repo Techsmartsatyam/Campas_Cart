@@ -40,12 +40,16 @@ export const getOrderPaymentQr = async (req, res, next) => {
 
     if (upiId && formattedAmount) {
       const shopName = shop.name || 'Campus Shop';
-      const txnNote = `NearCart-Order-${order.orderNumber}`;
-      upiPaymentUri = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(shopName)}&am=${formattedAmount}&cu=INR&tn=${encodeURIComponent(txnNote)}`;
+      const txnNote = `NearCart Order ${order.orderNumber}`;
+      const safeUpiId = encodeURIComponent(upiId.trim()).replace(/%40/g, '@');
+      const safeShopName = encodeURIComponent(shopName);
+      const safeTxnNote = encodeURIComponent(txnNote);
+      upiPaymentUri = `upi://pay?pa=${safeUpiId}&pn=${safeShopName}&am=${formattedAmount}&cu=INR&tn=${safeTxnNote}`;
     }
 
     return res.status(200).json({
       success: true,
+      orderId: order._id,
       shopName: shop.name || 'Campus Shop',
       totalAmount: order.totalAmount,
       formattedAmount,
