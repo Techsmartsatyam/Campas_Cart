@@ -1,0 +1,1363 @@
+/* ============================================================
+   NearCart — Coupon UI Styles
+   Shopkeeper Coupon Management + Checkout Coupon Section
+   ============================================================ */
+
+/* ── Coupon Theme Tokens ── */
+:root {
+  --cpn-bg: #ffffff;
+  --cpn-bg-subtle: #f8fafc;
+  --cpn-bg-hover: #f1f5f9;
+  --cpn-border: #e2e8f0;
+  --cpn-border-light: #f1f5f9;
+  --cpn-text: #0f172a;
+  --cpn-text-secondary: #475569;
+  --cpn-text-muted: #94a3b8;
+  --cpn-accent: #059669;
+  --cpn-accent-light: #d1fae5;
+  --cpn-accent-bg: #ecfdf5;
+  --cpn-accent-border: #a7f3d0;
+  --cpn-accent-dark: #047857;
+  --cpn-danger: #ef4444;
+  --cpn-danger-light: #fef2f2;
+  --cpn-danger-border: #fecaca;
+  --cpn-warning: #f59e0b;
+  --cpn-warning-light: #fffbeb;
+  --cpn-warning-border: #fde68a;
+  --cpn-blue: #0284c7;
+  --cpn-blue-light: #e0f2fe;
+  --cpn-gray-badge: #64748b;
+  --cpn-gray-badge-bg: #f1f5f9;
+  --cpn-gray-badge-border: #e2e8f0;
+  --cpn-shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06);
+  --cpn-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+  --cpn-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
+  --cpn-radius: 0.75rem;
+  --cpn-radius-sm: 0.5rem;
+  --cpn-radius-lg: 1rem;
+  --cpn-modal-overlay: rgba(15, 23, 42, 0.55);
+}
+
+/* ── Dark Mode ── */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --cpn-bg: #1e293b;
+    --cpn-bg-subtle: #0f172a;
+    --cpn-bg-hover: #334155;
+    --cpn-border: #334155;
+    --cpn-border-light: #1e293b;
+    --cpn-text: #f1f5f9;
+    --cpn-text-secondary: #cbd5e1;
+    --cpn-text-muted: #64748b;
+    --cpn-accent: #34d399;
+    --cpn-accent-light: rgba(52, 211, 153, 0.15);
+    --cpn-accent-bg: rgba(16, 185, 129, 0.1);
+    --cpn-accent-border: rgba(52, 211, 153, 0.3);
+    --cpn-accent-dark: #6ee7b7;
+    --cpn-danger: #f87171;
+    --cpn-danger-light: rgba(239, 68, 68, 0.12);
+    --cpn-danger-border: rgba(239, 68, 68, 0.3);
+    --cpn-warning: #fbbf24;
+    --cpn-warning-light: rgba(245, 158, 11, 0.12);
+    --cpn-warning-border: rgba(245, 158, 11, 0.3);
+    --cpn-blue: #38bdf8;
+    --cpn-blue-light: rgba(56, 189, 248, 0.12);
+    --cpn-gray-badge: #94a3b8;
+    --cpn-gray-badge-bg: #334155;
+    --cpn-gray-badge-border: #475569;
+    --cpn-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+    --cpn-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --cpn-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.4);
+    --cpn-modal-overlay: rgba(0, 0, 0, 0.65);
+  }
+}
+
+/* ============================================================
+   SHOPKEEPER — COUPON MANAGEMENT
+   ============================================================ */
+
+/* ── Header Banner ── */
+.cpn-header {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  background: linear-gradient(135deg, var(--cpn-accent) 0%, #0d9488 50%, var(--cpn-accent) 100%);
+  padding: 1.5rem;
+  border-radius: var(--cpn-radius-lg);
+  color: #ffffff;
+  box-shadow: var(--cpn-shadow-md);
+}
+
+@media (min-width: 640px) {
+  .cpn-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.cpn-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.375rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.cpn-header-subtitle {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.875rem;
+  margin: 0.25rem 0 0 0;
+}
+
+.cpn-btn-create {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  background: #ffffff;
+  color: var(--cpn-accent-dark);
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--cpn-radius);
+  border: none;
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cpn-btn-create:hover {
+  background: #f0fdf4;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.cpn-btn-create:active {
+  transform: scale(0.97);
+}
+
+.cpn-btn-create:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/* ── Notification Alerts ── */
+.cpn-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-radius: var(--cpn-radius-sm);
+  font-size: 0.85rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.cpn-alert-error {
+  background: var(--cpn-danger-light);
+  color: var(--cpn-danger);
+  border: 1px solid var(--cpn-danger-border);
+}
+
+.cpn-alert-success {
+  background: var(--cpn-accent-light);
+  color: var(--cpn-accent-dark);
+  border: 1px solid var(--cpn-accent-border);
+}
+
+.cpn-alert-dismiss {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  padding: 0.25rem;
+  display: flex;
+  align-items: center;
+  border-radius: 0.25rem;
+  flex-shrink: 0;
+}
+
+.cpn-alert-dismiss:hover {
+  opacity: 1;
+}
+
+.cpn-alert-dismiss:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 1px;
+}
+
+/* ── Loading State ── */
+.cpn-loading {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.cpn-spinner {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 3px solid var(--cpn-border);
+  border-top-color: var(--cpn-accent);
+  border-radius: 50%;
+  margin: 0 auto 0.75rem;
+  animation: cpn-spin 0.7s linear infinite;
+}
+
+@keyframes cpn-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Empty State ── */
+.cpn-empty {
+  background: var(--cpn-bg);
+  border: 1px solid var(--cpn-border);
+  border-radius: var(--cpn-radius-lg);
+  padding: 3rem 2rem;
+  text-align: center;
+  box-shadow: var(--cpn-shadow-sm);
+}
+
+.cpn-empty-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  background: var(--cpn-accent-light);
+  color: var(--cpn-accent);
+  border-radius: var(--cpn-radius);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1rem;
+}
+
+.cpn-empty-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--cpn-text);
+  margin: 0 0 0.375rem;
+}
+
+.cpn-empty-desc {
+  font-size: 0.875rem;
+  color: var(--cpn-text-muted);
+  margin: 0 0 1.25rem;
+  max-width: 28rem;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cpn-btn-empty {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--cpn-accent);
+  color: #ffffff;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--cpn-radius);
+  border: none;
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.cpn-btn-empty:hover {
+  background: var(--cpn-accent-dark);
+}
+
+.cpn-btn-empty:active {
+  transform: scale(0.97);
+}
+
+.cpn-btn-empty:focus-visible {
+  outline: 2px solid var(--cpn-accent);
+  outline-offset: 2px;
+}
+
+/* ── Coupon Grid ── */
+.cpn-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .cpn-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .cpn-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* ── Coupon Card ── */
+.cpn-card {
+  background: var(--cpn-bg);
+  border: 1px solid var(--cpn-border);
+  border-radius: var(--cpn-radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: var(--cpn-shadow-sm);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.cpn-card:hover {
+  box-shadow: var(--cpn-shadow-md);
+  border-color: var(--cpn-accent-border);
+}
+
+.cpn-card--inactive {
+  opacity: 0.65;
+  border-color: var(--cpn-border);
+}
+
+.cpn-card--inactive:hover {
+  border-color: var(--cpn-border);
+  box-shadow: var(--cpn-shadow-sm);
+}
+
+.cpn-card--expired {
+  border-color: var(--cpn-danger-border);
+  opacity: 0.7;
+}
+
+.cpn-card--expired:hover {
+  border-color: var(--cpn-danger-border);
+  box-shadow: var(--cpn-shadow-sm);
+}
+
+.cpn-card-body {
+  padding: 1.125rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* ── Coupon Code Badge ── */
+.cpn-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cpn-code-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 0.875rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--cpn-accent-dark);
+  background: var(--cpn-accent-light);
+  border: 1.5px dashed var(--cpn-accent-border);
+  padding: 0.3rem 0.625rem;
+  border-radius: var(--cpn-radius-sm);
+  word-break: break-all;
+  max-width: 100%;
+}
+
+.cpn-copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--cpn-accent);
+  cursor: pointer;
+  padding: 0.15rem;
+  border-radius: 0.25rem;
+  transition: color 0.15s ease;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.cpn-copy-btn:hover {
+  color: var(--cpn-accent-dark);
+}
+
+.cpn-copy-btn:focus-visible {
+  outline: 2px solid var(--cpn-accent);
+  outline-offset: 1px;
+}
+
+/* Copy feedback tooltip */
+.cpn-copy-tooltip {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--cpn-text);
+  color: var(--cpn-bg);
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-family: inherit;
+  padding: 0.2rem 0.5rem;
+  border-radius: 0.25rem;
+  white-space: nowrap;
+  pointer-events: none;
+  letter-spacing: 0;
+}
+
+/* ── Status Badges ── */
+.cpn-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 1rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cpn-status-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.cpn-status--active {
+  background: var(--cpn-accent-light);
+  color: var(--cpn-accent-dark);
+  border: 1px solid var(--cpn-accent-border);
+}
+
+.cpn-status--active .cpn-status-dot {
+  background: var(--cpn-accent);
+}
+
+.cpn-status--inactive {
+  background: var(--cpn-gray-badge-bg);
+  color: var(--cpn-gray-badge);
+  border: 1px solid var(--cpn-gray-badge-border);
+}
+
+.cpn-status--inactive .cpn-status-dot {
+  background: var(--cpn-gray-badge);
+}
+
+.cpn-status--expired {
+  background: var(--cpn-danger-light);
+  color: var(--cpn-danger);
+  border: 1px solid var(--cpn-danger-border);
+}
+
+.cpn-status--expired .cpn-status-dot {
+  background: var(--cpn-danger);
+}
+
+.cpn-status--upcoming {
+  background: var(--cpn-warning-light);
+  color: var(--cpn-warning);
+  border: 1px solid var(--cpn-warning-border);
+}
+
+.cpn-status--upcoming .cpn-status-dot {
+  background: var(--cpn-warning);
+}
+
+/* ── Coupon Description ── */
+.cpn-card-desc {
+  font-size: 0.8rem;
+  color: var(--cpn-text-muted);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Discount Banner ── */
+.cpn-discount-banner {
+  background: var(--cpn-accent-bg);
+  border: 1px solid var(--cpn-accent-border);
+  border-radius: var(--cpn-radius-sm);
+  padding: 0.625rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.cpn-discount-main {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--cpn-accent-dark);
+}
+
+.cpn-discount-label {
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--cpn-accent);
+  margin: 0;
+}
+
+.cpn-discount-value {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: var(--cpn-accent-dark);
+  margin: 0;
+  line-height: 1.2;
+}
+
+.cpn-discount-cap {
+  text-align: right;
+}
+
+.cpn-discount-cap-label {
+  font-size: 0.6rem;
+  color: var(--cpn-text-muted);
+  font-weight: 500;
+  margin: 0;
+}
+
+.cpn-discount-cap-val {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--cpn-text-secondary);
+  margin: 0;
+}
+
+/* ── Coupon Details Rows ── */
+.cpn-card-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-size: 0.8rem;
+}
+
+.cpn-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cpn-detail-label {
+  color: var(--cpn-text-muted);
+}
+
+.cpn-detail-value {
+  font-weight: 600;
+  color: var(--cpn-text);
+}
+
+.cpn-detail-divider {
+  border: none;
+  border-top: 1px solid var(--cpn-border-light);
+  margin: 0.125rem 0;
+}
+
+.cpn-detail-dates {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: 0.725rem;
+  color: var(--cpn-text-muted);
+}
+
+/* ── Card Footer / Actions ── */
+.cpn-card-footer {
+  background: var(--cpn-bg-subtle);
+  padding: 0.625rem 1.125rem;
+  border-top: 1px solid var(--cpn-border-light);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.cpn-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: none;
+  border: none;
+  font-size: 0.75rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0.25rem 0.375rem;
+  border-radius: 0.25rem;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.cpn-toggle-btn--deactivate {
+  color: var(--cpn-text-muted);
+}
+
+.cpn-toggle-btn--deactivate:hover {
+  color: var(--cpn-text);
+  background: var(--cpn-bg-hover);
+}
+
+.cpn-toggle-btn--activate {
+  color: var(--cpn-accent);
+}
+
+.cpn-toggle-btn--activate:hover {
+  color: var(--cpn-accent-dark);
+  background: var(--cpn-accent-light);
+}
+
+.cpn-toggle-btn:focus-visible {
+  outline: 2px solid var(--cpn-accent);
+  outline-offset: 1px;
+}
+
+.cpn-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.cpn-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0.375rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  color: var(--cpn-text-muted);
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.cpn-action-btn:focus-visible {
+  outline: 2px solid var(--cpn-blue);
+  outline-offset: 1px;
+}
+
+.cpn-action-btn--edit:hover {
+  color: var(--cpn-blue);
+  background: var(--cpn-blue-light);
+}
+
+.cpn-action-btn--delete:hover {
+  color: var(--cpn-danger);
+  background: var(--cpn-danger-light);
+}
+
+/* ============================================================
+   MODAL — Create / Edit / Delete
+   ============================================================ */
+
+.cpn-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: var(--cpn-modal-overlay);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.cpn-modal {
+  background: var(--cpn-bg);
+  border-radius: var(--cpn-radius-lg);
+  width: 100%;
+  max-width: 32rem;
+  box-shadow: var(--cpn-shadow-lg);
+  overflow: hidden;
+  border: 1px solid var(--cpn-border);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.cpn-modal-header {
+  padding: 1rem 1.5rem;
+  background: linear-gradient(135deg, var(--cpn-accent) 0%, #0d9488 100%);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.cpn-modal-header-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cpn-modal-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.cpn-modal-close {
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.75);
+  padding: 0.375rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.cpn-modal-close:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.cpn-modal-close:focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 1px;
+}
+
+/* ── Modal Form ── */
+.cpn-modal-form {
+  padding: 1.25rem 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+/* ── Form Sections ── */
+.cpn-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.cpn-form-section-title {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cpn-text-muted);
+  padding-bottom: 0.25rem;
+  border-bottom: 1px solid var(--cpn-border-light);
+  margin: 0;
+}
+
+/* ── Form Fields ── */
+.cpn-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.cpn-label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--cpn-text-secondary);
+}
+
+.cpn-label-required {
+  color: var(--cpn-danger);
+  margin-left: 0.125rem;
+}
+
+.cpn-input {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--cpn-radius-sm);
+  border: 1px solid var(--cpn-border);
+  background: var(--cpn-bg);
+  color: var(--cpn-text);
+  font-size: 0.875rem;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+}
+
+.cpn-input::placeholder {
+  color: var(--cpn-text-muted);
+}
+
+.cpn-input:focus {
+  border-color: var(--cpn-accent);
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.15);
+}
+
+.cpn-input:disabled {
+  background: var(--cpn-bg-subtle);
+  color: var(--cpn-text-muted);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.cpn-input--code {
+  font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  border-style: dashed;
+}
+
+.cpn-select {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--cpn-radius-sm);
+  border: 1px solid var(--cpn-border);
+  background: var(--cpn-bg);
+  color: var(--cpn-text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  font-family: inherit;
+  cursor: pointer;
+  appearance: auto;
+}
+
+.cpn-select:focus {
+  border-color: var(--cpn-accent);
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.15);
+}
+
+/* Grid layouts for form */
+.cpn-form-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.875rem;
+}
+
+@media (min-width: 480px) {
+  .cpn-form-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+/* ── Active Toggle ── */
+.cpn-toggle-field {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.25rem;
+}
+
+.cpn-checkbox {
+  width: 1rem;
+  height: 1rem;
+  accent-color: var(--cpn-accent);
+  cursor: pointer;
+}
+
+.cpn-toggle-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--cpn-text-secondary);
+  cursor: pointer;
+}
+
+/* ── Modal Footer ── */
+.cpn-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid var(--cpn-border-light);
+  flex-shrink: 0;
+}
+
+.cpn-btn-cancel {
+  padding: 0.5rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--cpn-text-muted);
+  background: none;
+  border: 1px solid var(--cpn-border);
+  border-radius: var(--cpn-radius-sm);
+  cursor: pointer;
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+
+.cpn-btn-cancel:hover {
+  color: var(--cpn-text);
+  border-color: var(--cpn-text-muted);
+  background: var(--cpn-bg-hover);
+}
+
+.cpn-btn-cancel:focus-visible {
+  outline: 2px solid var(--cpn-accent);
+  outline-offset: 2px;
+}
+
+.cpn-btn-submit {
+  padding: 0.5rem 1.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: var(--cpn-accent);
+  border: none;
+  border-radius: var(--cpn-radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.cpn-btn-submit:hover {
+  background: var(--cpn-accent-dark);
+}
+
+.cpn-btn-submit:active {
+  transform: scale(0.97);
+}
+
+.cpn-btn-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cpn-btn-submit:focus-visible {
+  outline: 2px solid var(--cpn-accent);
+  outline-offset: 2px;
+}
+
+/* ── Coupon Preview (inside modal) ── */
+.cpn-preview {
+  background: var(--cpn-bg-subtle);
+  border: 1px dashed var(--cpn-border);
+  border-radius: var(--cpn-radius-sm);
+  padding: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  align-items: center;
+  text-align: center;
+}
+
+.cpn-preview-title {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--cpn-text-muted);
+  margin: 0;
+}
+
+.cpn-preview-code {
+  font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--cpn-accent-dark);
+  background: var(--cpn-accent-light);
+  border: 1.5px dashed var(--cpn-accent-border);
+  padding: 0.25rem 0.625rem;
+  border-radius: 0.375rem;
+  text-transform: uppercase;
+  word-break: break-all;
+}
+
+.cpn-preview-discount {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--cpn-accent-dark);
+  margin: 0;
+}
+
+.cpn-preview-detail {
+  font-size: 0.75rem;
+  color: var(--cpn-text-muted);
+  margin: 0;
+}
+
+/* ── Delete Confirmation Modal ── */
+.cpn-delete-modal {
+  max-width: 24rem;
+  width: 100%;
+  border-radius: var(--cpn-radius);
+  padding: 1.5rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+  background: var(--cpn-bg);
+  border: 1px solid var(--cpn-border);
+  box-shadow: var(--cpn-shadow-lg);
+}
+
+.cpn-delete-icon {
+  width: 3rem;
+  height: 3rem;
+  background: var(--cpn-danger-light);
+  color: var(--cpn-danger);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cpn-delete-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--cpn-text);
+  margin: 0;
+}
+
+.cpn-delete-desc {
+  font-size: 0.85rem;
+  color: var(--cpn-text-muted);
+  margin: 0;
+  line-height: 1.45;
+}
+
+.cpn-delete-code {
+  font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+  font-weight: 700;
+  color: var(--cpn-danger);
+  background: var(--cpn-danger-light);
+  padding: 0.1rem 0.4rem;
+  border-radius: 0.25rem;
+}
+
+.cpn-delete-actions {
+  display: flex;
+  gap: 0.75rem;
+  width: 100%;
+  margin-top: 0.25rem;
+}
+
+.cpn-btn-delete-cancel {
+  flex: 1;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--cpn-text-secondary);
+  background: var(--cpn-bg-subtle);
+  border: 1px solid var(--cpn-border);
+  border-radius: var(--cpn-radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.cpn-btn-delete-cancel:hover {
+  background: var(--cpn-bg-hover);
+}
+
+.cpn-btn-delete-cancel:focus-visible {
+  outline: 2px solid var(--cpn-accent);
+  outline-offset: 2px;
+}
+
+.cpn-btn-delete-confirm {
+  flex: 1;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #ffffff;
+  background: var(--cpn-danger);
+  border: none;
+  border-radius: var(--cpn-radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+
+.cpn-btn-delete-confirm:hover {
+  background: #dc2626;
+}
+
+.cpn-btn-delete-confirm:active {
+  transform: scale(0.97);
+}
+
+.cpn-btn-delete-confirm:focus-visible {
+  outline: 2px solid var(--cpn-danger);
+  outline-offset: 2px;
+}
+
+/* ── No-shop Warning ── */
+.cpn-no-shop {
+  background: var(--cpn-warning-light);
+  border: 1px solid var(--cpn-warning-border);
+  border-radius: var(--cpn-radius);
+  padding: 2rem;
+  text-align: center;
+  margin: 1.5rem 0;
+}
+
+.cpn-no-shop-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--cpn-text);
+  margin: 0.75rem 0 0.25rem;
+}
+
+.cpn-no-shop-desc {
+  font-size: 0.85rem;
+  color: var(--cpn-text-muted);
+  margin: 0;
+}
+
+/* ============================================================
+   CHECKOUT — COUPON SECTION
+   ============================================================ */
+
+.cpn-checkout-section {
+  margin-bottom: 1.25rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--cpn-border);
+}
+
+.cpn-checkout-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--cpn-text);
+  margin-bottom: 0.625rem;
+}
+
+.cpn-checkout-label svg {
+  color: var(--cpn-accent);
+}
+
+/* ── Apply Form ── */
+.cpn-checkout-form {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.cpn-checkout-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.55rem 0.75rem;
+  border-radius: var(--cpn-radius-sm);
+  background: var(--cpn-bg);
+  border: 1px solid var(--cpn-border);
+  color: var(--cpn-text);
+  font-size: 0.85rem;
+  font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  outline: none;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.cpn-checkout-input::placeholder {
+  color: var(--cpn-text-muted);
+  font-family: inherit;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.cpn-checkout-input:focus {
+  border-color: var(--cpn-accent);
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.15);
+}
+
+.cpn-checkout-apply {
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--cpn-accent-dark);
+  background: var(--cpn-accent-light);
+  border: 1px solid var(--cpn-accent-border);
+  border-radius: var(--cpn-radius-sm);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cpn-checkout-apply:hover {
+  background: var(--cpn-accent);
+  color: #ffffff;
+  border-color: var(--cpn-accent);
+}
+
+.cpn-checkout-apply:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.cpn-checkout-apply:focus-visible {
+  outline: 2px solid var(--cpn-accent);
+  outline-offset: 2px;
+}
+
+/* ── Applied State ── */
+.cpn-checkout-applied {
+  background: var(--cpn-accent-light);
+  border: 1px solid var(--cpn-accent-border);
+  border-radius: var(--cpn-radius-sm);
+  padding: 0.625rem 0.75rem;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.cpn-checkout-applied-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.cpn-checkout-applied-title {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--cpn-accent-dark);
+}
+
+.cpn-checkout-applied-code {
+  font-family: 'SF Mono', 'Fira Code', 'Courier New', monospace;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+
+.cpn-checkout-savings {
+  font-size: 0.8rem;
+  color: var(--cpn-accent);
+  font-weight: 500;
+}
+
+.cpn-checkout-remove {
+  background: none;
+  border: none;
+  color: var(--cpn-danger);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0.2rem 0.375rem;
+  border-radius: 0.25rem;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.cpn-checkout-remove:hover {
+  background: var(--cpn-danger-light);
+}
+
+.cpn-checkout-remove:focus-visible {
+  outline: 2px solid var(--cpn-danger);
+  outline-offset: 1px;
+}
+
+/* ── Coupon Error ── */
+.cpn-checkout-error {
+  color: var(--cpn-danger);
+  font-size: 0.8rem;
+  margin-top: 0.375rem;
+  font-weight: 500;
+}
+
+/* ── Price Summary ── */
+.cpn-price-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.625rem;
+  font-size: 0.9rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--cpn-border);
+}
+
+.cpn-price-row {
+  display: flex;
+  justify-content: space-between;
+  color: var(--cpn-text-secondary);
+}
+
+.cpn-price-row--discount {
+  color: var(--cpn-accent);
+  font-weight: 600;
+}
+
+.cpn-price-row--discount .cpn-price-label {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.cpn-price-divider {
+  border: none;
+  border-top: 1px dashed var(--cpn-border);
+  margin: 0.125rem 0;
+}
+
+.cpn-price-row--total {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.cpn-price-row--total .cpn-price-label {
+  color: var(--cpn-text);
+}
+
+.cpn-price-row--total .cpn-price-value {
+  color: var(--cpn-blue);
+}
+
+/* ── Responsive: Stack input+button on small screens ── */
+@media (max-width: 374px) {
+  .cpn-checkout-form {
+    flex-direction: column;
+  }
+
+  .cpn-checkout-apply {
+    width: 100%;
+  }
+}
+
+/* ── Responsive: Modal on small screens ── */
+@media (max-width: 480px) {
+  .cpn-modal {
+    max-height: 95vh;
+    border-radius: var(--cpn-radius);
+    margin: 0.5rem;
+  }
+
+  .cpn-modal-form {
+    padding: 1rem;
+  }
+
+  .cpn-modal-header {
+    padding: 0.875rem 1rem;
+  }
+
+  .cpn-modal-footer {
+    padding: 0.75rem 1rem;
+  }
+
+  .cpn-delete-modal {
+    margin: 0 0.5rem;
+    padding: 1.25rem;
+  }
+
+  .cpn-card-body {
+    padding: 0.875rem;
+  }
+
+  .cpn-card-footer {
+    padding: 0.5rem 0.875rem;
+  }
+}

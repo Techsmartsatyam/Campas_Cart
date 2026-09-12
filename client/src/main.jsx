@@ -6,6 +6,7 @@ import { AuthProvider } from './context/AuthContext.jsx';
 import { NotificationProvider } from './context/NotificationContext.jsx';
 import './index.css';
 import './theme.css';
+import './coupon.css';
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

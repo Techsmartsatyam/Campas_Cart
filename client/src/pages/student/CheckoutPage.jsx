@@ -14,6 +14,7 @@ export default function CheckoutPage() {
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
+  const [couponApplying, setCouponApplying] = useState(false);
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -91,6 +92,7 @@ export default function CheckoutPage() {
     e.preventDefault();
     if (!couponCode.trim()) return;
     setCouponError('');
+    setCouponApplying(true);
     try {
       const res = await api.post('/orders/apply-coupon', {
         couponCode: couponCode.trim(),
@@ -104,6 +106,8 @@ export default function CheckoutPage() {
     } catch (err) {
       setAppliedCoupon(null);
       setCouponError(err.message || 'Invalid coupon code');
+    } finally {
+      setCouponApplying(false);
     }
   };
 
@@ -664,86 +668,85 @@ const finalTotal = Math.max(
             </div>
 
             {/* Coupon Code Section */}
-            <div style={{ marginBottom: '1.25rem', paddingTop: '1rem', borderTop: '1px dashed var(--border-color)' }}>
-              <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-secondary)', marginBottom: '0.5rem' }}>
-                Have a Coupon Code?
+            <div className="cpn-checkout-section">
+              <label className="cpn-checkout-label" htmlFor="checkout-coupon-input">
+                <Tag size={16} aria-hidden="true" />
+                Apply Coupon
               </label>
 
               {appliedCoupon ? (
-                <div style={{
-                  background: '#d1fae5',
-                  border: '1px solid #a7f3d0',
-                  color: '#047857',
-                  padding: '0.6rem 0.85rem',
-                  borderRadius: '0.5rem',
-                  display: 'flex',
-                  justify: 'space-between',
-                  alignItems: 'center',
-                  fontSize: '0.85rem',
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <CheckCircle size={16} />
-                    <span>Coupon <strong>{appliedCoupon.code}</strong> applied (-₹{appliedCoupon.discountAmount})</span>
+                <div className="cpn-checkout-applied" role="status" aria-live="polite">
+                  <div className="cpn-checkout-applied-info">
+                    <span className="cpn-checkout-applied-title">
+                      <CheckCircle size={15} aria-hidden="true" />
+                      <span className="cpn-checkout-applied-code">{appliedCoupon.code}</span>
+                      <span>applied</span>
+                    </span>
+                    <span className="cpn-checkout-savings">You saved ₹{discountAmount.toFixed(2)}</span>
                   </div>
-                  <button onClick={handleRemoveCoupon} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '0.75rem', textDecoration: 'underline' }}>
+                  <button
+                    onClick={handleRemoveCoupon}
+                    className="cpn-checkout-remove"
+                    aria-label="Remove coupon"
+                  >
                     Remove
                   </button>
                 </div>
               ) : (
-                <form onSubmit={handleApplyCoupon} style={{ display: 'flex', gap: '0.5rem' }}>
+                <form onSubmit={handleApplyCoupon} className="cpn-checkout-form">
                   <input
+                    id="checkout-coupon-input"
                     type="text"
                     value={couponCode}
                     onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                    placeholder="ENTER CODE"
-                    style={{
-                      flex: 1,
-                      padding: '0.5rem 0.75rem',
-                      borderRadius: '0.4rem',
-                      background: '#ffffff',
-                      border: '1px solid #cbd5e1',
-                      color: 'var(--text-primary)',
-                      fontSize: '0.85rem',
-                      textTransform: 'uppercase',
-                    }}
+                    placeholder="Enter coupon code"
+                    className="cpn-checkout-input"
+                    autoComplete="off"
+                    aria-label="Coupon code"
                   />
-                  <button type="submit" className="btn-secondary" style={{ padding: '0.5rem 0.85rem', fontSize: '0.85rem' }}>
-                    Apply
+                  <button
+                    type="submit"
+                    className="cpn-checkout-apply"
+                    disabled={couponApplying || !couponCode.trim()}
+                    aria-label="Apply coupon"
+                  >
+                    {couponApplying ? 'Applying...' : 'Apply'}
                   </button>
                 </form>
               )}
 
               {couponError && (
-                <p style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.4rem', margin: 0 }}>
-                  {couponError}
-                </p>
+                <p className="cpn-checkout-error" role="alert">{couponError}</p>
               )}
             </div>
 
-            {/* Price Calculations */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', fontSize: '0.95rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-                <span>Subtotal</span>
-                <span>₹{subtotal.toFixed(2)}</span>
+            {/* Price Summary */}
+            <div className="cpn-price-summary">
+              <div className="cpn-price-row">
+                <span className="cpn-price-label">Subtotal</span>
+                <span className="cpn-price-value">₹{subtotal.toFixed(2)}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-                <span>Delivery Fee</span>
-                <span>{deliveryFee > 0 ? `₹${deliveryFee.toFixed(2)}` : 'FREE'}</span>
+              <div className="cpn-price-row">
+                <span className="cpn-price-label">Delivery Fee</span>
+                <span className="cpn-price-value">{deliveryFee > 0 ? `₹${deliveryFee.toFixed(2)}` : 'FREE'}</span>
               </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-secondary)' }}>
-                <span>GST</span>
-                <span>₹{roundedGstAmount.toFixed(2)}</span>
+              <div className="cpn-price-row">
+                <span className="cpn-price-label">GST</span>
+                <span className="cpn-price-value">₹{roundedGstAmount.toFixed(2)}</span>
               </div>
               {appliedCoupon && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--success)' }}>
-                  <span>Discount</span>
-                  <span>-₹{discountAmount.toFixed(2)}</span>
+                <div className="cpn-price-row cpn-price-row--discount" aria-label={`Coupon discount: minus ₹${discountAmount.toFixed(2)}`}>
+                  <span className="cpn-price-label">
+                    <Tag size={13} aria-hidden="true" />
+                    Coupon Discount
+                  </span>
+                  <span className="cpn-price-value">-₹{discountAmount.toFixed(2)}</span>
                 </div>
               )}
-              <div style={{ height: '1px', background: 'var(--border-color)', margin: '0.25rem 0' }}></div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.25rem', fontWeight: '800' }}>
-                <span style={{ color: 'var(--text-primary)' }}>Final Total</span>
-                <span style={{ color: 'var(--primary)' }}>₹{finalTotal.toFixed(2)}</span>
+              <hr className="cpn-price-divider" />
+              <div className="cpn-price-row cpn-price-row--total">
+                <span className="cpn-price-label">Total</span>
+                <span className="cpn-price-value">₹{finalTotal.toFixed(2)}</span>
               </div>
             </div>
 

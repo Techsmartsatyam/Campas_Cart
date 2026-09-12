@@ -7,10 +7,8 @@ import {
   Trash2,
   CheckCircle2,
   AlertCircle,
-  Clock,
   Calendar,
   Percent,
-  DollarSign,
   ToggleLeft,
   ToggleRight,
   X,
@@ -29,6 +27,9 @@ export default function CouponManagement({ shop }) {
   const [showModal, setShowModal] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState(null);
   const [copiedCode, setCopiedCode] = useState('');
+
+  // Delete confirmation modal state
+  const [deleteTarget, setDeleteTarget] = useState(null); // { id, code }
 
   // Form State
   const [formData, setFormData] = useState({
@@ -175,15 +176,20 @@ export default function CouponManagement({ shop }) {
     }
   };
 
-  const handleDelete = async (couponId, code) => {
-    if (!window.confirm(`Are you sure you want to delete coupon code "${code}"?`)) {
-      return;
-    }
+  // Opens the custom delete confirmation modal
+  const handleDeleteRequest = (couponId, code) => {
+    setDeleteTarget({ id: couponId, code });
+  };
 
+  // Called when user confirms delete in the modal
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    const { id, code } = deleteTarget;
+    setDeleteTarget(null);
     try {
-      const res = await api.delete(`/shopkeeper/coupons/${couponId}`);
+      const res = await api.delete(`/shopkeeper/coupons/${id}`);
       if (res.success) {
-        setCoupons((prev) => prev.filter((c) => c._id !== couponId));
+        setCoupons((prev) => prev.filter((c) => c._id !== id));
         setSuccess(`Coupon "${code}" deleted successfully`);
         setTimeout(() => setSuccess(''), 3000);
       }
@@ -198,226 +204,247 @@ export default function CouponManagement({ shop }) {
     setTimeout(() => setCopiedCode(''), 2000);
   };
 
+  // Compute live preview discount label
+  const getPreviewDiscount = () => {
+    if (!formData.discountValue) return null;
+    if (formData.discountType === 'PERCENTAGE') {
+      return `${formData.discountValue}% OFF`;
+    }
+    return `₹${formData.discountValue} OFF`;
+  };
+
+  const getStatusInfo = (coupon) => {
+    const isExpired = new Date(coupon.endDate) < new Date();
+    const isUpcoming = new Date(coupon.startDate) > new Date();
+    if (!coupon.isActive) return { label: 'Inactive', cls: 'cpn-status--inactive' };
+    if (isExpired) return { label: 'Expired', cls: 'cpn-status--expired' };
+    if (isUpcoming) return { label: 'Upcoming', cls: 'cpn-status--upcoming' };
+    return { label: 'Active', cls: 'cpn-status--active' };
+  };
+
+  const getCardClass = (coupon) => {
+    const isExpired = new Date(coupon.endDate) < new Date();
+    if (!coupon.isActive) return 'cpn-card cpn-card--inactive';
+    if (isExpired) return 'cpn-card cpn-card--expired';
+    return 'cpn-card';
+  };
+
   if (!shop) {
     return (
-      <div className="bg-amber-50 rounded-2xl p-8 border border-amber-200 text-center my-6">
-        <AlertCircle className="w-12 h-12 text-amber-500 mx-auto mb-3" />
-        <h3 className="text-lg font-bold text-amber-900 mb-1">Shop Setup Required</h3>
-        <p className="text-sm text-amber-700">
+      <div className="cpn-no-shop">
+        <AlertCircle style={{ width: '2.25rem', height: '2.25rem', color: 'var(--cpn-warning)', margin: '0 auto' }} />
+        <h3 className="cpn-no-shop-title">Shop Setup Required</h3>
+        <p className="cpn-no-shop-desc">
           Please create and setup your shop profile first before creating coupon codes.
         </p>
       </div>
     );
   }
 
+  const previewDiscount = getPreviewDiscount();
+
   return (
-    <div className="space-y-6">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       {/* Header Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 p-6 rounded-2xl text-white shadow-lg">
+      <div className="cpn-header">
         <div>
-          <div className="flex items-center space-x-2">
-            <Tag className="w-7 h-7 text-emerald-200" />
-            <h2 className="text-2xl font-black tracking-tight">Coupon Codes & Discounts</h2>
-          </div>
-          <p className="text-emerald-100 text-sm mt-1">
-            Create promotional discount codes for your customers at {shop.name}
+          <h2 className="cpn-header-title">
+            <Tag style={{ width: '1.25rem', height: '1.25rem', color: 'rgba(255,255,255,0.85)' }} />
+            Coupons
+          </h2>
+          <p className="cpn-header-subtitle">
+            Create and manage discount coupons for your shop
           </p>
         </div>
         <button
           onClick={() => handleOpenModal()}
-          className="inline-flex items-center justify-center space-x-2 bg-white text-emerald-700 hover:bg-emerald-50 px-5 py-2.5 rounded-xl font-bold transition shadow-md hover:shadow-lg active:scale-95"
+          className="cpn-btn-create"
+          aria-label="Create new coupon"
         >
-          <Plus className="w-5 h-5" />
-          <span>Create New Coupon</span>
+          <Plus style={{ width: '1rem', height: '1rem' }} />
+          Create Coupon
         </button>
       </div>
 
       {/* Notifications */}
       {error && (
-        <div className="flex items-center space-x-2 bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 text-sm font-medium">
-          <AlertCircle className="w-5 h-5 flex-shrink-0 text-red-500" />
+        <div className="cpn-alert cpn-alert-error" role="alert">
+          <AlertCircle style={{ width: '1rem', height: '1rem', flexShrink: 0 }} />
           <span>{error}</span>
-          <button onClick={() => setError('')} className="ml-auto text-red-400 hover:text-red-600">
-            <X className="w-4 h-4" />
+          <button
+            onClick={() => setError('')}
+            className="cpn-alert-dismiss"
+            aria-label="Dismiss error"
+          >
+            <X style={{ width: '0.875rem', height: '0.875rem' }} />
           </button>
         </div>
       )}
 
       {success && (
-        <div className="flex items-center space-x-2 bg-emerald-50 text-emerald-700 p-4 rounded-xl border border-emerald-200 text-sm font-medium">
-          <CheckCircle2 className="w-5 h-5 flex-shrink-0 text-emerald-500" />
+        <div className="cpn-alert cpn-alert-success" role="status">
+          <CheckCircle2 style={{ width: '1rem', height: '1rem', flexShrink: 0 }} />
           <span>{success}</span>
-          <button onClick={() => setSuccess('')} className="ml-auto text-emerald-400 hover:text-emerald-600">
-            <X className="w-4 h-4" />
+          <button
+            onClick={() => setSuccess('')}
+            className="cpn-alert-dismiss"
+            aria-label="Dismiss message"
+          >
+            <X style={{ width: '0.875rem', height: '0.875rem' }} />
           </button>
         </div>
       )}
 
       {/* Coupons List */}
       {loading ? (
-        <div className="text-center py-12">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-emerald-600 mx-auto mb-3"></div>
-          <p className="text-slate-500 text-sm">Loading coupons...</p>
+        <div className="cpn-loading">
+          <div className="cpn-spinner" role="status" aria-label="Loading coupons"></div>
+          <p style={{ color: 'var(--cpn-text-muted)', fontSize: '0.875rem' }}>Loading coupons...</p>
         </div>
       ) : coupons.length === 0 ? (
-        <div className="bg-white rounded-2xl p-12 text-center border border-slate-200/80 shadow-sm space-y-4">
-          <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-2xl flex items-center justify-center mx-auto">
-            <Tag className="w-8 h-8" />
+        <div className="cpn-empty">
+          <div className="cpn-empty-icon" aria-hidden="true">
+            <Tag style={{ width: '1.75rem', height: '1.75rem' }} />
           </div>
-          <h3 className="text-lg font-bold text-slate-800">No Coupon Codes Created</h3>
-          <p className="text-slate-500 text-sm max-w-md mx-auto">
-            Boost your sales by creating custom discount codes like <span className="font-mono font-bold text-emerald-600">WELCOME10</span> or <span className="font-mono font-bold text-emerald-600">FLAT50</span> for your customers.
+          <h3 className="cpn-empty-title">No coupons yet</h3>
+          <p className="cpn-empty-desc">
+            Create your first coupon and offer discounts to your customers.
           </p>
           <button
             onClick={() => handleOpenModal()}
-            className="inline-flex items-center space-x-2 bg-emerald-600 text-white hover:bg-emerald-700 px-5 py-2.5 rounded-xl font-bold transition shadow-md"
+            className="cpn-btn-empty"
           >
-            <Plus className="w-5 h-5" />
-            <span>Create First Coupon</span>
+            <Plus style={{ width: '1rem', height: '1rem' }} />
+            Create Coupon
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="cpn-grid">
           {coupons.map((coupon) => {
-            const isExpired = new Date(coupon.endDate) < new Date();
-            const isUpcoming = new Date(coupon.startDate) > new Date();
+            const status = getStatusInfo(coupon);
+            const cardClass = getCardClass(coupon);
 
             return (
-              <div
-                key={coupon._id}
-                className={`bg-white rounded-2xl border transition-all duration-200 shadow-sm hover:shadow-md overflow-hidden flex flex-col justify-between ${
-                  !coupon.isActive
-                    ? 'border-slate-200 opacity-75 bg-slate-50/50'
-                    : isExpired
-                    ? 'border-red-200 bg-red-50/20'
-                    : 'border-emerald-200/80 hover:border-emerald-400'
-                }`}
-              >
-                {/* Coupon Top Header */}
-                <div className="p-5 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className="font-mono font-black text-lg bg-emerald-100 text-emerald-900 border border-emerald-200 px-3 py-1 rounded-lg flex items-center gap-1.5 tracking-wider">
-                        {coupon.code}
-                        <button
-                          onClick={() => handleCopyCode(coupon.code)}
-                          title="Copy Code"
-                          className="text-emerald-700 hover:text-emerald-950 transition"
-                        >
-                          {copiedCode === coupon.code ? (
-                            <Check className="w-3.5 h-3.5 text-emerald-600" />
-                          ) : (
-                            <Copy className="w-3.5 h-3.5" />
-                          )}
-                        </button>
-                      </span>
-                    </div>
-
-                    <span
-                      className={`text-xs font-extrabold px-2.5 py-1 rounded-full uppercase tracking-wider ${
-                        !coupon.isActive
-                          ? 'bg-slate-200 text-slate-700'
-                          : isExpired
-                          ? 'bg-red-100 text-red-700'
-                          : isUpcoming
-                          ? 'bg-amber-100 text-amber-800'
-                          : 'bg-emerald-100 text-emerald-800'
-                      }`}
-                    >
-                      {!coupon.isActive ? 'Inactive' : isExpired ? 'Expired' : isUpcoming ? 'Upcoming' : 'Active'}
+              <div key={coupon._id} className={cardClass}>
+                {/* Card Body */}
+                <div className="cpn-card-body">
+                  {/* Top: Code + Status */}
+                  <div className="cpn-card-top">
+                    <span className="cpn-code-badge">
+                      {coupon.code}
+                      <button
+                        onClick={() => handleCopyCode(coupon.code)}
+                        className="cpn-copy-btn"
+                        aria-label={`Copy coupon code ${coupon.code}`}
+                        title="Copy code"
+                      >
+                        {copiedCode === coupon.code ? (
+                          <>
+                            <Check style={{ width: '0.8rem', height: '0.8rem' }} />
+                            <span className="cpn-copy-tooltip">Copied!</span>
+                          </>
+                        ) : (
+                          <Copy style={{ width: '0.8rem', height: '0.8rem' }} />
+                        )}
+                      </button>
+                    </span>
+                    <span className={`cpn-status ${status.cls}`} aria-label={`Status: ${status.label}`}>
+                      <span className="cpn-status-dot" aria-hidden="true"></span>
+                      {status.label}
                     </span>
                   </div>
 
+                  {/* Description */}
                   {coupon.description && (
-                    <p className="text-slate-600 text-xs line-clamp-2">{coupon.description}</p>
+                    <p className="cpn-card-desc">{coupon.description}</p>
                   )}
 
-                  {/* Main Value Banner */}
-                  <div className="bg-emerald-50/80 border border-emerald-100 rounded-xl p-3 flex items-center justify-between">
-                    <div className="flex items-center space-x-2 text-emerald-800">
+                  {/* Discount Banner */}
+                  <div className="cpn-discount-banner">
+                    <div className="cpn-discount-main">
                       {coupon.discountType === 'PERCENTAGE' ? (
-                        <Percent className="w-5 h-5 text-emerald-600" />
+                        <Percent style={{ width: '1.1rem', height: '1.1rem', flexShrink: 0 }} />
                       ) : (
-                        <Zap className="w-5 h-5 text-emerald-600" />
+                        <Zap style={{ width: '1.1rem', height: '1.1rem', flexShrink: 0 }} />
                       )}
                       <div>
-                        <div className="text-xs text-emerald-600 font-semibold uppercase tracking-wider">Discount</div>
-                        <div className="text-lg font-black">
+                        <p className="cpn-discount-label">Discount</p>
+                        <p className="cpn-discount-value">
                           {coupon.discountType === 'PERCENTAGE'
                             ? `${coupon.discountValue}% OFF`
-                            : `₹${coupon.discountValue} FLAT OFF`}
-                        </div>
+                            : `₹${coupon.discountValue} OFF`}
+                        </p>
                       </div>
                     </div>
-
                     {coupon.maximumDiscount > 0 && coupon.discountType === 'PERCENTAGE' && (
-                      <div className="text-right">
-                        <div className="text-[10px] text-slate-500 font-medium">Max Discount</div>
-                        <div className="text-xs font-bold text-slate-700">₹{coupon.maximumDiscount}</div>
+                      <div className="cpn-discount-cap">
+                        <p className="cpn-discount-cap-label">Max Discount</p>
+                        <p className="cpn-discount-cap-val">₹{coupon.maximumDiscount}</p>
                       </div>
                     )}
                   </div>
 
-                  {/* Rules Details */}
-                  <div className="space-y-1.5 text-xs text-slate-600 pt-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-500">Min Order:</span>
-                      <span className="font-semibold text-slate-800">₹{coupon.minimumOrderAmount || 0}</span>
+                  {/* Details */}
+                  <div className="cpn-card-details">
+                    <div className="cpn-detail-row">
+                      <span className="cpn-detail-label">Min Order</span>
+                      <span className="cpn-detail-value">₹{coupon.minimumOrderAmount || 0}</span>
                     </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-slate-500">Usage Count:</span>
-                      <span className="font-semibold text-slate-800">
-                        {coupon.usedCount || 0} {coupon.usageLimit ? `/ ${coupon.usageLimit}` : 'times'}
+                    <div className="cpn-detail-row">
+                      <span className="cpn-detail-label">Usage</span>
+                      <span className="cpn-detail-value">
+                        {coupon.usedCount || 0}
+                        {coupon.usageLimit ? ` / ${coupon.usageLimit}` : ' uses'}
                       </span>
                     </div>
-
-                    <div className="flex items-center justify-between pt-1 border-t border-slate-100 text-[11px] text-slate-500">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-slate-400" />
-                        {new Date(coupon.startDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })} -{' '}
+                    <hr className="cpn-detail-divider" />
+                    <div className="cpn-detail-dates">
+                      <Calendar style={{ width: '0.75rem', height: '0.75rem' }} aria-hidden="true" />
+                      <span>
+                        {new Date(coupon.startDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' })}
+                        {' — '}
                         {new Date(coupon.endDate).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Card Footer Actions */}
-                <div className="bg-slate-50 px-5 py-3 border-t border-slate-100 flex items-center justify-between">
+                {/* Card Footer */}
+                <div className="cpn-card-footer">
                   <button
                     onClick={() => handleToggleActive(coupon._id, coupon.isActive)}
-                    className={`inline-flex items-center space-x-1.5 text-xs font-bold transition ${
-                      coupon.isActive ? 'text-slate-600 hover:text-slate-900' : 'text-emerald-600 hover:text-emerald-700'
-                    }`}
+                    className={`cpn-toggle-btn ${coupon.isActive ? 'cpn-toggle-btn--deactivate' : 'cpn-toggle-btn--activate'}`}
+                    aria-label={coupon.isActive ? `Deactivate coupon ${coupon.code}` : `Activate coupon ${coupon.code}`}
                   >
                     {coupon.isActive ? (
                       <>
-                        <ToggleRight className="w-5 h-5 text-emerald-600" />
-                        <span>Deactivate</span>
+                        <ToggleRight style={{ width: '1.1rem', height: '1.1rem', color: 'var(--cpn-accent)' }} />
+                        Deactivate
                       </>
                     ) : (
                       <>
-                        <ToggleLeft className="w-5 h-5 text-slate-400" />
-                        <span>Activate</span>
+                        <ToggleLeft style={{ width: '1.1rem', height: '1.1rem' }} />
+                        Activate
                       </>
                     )}
                   </button>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="cpn-card-actions">
                     <button
                       onClick={() => handleOpenModal(coupon)}
-                      title="Edit Coupon"
-                      className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                      className="cpn-action-btn cpn-action-btn--edit"
+                      aria-label={`Edit coupon ${coupon.code}`}
+                      title="Edit"
                     >
-                      <Edit2 className="w-4 h-4" />
+                      <Edit2 style={{ width: '0.9rem', height: '0.9rem' }} />
                     </button>
-
                     <button
-                      onClick={() => handleDelete(coupon._id, coupon.code)}
-                      title="Delete Coupon"
-                      className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+                      onClick={() => handleDeleteRequest(coupon._id, coupon.code)}
+                      className="cpn-action-btn cpn-action-btn--delete"
+                      aria-label={`Delete coupon ${coupon.code}`}
+                      title="Delete"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 style={{ width: '0.9rem', height: '0.9rem' }} />
                     </button>
                   </div>
                 </div>
@@ -427,194 +454,310 @@ export default function CouponManagement({ shop }) {
         </div>
       )}
 
-      {/* Modal Form for Create/Edit */}
+      {/* ── Delete Confirmation Modal ── */}
+      {deleteTarget && (
+        <div className="cpn-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="delete-modal-title">
+          <div className="cpn-delete-modal">
+            <div className="cpn-delete-icon" aria-hidden="true">
+              <Trash2 style={{ width: '1.25rem', height: '1.25rem' }} />
+            </div>
+            <h3 className="cpn-delete-title" id="delete-modal-title">Delete Coupon?</h3>
+            <p className="cpn-delete-desc">
+              Are you sure you want to delete coupon{' '}
+              <span className="cpn-delete-code">{deleteTarget.code}</span>?
+              This action cannot be undone.
+            </p>
+            <div className="cpn-delete-actions">
+              <button
+                onClick={() => setDeleteTarget(null)}
+                className="cpn-btn-delete-cancel"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="cpn-btn-delete-confirm"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Create / Edit Modal ── */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden border border-slate-100 max-h-[90vh] flex flex-col">
+        <div
+          className="cpn-modal-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="coupon-modal-title"
+        >
+          <div className="cpn-modal">
             {/* Modal Header */}
-            <div className="px-6 py-4 bg-gradient-to-r from-emerald-600 to-teal-600 text-white flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <Tag className="w-5 h-5 text-emerald-200" />
-                <h3 className="font-bold text-lg">
-                  {editingCoupon ? 'Edit Coupon Code' : 'Create New Coupon'}
+            <div className="cpn-modal-header">
+              <div className="cpn-modal-header-text">
+                <Tag style={{ width: '1.1rem', height: '1.1rem', color: 'rgba(255,255,255,0.85)' }} />
+                <h3 className="cpn-modal-title" id="coupon-modal-title">
+                  {editingCoupon ? 'Edit Coupon' : 'Create Coupon'}
                 </h3>
               </div>
               <button
                 onClick={handleCloseModal}
-                className="text-emerald-100 hover:text-white p-1 rounded-full hover:bg-white/10 transition"
+                className="cpn-modal-close"
+                aria-label="Close modal"
               >
-                <X className="w-5 h-5" />
+                <X style={{ width: '1.1rem', height: '1.1rem' }} />
               </button>
             </div>
 
+            {/* Error inside modal */}
+            {error && (
+              <div className="cpn-alert cpn-alert-error" style={{ margin: '0.75rem 1.5rem 0', borderRadius: 'var(--cpn-radius-sm)' }} role="alert">
+                <AlertCircle style={{ width: '0.9rem', height: '0.9rem', flexShrink: 0 }} />
+                <span>{error}</span>
+                <button onClick={() => setError('')} className="cpn-alert-dismiss" aria-label="Dismiss">
+                  <X style={{ width: '0.8rem', height: '0.8rem' }} />
+                </button>
+              </div>
+            )}
+
             {/* Modal Form */}
-            <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto">
-              {/* Coupon Code */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Coupon Code <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. WELCOME20, FLAT50"
-                  value={formData.code}
-                  onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                  className="w-full font-mono font-bold uppercase tracking-wider px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-slate-800 transition outline-none"
-                />
-              </div>
+            <form onSubmit={handleSubmit} className="cpn-modal-form" noValidate>
 
-              {/* Description */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Description
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Get 20% off on your first order"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-slate-800 text-sm transition outline-none"
-                />
-              </div>
+              {/* ── COUPON DETAILS ── */}
+              <div className="cpn-form-section">
+                <p className="cpn-form-section-title">Coupon Details</p>
 
-              {/* Discount Type & Value */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Discount Type <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={formData.discountType}
-                    onChange={(e) => setFormData({ ...formData, discountType: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-slate-800 text-sm transition outline-none bg-white font-medium"
-                  >
-                    <option value="PERCENTAGE">Percentage (%)</option>
-                    <option value="FIXED">Flat Amount (₹)</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Discount Value {formData.discountType === 'PERCENTAGE' ? '(%)' : '(₹)'} <span className="text-red-500">*</span>
+                <div className="cpn-field">
+                  <label htmlFor="cpn-code" className="cpn-label">
+                    Coupon Code <span className="cpn-label-required" aria-hidden="true">*</span>
                   </label>
                   <input
-                    type="number"
+                    id="cpn-code"
+                    type="text"
                     required
-                    min="0.01"
-                    max={formData.discountType === 'PERCENTAGE' ? '100' : undefined}
-                    step="any"
-                    placeholder={formData.discountType === 'PERCENTAGE' ? 'e.g. 20' : 'e.g. 50'}
-                    value={formData.discountValue}
-                    onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
-                    className="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-slate-800 font-bold transition outline-none"
+                    placeholder="e.g. WELCOME20"
+                    value={formData.code}
+                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+                    className="cpn-input cpn-input--code"
+                    autoComplete="off"
+                    aria-required="true"
+                  />
+                </div>
+
+                <div className="cpn-field">
+                  <label htmlFor="cpn-desc" className="cpn-label">Description</label>
+                  <input
+                    id="cpn-desc"
+                    type="text"
+                    placeholder="e.g. Get 20% off on your first order"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    className="cpn-input"
                   />
                 </div>
               </div>
 
-              {/* Min Order & Max Discount */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Min Order Amount (₹)
+              {/* ── DISCOUNT ── */}
+              <div className="cpn-form-section">
+                <p className="cpn-form-section-title">Discount</p>
+
+                <div className="cpn-form-row">
+                  <div className="cpn-field">
+                    <label htmlFor="cpn-type" className="cpn-label">
+                      Discount Type <span className="cpn-label-required" aria-hidden="true">*</span>
+                    </label>
+                    <select
+                      id="cpn-type"
+                      value={formData.discountType}
+                      onChange={(e) => setFormData({ ...formData, discountType: e.target.value })}
+                      className="cpn-select"
+                      aria-required="true"
+                    >
+                      <option value="PERCENTAGE">Percentage (%)</option>
+                      <option value="FIXED">Flat Amount (₹)</option>
+                    </select>
+                  </div>
+
+                  <div className="cpn-field">
+                    <label htmlFor="cpn-value" className="cpn-label">
+                      Discount Value {formData.discountType === 'PERCENTAGE' ? '(%)' : '(₹)'}
+                      <span className="cpn-label-required" aria-hidden="true">*</span>
+                    </label>
+                    <input
+                      id="cpn-value"
+                      type="number"
+                      required
+                      min="0.01"
+                      max={formData.discountType === 'PERCENTAGE' ? '100' : undefined}
+                      step="any"
+                      placeholder={formData.discountType === 'PERCENTAGE' ? 'e.g. 20' : 'e.g. 50'}
+                      value={formData.discountValue}
+                      onChange={(e) => setFormData({ ...formData, discountValue: e.target.value })}
+                      className="cpn-input"
+                      aria-required="true"
+                    />
+                  </div>
+                </div>
+
+                <div className="cpn-field">
+                  <label htmlFor="cpn-maxdiscount" className="cpn-label">
+                    Maximum Discount (₹)
+                    {formData.discountType === 'FIXED' && (
+                      <span style={{ fontSize: '0.72rem', color: 'var(--cpn-text-muted)', fontWeight: 400, marginLeft: '0.25rem' }}>
+                        (applies to % only)
+                      </span>
+                    )}
                   </label>
                   <input
+                    id="cpn-maxdiscount"
+                    type="number"
+                    min="0"
+                    placeholder="Optional max cap"
+                    disabled={formData.discountType === 'FIXED'}
+                    value={formData.maximumDiscount}
+                    onChange={(e) => setFormData({ ...formData, maximumDiscount: e.target.value })}
+                    className="cpn-input"
+                    aria-disabled={formData.discountType === 'FIXED'}
+                  />
+                </div>
+              </div>
+
+              {/* ── ORDER REQUIREMENTS ── */}
+              <div className="cpn-form-section">
+                <p className="cpn-form-section-title">Order Requirements</p>
+
+                <div className="cpn-field">
+                  <label htmlFor="cpn-minorder" className="cpn-label">Minimum Order Amount (₹)</label>
+                  <input
+                    id="cpn-minorder"
                     type="number"
                     min="0"
                     placeholder="0 for no minimum"
                     value={formData.minimumOrderAmount}
                     onChange={(e) => setFormData({ ...formData, minimumOrderAmount: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-slate-800 text-sm transition outline-none"
+                    className="cpn-input"
                   />
                 </div>
+              </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Max Discount Limit (₹)
-                  </label>
+              {/* ── USAGE ── */}
+              <div className="cpn-form-section">
+                <p className="cpn-form-section-title">Usage</p>
+
+                <div className="cpn-field">
+                  <label htmlFor="cpn-usagelimit" className="cpn-label">Usage Limit</label>
                   <input
+                    id="cpn-usagelimit"
                     type="number"
-                    min="0"
-                    placeholder="Optional max limit"
-                    disabled={formData.discountType === 'FIXED'}
-                    value={formData.maximumDiscount}
-                    onChange={(e) => setFormData({ ...formData, maximumDiscount: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-slate-800 text-sm transition outline-none disabled:bg-slate-100 disabled:text-slate-400"
+                    min="1"
+                    placeholder="Leave empty for unlimited"
+                    value={formData.usageLimit}
+                    onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value })}
+                    className="cpn-input"
                   />
                 </div>
               </div>
 
-              {/* Usage Limit */}
-              <div>
-                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                  Total Usage Limit
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  placeholder="Leave empty for unlimited usages"
-                  value={formData.usageLimit}
-                  onChange={(e) => setFormData({ ...formData, usageLimit: e.target.value })}
-                  className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-slate-800 text-sm transition outline-none"
-                />
+              {/* ── VALIDITY ── */}
+              <div className="cpn-form-section">
+                <p className="cpn-form-section-title">Validity</p>
+
+                <div className="cpn-form-row">
+                  <div className="cpn-field">
+                    <label htmlFor="cpn-startdate" className="cpn-label">
+                      Start Date <span className="cpn-label-required" aria-hidden="true">*</span>
+                    </label>
+                    <input
+                      id="cpn-startdate"
+                      type="date"
+                      required
+                      value={formData.startDate}
+                      onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                      className="cpn-input"
+                      aria-required="true"
+                    />
+                  </div>
+
+                  <div className="cpn-field">
+                    <label htmlFor="cpn-enddate" className="cpn-label">
+                      End Date <span className="cpn-label-required" aria-hidden="true">*</span>
+                    </label>
+                    <input
+                      id="cpn-enddate"
+                      type="date"
+                      required
+                      value={formData.endDate}
+                      onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
+                      className="cpn-input"
+                      aria-required="true"
+                    />
+                  </div>
+                </div>
               </div>
 
-              {/* Start & End Dates */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    Start Date <span className="text-red-500">*</span>
-                  </label>
+              {/* ── STATUS ── */}
+              <div className="cpn-form-section">
+                <p className="cpn-form-section-title">Status</p>
+
+                <div className="cpn-toggle-field">
                   <input
-                    type="date"
-                    required
-                    value={formData.startDate}
-                    onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-slate-800 text-sm transition outline-none"
+                    type="checkbox"
+                    id="cpn-isactive"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                    className="cpn-checkbox"
                   />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                    End Date <span className="text-red-500">*</span>
+                  <label htmlFor="cpn-isactive" className="cpn-toggle-label">
+                    Activate coupon immediately
                   </label>
-                  <input
-                    type="date"
-                    required
-                    value={formData.endDate}
-                    onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full px-3.5 py-2 rounded-xl border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-200 text-slate-800 text-sm transition outline-none"
-                  />
                 </div>
               </div>
 
-              {/* Active Toggle */}
-              <div className="flex items-center space-x-3 pt-2">
-                <input
-                  type="checkbox"
-                  id="isActive"
-                  checked={formData.isActive}
-                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                  className="w-4 h-4 text-emerald-600 rounded border-slate-300 focus:ring-emerald-500"
-                />
-                <label htmlFor="isActive" className="text-sm font-semibold text-slate-700 cursor-pointer">
-                  Activate coupon immediately
-                </label>
-              </div>
+              {/* ── LIVE PREVIEW ── */}
+              {(formData.code || previewDiscount) && (
+                <div className="cpn-form-section">
+                  <p className="cpn-form-section-title">Preview</p>
+                  <div className="cpn-preview" aria-live="polite" aria-label="Coupon preview">
+                    {formData.code && (
+                      <span className="cpn-preview-code">{formData.code}</span>
+                    )}
+                    {previewDiscount && (
+                      <p className="cpn-preview-discount">{previewDiscount}</p>
+                    )}
+                    {Number(formData.minimumOrderAmount) > 0 && (
+                      <p className="cpn-preview-detail">
+                        Min. order ₹{formData.minimumOrderAmount}
+                      </p>
+                    )}
+                    {formData.endDate && (
+                      <p className="cpn-preview-detail">
+                        Valid until{' '}
+                        {new Date(formData.endDate).toLocaleDateString('en-IN', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              )}
 
-              {/* Modal Action Buttons */}
-              <div className="flex items-center justify-end space-x-3 pt-4 border-t border-slate-100">
+              {/* ── Modal Footer ── */}
+              <div className="cpn-modal-footer" style={{ padding: '0', borderTop: '1px solid var(--cpn-border-light)', paddingTop: '1rem' }}>
                 <button
                   type="button"
                   onClick={handleCloseModal}
-                  className="px-4 py-2 text-sm font-bold text-slate-600 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition"
+                  className="cpn-btn-cancel"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-6 py-2.5 text-sm font-bold text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl shadow-md transition disabled:opacity-50"
+                  className="cpn-btn-submit"
                 >
                   {saving ? 'Saving...' : editingCoupon ? 'Update Coupon' : 'Create Coupon'}
                 </button>
