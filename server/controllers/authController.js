@@ -12,13 +12,15 @@ const sendTokenResponse = (user, statusCode, res, message = 'Success') => {
 
   const cookieName = process.env.COOKIE_NAME || 'campuscart_token';
   const isProduction = process.env.NODE_ENV === 'production';
+  const maxAgeMs = 15 * 24 * 60 * 60 * 1000; // 15 days
 
   const options = {
-    expires: new Date(Date.now() + 15 * 24 * 60 * 60 * 1000), // 15 days
+    expires: new Date(Date.now() + maxAgeMs),
+    maxAge: maxAgeMs,
     httpOnly: true,
     secure: isProduction,
-   sameSite: isProduction ? 'none' : 'lax',
-   path: '/',
+    sameSite: isProduction ? 'none' : 'lax',
+    path: '/',
   };
 
   const safeUser = {
@@ -162,9 +164,10 @@ export const logout = async (req, res, next) => {
     res.cookie(cookieName, '', {
       httpOnly: true,
       expires: new Date(0),
+      maxAge: 0,
       secure: isProduction,
       sameSite: isProduction ? 'none' : 'lax',
-        path: '/',
+      path: '/',
     });
 
     res.status(200).json({

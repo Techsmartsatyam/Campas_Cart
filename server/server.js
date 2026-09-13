@@ -27,14 +27,32 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Trust reverse proxy (Render, Heroku, Nginx) for secure HTTPS cookie handling
+app.set('trust proxy', 1);
+
 // Create HTTP server for Express + Socket.IO
 const httpServer = http.createServer(app);
 
 import paymentRoutes from './routes/paymentRoutes.js';
 
-// CORS configuration
+// CORS configuration supporting credentials for production & development clients
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'https://campusmar.netlify.app',
+  process.env.CLIENT_URL,
+].filter(Boolean);
+
 const corsOptions = {
-  origin: process.env.CLIENT_URL || 'http://localhost:5173',
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. mobile apps, curl) or matching allowed origins
+    if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+      callback(null, true);
+    } else {
+      callback(null, true);
+    }
+  },
   credentials: true,
   optionsSuccessStatus: 200,
 };

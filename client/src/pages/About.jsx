@@ -616,7 +616,7 @@ export default function About() {
         <section style={{ marginBottom: '2rem' }}>
           <div
             style={{
-              maxWidth: '450px',
+              maxWidth: '480px',
               margin: '0 auto',
               background: 'linear-gradient(135deg, #041d14 0%, #062b1e 100%)',
               color: '#ffffff',
@@ -637,28 +637,34 @@ export default function About() {
                 color: '#34d399',
                 textTransform: 'uppercase',
                 letterSpacing: '1px',
-                marginBottom: '1rem',
+                marginBottom: '0.75rem',
               }}
             >
               <Code2 size={14} />
               <span>BUILT BY</span>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem', marginBottom: '1rem' }}>
-              <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#ffffff' }}>
-                Satyam Gautam
-              </div>
-              <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#ffffff' }}>
-                Soni Rastogi
-              </div>
+            <div style={{ fontSize: '1.35rem', fontWeight: '800', color: '#ffffff', marginBottom: '0.5rem' }}>
+              Built by NearCart Team
             </div>
+
+            <p
+              style={{
+                fontSize: '0.875rem',
+                color: '#cbd5e1',
+                lineHeight: '1.5',
+                margin: '0 0 0.85rem 0',
+              }}
+            >
+              Built by the NearCart Team with a focus on simple, reliable and convenient local delivery.
+            </p>
 
             <div
               style={{
                 fontSize: '0.8rem',
                 color: '#94a3b8',
                 fontWeight: '600',
-                paddingTop: '0.75rem',
+                paddingTop: '0.65rem',
                 borderTop: '1px dashed rgba(255, 255, 255, 0.15)',
               }}
             >
