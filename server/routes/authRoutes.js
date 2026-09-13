@@ -3,6 +3,7 @@ import express from 'express';
 import {
   register,
   login,
+  googleAuth,
   logout,
   getMe,
   getSocketToken,
@@ -17,6 +18,7 @@ const router = express.Router();
 // Public routes
 router.post('/register', register);
 router.post('/login', login);
+router.post('/google', googleAuth);
 router.post('/logout', logout);
 
 // Protected routes

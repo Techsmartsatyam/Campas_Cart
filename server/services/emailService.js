@@ -378,3 +378,103 @@ export const sendDeliveryAssignedEmailToDeliveryBoy = async ({
     return { success: false, error: safeError };
   }
 };
+
+/**
+ * Send welcome email to newly registered student/customer using Brevo HTTP API
+ */
+export const sendWelcomeEmailToUser = async ({ userEmail, userName }) => {
+  if (!userEmail) return { success: false, reason: 'No recipient email provided' };
+
+  const subject = 'Welcome to NearCart 🎉';
+  const name = userName || 'Customer';
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; background: #ffffff;">
+      <h2 style="color: #0284c7; margin-top: 0;">🎉 Welcome to NearCart!</h2>
+      <p>Hello <strong>${name}</strong>,</p>
+      <p>Your account has been created successfully. You can now explore local shops and place orders straight to your location.</p>
+      
+      <div style="background: #f8fafc; padding: 16px; border-radius: 6px; margin: 18px 0; border: 1px solid #e2e8f0;">
+        <h3 style="margin-top: 0; color: #334155; font-size: 1rem;">What you can do on NearCart:</h3>
+        <ul style="padding-left: 20px; margin-bottom: 0; color: #475569;">
+          <li>Browse products from nearby canteen, stationery, and grocery shops</li>
+          <li>Place quick orders with Cash on Delivery or UPI payments</li>
+          <li>Track your delivery partner live on the map</li>
+        </ul>
+      </div>
+
+      <p style="font-size: 0.9rem; color: #64748b;">
+        "Your nearby shops, delivered."
+      </p>
+
+      <hr style="border: 0; border-top: 1px solid #f1f5f9; margin-top: 24px;" />
+      <p style="font-size: 0.75rem; color: #94a3b8; text-align: center;">
+        NearCart Platform — Automatic Notification System
+      </p>
+    </div>
+  `;
+
+  try {
+    if (process.env.BREVO_API_KEY) {
+      const info = await sendViaBrevoApi({ to: userEmail, subject, htmlContent });
+      return { success: true, messageId: info.messageId };
+    }
+    const transporter = createTransporter();
+    if (!transporter) return { success: true, loggedOnly: true };
+
+    const info = await transporter.sendMail({ from: getFromAddress(), to: userEmail, subject, html: htmlContent });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('[EMAIL WARNING] Welcome email dispatch failed safely:', error.message);
+    return { success: false, error: error.message };
+  }
+};
+
+/**
+ * Send welcome email to staff member (Shopkeeper / Delivery Boy) created by admin
+ */
+export const sendStaffWelcomeEmailToStaff = async ({ staffEmail, staffName, role }) => {
+  if (!staffEmail) return { success: false, reason: 'No recipient email provided' };
+
+  const subject = 'Welcome to the NearCart Team 🎉';
+  const roleName = role === 'SHOPKEEPER' ? 'Shop Partner' : 'Delivery Partner';
+  const portalName = role === 'SHOPKEEPER' ? 'NearCart Shopkeeper Portal' : 'NearCart Delivery Hub';
+
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; background: #ffffff;">
+      <h2 style="color: #0284c7; margin-top: 0;">🎉 Welcome to the NearCart Team!</h2>
+      <p>Hello <strong>${staffName || 'Partner'}</strong>,</p>
+      <p>Your <strong>${roleName}</strong> account has been created successfully by the administrator.</p>
+      
+      <div style="background: #f8fafc; padding: 16px; border-radius: 6px; margin: 18px 0; border: 1px solid #e2e8f0;">
+        <p style="margin: 4px 0;"><strong>Role:</strong> ${roleName}</p>
+        <p style="margin: 4px 0;"><strong>Portal:</strong> ${portalName}</p>
+        <p style="margin: 4px 0;"><strong>Status:</strong> Active & Approved</p>
+      </div>
+
+      <p style="font-size: 0.9rem; color: #64748b;">
+        You can now log in to NearCart using your registered email address to access your dashboard.
+      </p>
+
+      <hr style="border: 0; border-top: 1px solid #f1f5f9; margin-top: 24px;" />
+      <p style="font-size: 0.75rem; color: #94a3b8; text-align: center;">
+        NearCart Platform Administration — Automatic Notification
+      </p>
+    </div>
+  `;
+
+  try {
+    if (process.env.BREVO_API_KEY) {
+      const info = await sendViaBrevoApi({ to: staffEmail, subject, htmlContent });
+      return { success: true, messageId: info.messageId };
+    }
+    const transporter = createTransporter();
+    if (!transporter) return { success: true, loggedOnly: true };
+
+    const info = await transporter.sendMail({ from: getFromAddress(), to: staffEmail, subject, html: htmlContent });
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('[EMAIL WARNING] Staff welcome email dispatch failed safely:', error.message);
+    return { success: false, error: error.message };
+  }
+};

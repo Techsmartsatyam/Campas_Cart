@@ -71,7 +71,7 @@ export default function About() {
               color: '#ffffff',
             }}
           >
-            About NearCart
+            About NearCart  + FoodDisk
           </h1>
 
           <p

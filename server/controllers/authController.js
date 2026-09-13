@@ -1,6 +1,8 @@
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 import { isValidEmail, normalizeEmail } from '../utils/emailValidator.js';
+import { sendWelcomeEmailToUser, sendStaffWelcomeEmailToStaff } from '../services/emailService.js';
 
 // Helper to generate JWT token and set HTTP-only cookie
 const sendTokenResponse = (user, statusCode, res, message = 'Success') => {
@@ -93,7 +95,110 @@ export const register = async (req, res, next) => {
       accountStatus: 'APPROVED',
     });
 
+    // Create in-app welcome notification for newly registered student
+    try {
+      const welcomeNotif = await Notification.create({
+        user: user._id,
+        title: 'Welcome to NearCart! 🎉',
+        message: 'Welcome to NearCart. Your account has been created successfully. You can now explore local shops and place orders.',
+        type: 'SYSTEM',
+        isRead: false,
+      });
+
+      const { getIO } = await import('../config/socket.js');
+      const io = getIO();
+      if (io) {
+        io.to(`user:${user._id}`).emit('notification', welcomeNotif);
+      }
+    } catch (notifErr) {
+      console.warn('[NOTIF WARNING] Welcome notification dispatch failed safely:', notifErr.message);
+    }
+
+    // Send welcome email via Brevo HTTP API (non-blocking failure isolation)
+    sendWelcomeEmailToUser({ userEmail: user.email, userName: user.name }).catch((emailErr) => {
+      console.warn('[EMAIL WARNING] Welcome email dispatch failed safely:', emailErr.message);
+    });
+
     sendTokenResponse(user, 201, res, 'Registration successful');
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @route   POST /api/auth/google
+// @desc    Google Sign-In / Registration handler (Public)
+// @access  Public
+export const googleAuth = async (req, res, next) => {
+  try {
+    const { email, name, phone, googleId } = req.body;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google profile email is required',
+      });
+    }
+
+    if (!isValidEmail(email)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid Google account email address',
+      });
+    }
+
+    const normalizedEmail = normalizeEmail(email);
+
+    // Look for existing user
+    let user = await User.findOne({ email: normalizedEmail });
+
+    if (user) {
+      // Existing Google account login -> DO NOT send welcome notification or email
+      if (!user.isActive) {
+        return res.status(401).json({
+          success: false,
+          message: 'Your account is deactivated. Please contact support.',
+        });
+      }
+      return sendTokenResponse(user, 200, res, 'Google login successful');
+    }
+
+    // Genuinely NEW Google account creation
+    const randomPassword = `google_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+    user = await User.create({
+      name: name ? name.trim() : 'Google User',
+      email: normalizedEmail,
+      phone: phone ? phone.trim() : '0000000000',
+      password: randomPassword,
+      role: 'STUDENT',
+      accountStatus: 'APPROVED',
+      isActive: true,
+    });
+
+    // Create in-app welcome notification for newly registered Google student
+    try {
+      const welcomeNotif = await Notification.create({
+        user: user._id,
+        title: 'Welcome to NearCart! 🎉',
+        message: 'Welcome to NearCart. Your account has been created successfully. You can now explore local shops and place orders.',
+        type: 'SYSTEM',
+        isRead: false,
+      });
+
+      const { getIO } = await import('../config/socket.js');
+      const io = getIO();
+      if (io) {
+        io.to(`user:${user._id}`).emit('notification', welcomeNotif);
+      }
+    } catch (notifErr) {
+      console.warn('[NOTIF WARNING] Google welcome notification dispatch failed safely:', notifErr.message);
+    }
+
+    // Send welcome email via Brevo HTTP API (non-blocking failure isolation)
+    sendWelcomeEmailToUser({ userEmail: user.email, userName: user.name }).catch((emailErr) => {
+      console.warn('[EMAIL WARNING] Google welcome email dispatch failed safely:', emailErr.message);
+    });
+
+    return sendTokenResponse(user, 201, res, 'Google registration successful');
   } catch (error) {
     next(error);
   }
@@ -301,6 +406,34 @@ export const createStaff = async (req, res, next) => {
       role,
       accountStatus: 'APPROVED',
       isActive: true,
+    });
+
+    // Create in-app welcome notification for newly created staff member
+    try {
+      const msg = role === 'SHOPKEEPER'
+        ? 'Your NearCart shopkeeper account has been created successfully by the administrator.'
+        : 'Your NearCart delivery partner account has been created successfully by the administrator.';
+
+      const welcomeNotif = await Notification.create({
+        user: staffUser._id,
+        title: 'Welcome to NearCart! 🎉',
+        message: msg,
+        type: 'SYSTEM',
+        isRead: false,
+      });
+
+      const { getIO } = await import('../config/socket.js');
+      const io = getIO();
+      if (io) {
+        io.to(`user:${staffUser._id}`).emit('notification', welcomeNotif);
+      }
+    } catch (notifErr) {
+      console.warn('[NOTIF WARNING] Staff welcome notification dispatch failed safely:', notifErr.message);
+    }
+
+    // Send staff welcome email via Brevo HTTP API (non-blocking failure isolation)
+    sendStaffWelcomeEmailToStaff({ staffEmail: staffUser.email, staffName: staffUser.name, role: staffUser.role }).catch((emailErr) => {
+      console.warn('[EMAIL WARNING] Staff welcome email dispatch failed safely:', emailErr.message);
     });
 
     res.status(201).json({
