@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../../services/api';
-import { MapPin, Plus, Check, Tag, CreditCard, ShoppingBag, ShieldCheck, AlertCircle, ArrowLeft, CheckCircle, Zap } from 'lucide-react';
+import { detectUserLocality } from '../../utils/locationService';
+import { MapPin, Plus, Check, Tag, CreditCard, ShoppingBag, ShieldCheck, AlertCircle, ArrowLeft, CheckCircle, Zap, Compass, Loader2 } from 'lucide-react';
 
 export default function CheckoutPage() {
   const location = useLocation();
@@ -20,6 +21,11 @@ export default function CheckoutPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
+  // Location Detection State
+  const [locationDetecting, setLocationDetecting] = useState(false);
+  const [locationMessage, setLocationMessage] = useState('');
+  const [detectedLocalityInfo, setDetectedLocalityInfo] = useState(null);
+
   // Address Form Modal State
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [addressFormData, setAddressFormData] = useState({
@@ -35,6 +41,32 @@ export default function CheckoutPage() {
   });
 
   const navigate = useNavigate();
+
+  const handleDetectLocality = async () => {
+    setLocationDetecting(true);
+    setLocationMessage('');
+    try {
+      const result = await detectUserLocality();
+      if (result && result.success) {
+        setDetectedLocalityInfo(result);
+        setAddressFormData((prev) => ({
+          ...prev,
+          label: 'HOME',
+          fullAddress: result.fullAddress,
+          city: result.city || prev.city,
+          state: result.state || prev.state,
+          postalCode: result.postalCode || prev.postalCode,
+          landmark: result.locality ? `Locality: ${result.locality}` : prev.landmark,
+          isDefault: true,
+        }));
+        setShowAddressModal(true);
+      }
+    } catch (err) {
+      setLocationMessage(err.message || "Location access wasn't available. You can enter your address manually.");
+    } finally {
+      setLocationDetecting(false);
+    }
+  };
 
   useEffect(() => {
     fetchCheckoutData();
@@ -295,27 +327,64 @@ const finalTotal = Math.max(
             border: '1px solid var(--border-color)',
             padding: '1.5rem',
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
               <h3 style={{ fontSize: '1.15rem', fontWeight: '700', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <MapPin size={20} style={{ color: 'var(--primary)' }} /> 1. Select Delivery Address
               </h3>
-              <button
-                onClick={() => setShowAddressModal(true)}
-                className="btn-secondary"
-                style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
-              >
-                <Plus size={14} /> Add New Address
-              </button>
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={handleDetectLocality}
+                  disabled={locationDetecting}
+                  className="btn-secondary"
+                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem', color: 'var(--primary)', borderColor: 'var(--primary)' }}
+                >
+                  {locationDetecting ? <Loader2 size={14} className="spin" /> : <Compass size={14} />}
+                  <span>{locationDetecting ? 'Detecting...' : 'Detect my locality'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowAddressModal(true)}
+                  className="btn-secondary"
+                  style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                >
+                  <Plus size={14} /> Add New Address
+                </button>
+              </div>
             </div>
+
+            {locationMessage && (
+              <div style={{ padding: '0.65rem 0.85rem', background: '#fffbebe6', border: '1px solid #fef3c7', color: '#b45309', borderRadius: '0.4rem', fontSize: '0.825rem', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <AlertCircle size={15} style={{ flexShrink: 0 }} />
+                <span>{locationMessage}</span>
+              </div>
+            )}
 
             {addresses.length === 0 ? (
               <div style={{ padding: '1.5rem', textAlign: 'center', border: '1px dashed var(--border-color)', borderRadius: '0.5rem' }}>
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
-                  No delivery address saved yet. Please add a hostel or campus delivery address.
+                  No saved default address found. You can detect your locality or enter your address manually below.
                 </p>
-                <button onClick={() => setShowAddressModal(true)} className="btn-primary" style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}>
-                  <Plus size={16} /> Add Delivery Address
-                </button>
+                <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={handleDetectLocality}
+                    disabled={locationDetecting}
+                    className="btn-primary"
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    <Compass size={16} />
+                    <span>{locationDetecting ? 'Detecting Locality...' : 'Use my current location'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddressModal(true)}
+                    className="btn-secondary"
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.875rem' }}
+                  >
+                    <Plus size={16} /> Enter Address Manually
+                  </button>
+                </div>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -347,7 +416,7 @@ const finalTotal = Math.max(
                       }}></div>
 
                       <div style={{ flex: 1 }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                           <span style={{
                             background: 'var(--primary-gradient)',
                             color: '#ffffff',
@@ -359,6 +428,18 @@ const finalTotal = Math.max(
                           }}>
                             {addr.label || 'HOSTEL'}
                           </span>
+                          {addr.isDefault && (
+                            <span style={{
+                              background: '#d1fae5',
+                              color: '#047857',
+                              fontSize: '0.68rem',
+                              fontWeight: '700',
+                              padding: '0.15rem 0.4rem',
+                              borderRadius: '0.25rem',
+                            }}>
+                              DEFAULT
+                            </span>
+                          )}
                           {addr.hostelName && (
                             <span style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '0.95rem' }}>
                               {addr.hostelName} {addr.roomNumber ? `(Room ${addr.roomNumber})` : ''}
@@ -798,6 +879,28 @@ const finalTotal = Math.max(
             <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: 'var(--text-primary)', marginBottom: '1.25rem' }}>
               Add Delivery Address
             </h2>
+
+            {detectedLocalityInfo && (
+              <div style={{
+                background: '#f0f9ff',
+                border: '1px solid #bae6fd',
+                borderRadius: '0.5rem',
+                padding: '0.85rem 1rem',
+                marginBottom: '1rem',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: 'var(--primary)', fontWeight: '700', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+                  <Compass size={16} />
+                  <span>📍 Detected Location</span>
+                </div>
+                <div style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--text-primary)' }}>
+                  {detectedLocalityInfo.locality}
+                  {detectedLocalityInfo.city ? `, ${detectedLocalityInfo.city}` : ''}
+                </div>
+                <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  {detectedLocalityInfo.state} {detectedLocalityInfo.postalCode}
+                </div>
+              </div>
+            )}
 
             <form onSubmit={handleCreateAddress} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <div>

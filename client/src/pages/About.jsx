@@ -58,7 +58,7 @@ export default function About() {
               letterSpacing: '0.5px',
             }}
           >
-            <NearCartLogo size="small" />
+            <NearCartLogo size="small" variant="dark" />
             <span>HYPERLOCAL SHOPPING PLATFORM</span>
           </div>
 

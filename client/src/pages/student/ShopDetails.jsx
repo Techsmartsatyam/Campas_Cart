@@ -10,9 +10,15 @@ export default function ShopDetails() {
 
   const [shop, setShop] = useState(null);
   const [products, setProducts] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0, limit: 24 });
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   useEffect(() => {
     async function fetchShopData() {
@@ -21,7 +27,7 @@ export default function ShopDetails() {
       try {
         const [shopRes, prodRes] = await Promise.all([
           getShopById(id),
-          getProducts({ shop: id, search }),
+          getProducts({ shop: id, search, page, limit: 24 }),
         ]);
 
         if (shopRes.success) {
@@ -29,6 +35,7 @@ export default function ShopDetails() {
         }
         if (prodRes.success) {
           setProducts(prodRes.products);
+          if (prodRes.pagination) setPagination(prodRes.pagination);
         }
       } catch (err) {
         setError(err.message || 'Shop not found or unavailable');
@@ -37,7 +44,7 @@ export default function ShopDetails() {
       }
     }
     fetchShopData();
-  }, [id, search]);
+  }, [id, search, page]);
 
   if (loading) return <LoadingSpinner />;
 
@@ -161,15 +168,41 @@ export default function ShopDetails() {
         {products.length === 0 ? (
           <EmptyState message="No available products found in this store." />
         ) : (
-          <div className="product-grid-responsive">
-            {products.map((prod) => (
-              <ProductCard
-                key={prod._id}
-                product={prod}
-                onClick={() => navigate(`/student/products/${prod._id}`)}
-              />
-            ))}
-          </div>
+          <>
+            <div className="product-grid-responsive">
+              {products.map((prod) => (
+                <ProductCard
+                  key={prod._id}
+                  product={prod}
+                  onClick={() => navigate(`/student/products/${prod._id}`)}
+                />
+              ))}
+            </div>
+
+            {pagination.totalPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', marginTop: '1.5rem' }}>
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  className="btn-secondary"
+                  style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', opacity: page <= 1 ? 0.5 : 1 }}
+                >
+                  Previous
+                </button>
+                <span style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                  Page {page} of {pagination.totalPages}
+                </span>
+                <button
+                  disabled={page >= pagination.totalPages}
+                  onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                  className="btn-primary"
+                  style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', opacity: page >= pagination.totalPages ? 0.5 : 1 }}
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
 

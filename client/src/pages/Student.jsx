@@ -17,23 +17,30 @@ export default function Student() {
 
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0, limit: 24 });
 
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchData = async () => {
+  const fetchData = async (currentPage = 1) => {
     setLoading(true);
     setError('');
     try {
       const [catRes, prodRes] = await Promise.all([
         getCategories(),
-        getProducts({ limit: 24, search, category: selectedCategory }),
+        getProducts({ limit: 24, page: currentPage, search, category: selectedCategory }),
       ]);
 
       if (catRes.success) setCategories(catRes.categories);
-      if (prodRes.success) setProducts(prodRes.products);
+      if (prodRes.success) {
+        setProducts(prodRes.products);
+        if (prodRes.pagination) {
+          setPagination(prodRes.pagination);
+        }
+      }
     } catch (err) {
       setError(err.message || 'Failed to load NearCart products');
     } finally {
@@ -42,14 +49,18 @@ export default function Student() {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchData();
-    }, 300);
-    return () => clearTimeout(timer);
+    setPage(1);
   }, [search, selectedCategory]);
 
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchData(page);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [search, selectedCategory, page]);
+
   return (
-    <div className="container" style={{ padding: '2rem 0.5rem 5rem 0.5rem' }}>
+    <div className="container" style={{ padding: '2rem 0.5rem 4rem 0.5rem' }}>
       {/* Welcome Banner */}
       <div
         className="glass-card"
@@ -129,11 +140,37 @@ export default function Student() {
 
       {/* Main Student Product Listing Grid */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
           <div>
             <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-primary)' }}>Available Products</h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Live items ready for immediate delivery</p>
+            <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              {pagination.total > 0 ? `Showing ${products.length} of ${pagination.total} items ready for immediate delivery` : 'Live items ready for immediate delivery'}
+            </p>
           </div>
+
+          {pagination.totalPages > 1 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+              <button
+                disabled={page <= 1}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                className="btn-secondary"
+                style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', opacity: page <= 1 ? 0.5 : 1 }}
+              >
+                Previous
+              </button>
+              <span style={{ fontWeight: '600', color: 'var(--text-secondary)' }}>
+                Page {page} of {pagination.totalPages}
+              </span>
+              <button
+                disabled={page >= pagination.totalPages}
+                onClick={() => setPage((p) => Math.min(pagination.totalPages, p + 1))}
+                className="btn-secondary"
+                style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', opacity: page >= pagination.totalPages ? 0.5 : 1 }}
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
 
         {loading ? (
@@ -147,19 +184,52 @@ export default function Student() {
             }}
           />
         ) : (
-          <div className="product-grid-responsive">
-            {products.map((prod) => (
-              <ProductCard
-                key={prod._id}
-                product={prod}
-                onClick={() => navigate(`/student/products/${prod._id}`)}
-                onShopClick={(e, shopId) => {
-                  e.stopPropagation();
-                  navigate(`/student/shops/${shopId}`);
-                }}
-              />
-            ))}
-          </div>
+          <>
+            <div className="product-grid-responsive">
+              {products.map((prod) => (
+                <ProductCard
+                  key={prod._id}
+                  product={prod}
+                  onClick={() => navigate(`/student/products/${prod._id}`)}
+                  onShopClick={(e, shopId) => {
+                    e.stopPropagation();
+                    navigate(`/student/shops/${shopId}`);
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Bottom Pagination controls */}
+            {pagination.totalPages > 1 && (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.75rem', marginTop: '2rem' }}>
+                <button
+                  disabled={page <= 1}
+                  onClick={() => {
+                    setPage((p) => Math.max(1, p - 1));
+                    window.scrollTo({ top: 300, behavior: 'smooth' });
+                  }}
+                  className="btn-secondary"
+                  style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', opacity: page <= 1 ? 0.5 : 1 }}
+                >
+                  ← Previous Page
+                </button>
+                <span style={{ fontWeight: '700', fontSize: '0.9rem', color: 'var(--text-primary)' }}>
+                  Page {page} of {pagination.totalPages}
+                </span>
+                <button
+                  disabled={page >= pagination.totalPages}
+                  onClick={() => {
+                    setPage((p) => Math.min(pagination.totalPages, p + 1));
+                    window.scrollTo({ top: 300, behavior: 'smooth' });
+                  }}
+                  className="btn-primary"
+                  style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', opacity: page >= pagination.totalPages ? 0.5 : 1 }}
+                >
+                  Next Page →
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

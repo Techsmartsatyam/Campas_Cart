@@ -87,7 +87,7 @@ export default function Footer() {
       <div
         className="container"
         style={{
-          padding: '3.5rem 1.5rem 2rem 1.5rem',
+          padding: '1.5rem 1.25rem 1.25rem 1.25rem',
           maxWidth: '1200px',
           margin: '0 auto',
         }}
@@ -96,32 +96,32 @@ export default function Footer() {
         <div
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-            gap: '2.5rem',
-            marginBottom: '3rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+            gap: '1.25rem 1.5rem',
+            marginBottom: '1.25rem',
           }}
         >
           {/* Column 1: Brand & Tagline */}
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-              <NearCartLogo size="medium" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.4rem' }}>
+              <NearCartLogo size="small" variant="dark" />
             </div>
 
-            <p style={{ fontSize: '0.9rem', fontWeight: '700', color: '#34d399', margin: '0 0 0.5rem 0' }}>
+            <p style={{ fontSize: '0.8rem', fontWeight: '700', color: '#34d399', margin: '0 0 0.35rem 0' }}>
               "Your nearby shops, delivered."
             </p>
 
-            <p style={{ fontSize: '0.85rem', color: '#94a3b8', lineHeight: '1.6', margin: '0 0 1.25rem 0' }}>
+            <p style={{ fontSize: '0.78rem', color: '#94a3b8', lineHeight: '1.4', margin: '0 0 0.75rem 0' }}>
               NearCart connects customers with nearby local shops for fast, convenient, and reliable ordering & delivery straight to your doorstep.
             </p>
 
             {/* Social Links Section */}
             {activeSocialLinks.length > 0 && (
               <div>
-                <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#a7f3d0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.6rem' }}>
+                <div style={{ fontSize: '0.7rem', fontWeight: '700', color: '#a7f3d0', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '0.35rem' }}>
                   Connect With Us
                 </div>
-                <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap' }}>
                   {activeSocialLinks.map((social) => {
                     const IconComp = social.icon;
                     return (
@@ -134,8 +134,8 @@ export default function Footer() {
                         title={social.name}
                         className="social-icon-btn"
                         style={{
-                          width: '2.25rem',
-                          height: '2.25rem',
+                          width: '1.85rem',
+                          height: '1.85rem',
                           borderRadius: '50%',
                           background: 'rgba(255, 255, 255, 0.06)',
                           border: '1px solid rgba(52, 211, 153, 0.2)',
@@ -147,7 +147,7 @@ export default function Footer() {
                           transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                         }}
                       >
-                        <IconComp size={16} />
+                        <IconComp size={14} />
                       </a>
                     );
                   })}
@@ -160,10 +160,10 @@ export default function Footer() {
           <div>
             <h4
               style={{
-                fontSize: '0.95rem',
+                fontSize: '0.85rem',
                 fontWeight: '800',
                 color: '#ffffff',
-                marginBottom: '1rem',
+                marginBottom: '0.6rem',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
                 display: 'flex',
@@ -171,10 +171,10 @@ export default function Footer() {
                 gap: '0.4rem',
               }}
             >
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }} />
               Quick Links
             </h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.875rem' }}>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.8rem' }}>
               <li>
                 <Link to="/" className="footer-link">
                   Home
@@ -212,10 +212,10 @@ export default function Footer() {
           <div>
             <h4
               style={{
-                fontSize: '0.95rem',
+                fontSize: '0.85rem',
                 fontWeight: '800',
                 color: '#ffffff',
-                marginBottom: '1rem',
+                marginBottom: '0.6rem',
                 textTransform: 'uppercase',
                 letterSpacing: '0.5px',
                 display: 'flex',
@@ -223,10 +223,10 @@ export default function Footer() {
                 gap: '0.4rem',
               }}
             >
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#0284c7', display: 'inline-block' }} />
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0284c7', display: 'inline-block' }} />
               Platform Portals
             </h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.6rem', fontSize: '0.875rem' }}>
+            <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.35rem', fontSize: '0.8rem' }}>
               <li>
                 <Link to="/student" className="footer-link">
                   Customer Marketplace
@@ -256,47 +256,43 @@ export default function Footer() {
               style={{
                 background: 'rgba(16, 185, 129, 0.05)',
                 border: '1px solid rgba(52, 211, 153, 0.2)',
-                borderRadius: '0.85rem',
-                padding: '1.25rem',
+                borderRadius: '0.65rem',
+                padding: '0.85rem 1rem',
               }}
             >
               <h4
                 style={{
-                  fontSize: '0.95rem',
+                  fontSize: '0.85rem',
                   fontWeight: '800',
                   color: '#34d399',
-                  margin: '0 0 0.75rem 0',
+                  margin: '0 0 0.4rem 0',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.5rem',
+                  gap: '0.4rem',
                 }}
               >
-                <ShieldCheck size={18} style={{ color: '#34d399' }} />
+                <ShieldCheck size={15} style={{ color: '#34d399' }} />
                 Privacy & Safety
               </h4>
 
-              <p style={{ fontSize: '0.825rem', color: '#cbd5e1', lineHeight: '1.5', margin: '0 0 0.6rem 0' }}>
-                Your privacy matters to us. NearCart only uses the information required to provide and manage your orders.
-              </p>
-
-              <p style={{ fontSize: '0.825rem', color: '#cbd5e1', lineHeight: '1.5', margin: '0 0 0.6rem 0' }}>
-                Account protection: Secure authentication helps protect your account access.
+              <p style={{ fontSize: '0.78rem', color: '#cbd5e1', lineHeight: '1.35', margin: '0 0 0.4rem 0' }}>
+                Your privacy matters to us. NearCart only uses data needed to process your orders.
               </p>
 
               <div
                 style={{
-                  fontSize: '0.78rem',
+                  fontSize: '0.74rem',
                   color: '#94a3b8',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '0.35rem',
-                  marginTop: '0.75rem',
-                  paddingTop: '0.6rem',
+                  gap: '0.3rem',
+                  marginTop: '0.4rem',
+                  paddingTop: '0.4rem',
                   borderTop: '1px solid rgba(255, 255, 255, 0.08)',
                 }}
               >
-                <Lock size={13} style={{ color: '#34d399', flexShrink: 0 }} />
-                <span>Do not share passwords or sensitive details with anyone.</span>
+                <Lock size={12} style={{ color: '#34d399', flexShrink: 0 }} />
+                <span>Secure account protection enabled.</span>
               </div>
             </div>
           </div>
@@ -306,13 +302,13 @@ export default function Footer() {
         <div
           style={{
             borderTop: '1px solid rgba(255, 255, 255, 0.08)',
-            paddingTop: '1.5rem',
+            paddingTop: '0.85rem',
             display: 'flex',
             justify: 'space-between',
             alignItems: 'center',
             flexWrap: 'wrap',
-            gap: '1rem',
-            fontSize: '0.825rem',
+            gap: '0.5rem',
+            fontSize: '0.78rem',
             color: '#64748b',
           }}
         >
@@ -321,7 +317,7 @@ export default function Footer() {
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#94a3b8' }}>
-            <ShieldCheck size={14} style={{ color: '#34d399' }} />
+            <ShieldCheck size={13} style={{ color: '#34d399' }} />
             <span>Secure & Private Local Ordering</span>
           </div>
         </div>
