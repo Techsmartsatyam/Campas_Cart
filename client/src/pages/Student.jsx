@@ -105,36 +105,6 @@ export default function Student() {
         </div>
       </div>
 
-      {/* Nearby Shops Section */}
-      <div style={{ marginBottom: '2.5rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-          <div>
-            <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
-              Nearby Shops & Hotels
-            </h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>
-              Select a shop to view its exclusive items and menu
-            </p>
-          </div>
-        </div>
-
-        {shops.length === 0 ? (
-          <div className="glass-card" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            No active shops available right now.
-          </div>
-        ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem' }}>
-            {shops.map((shopItem) => (
-              <ShopCard
-                key={shopItem._id}
-                shop={shopItem}
-                onClick={() => navigate(`/student/shops/${shopItem._id}`)}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Categories Horizontal Selector */}
       <div style={{ marginBottom: '2rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
@@ -166,6 +136,36 @@ export default function Student() {
             />
           ))}
         </div>
+      </div>
+
+      {/* Nearby Shops Section */}
+      <div style={{ marginBottom: '2.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
+              Nearby Shops & Hotels
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>
+              Select a shop to view its exclusive items and menu
+            </p>
+          </div>
+        </div>
+
+        {shops.length === 0 ? (
+          <div className="glass-card" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            No active shops available right now.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem' }}>
+            {shops.map((shopItem) => (
+              <ShopCard
+                key={shopItem._id}
+                shop={shopItem}
+                onClick={() => navigate(`/student/shops/${shopItem._id}`)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
     </div>

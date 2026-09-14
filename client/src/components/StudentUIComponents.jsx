@@ -98,13 +98,30 @@ export function ShopCard({ shop, onClick }) {
     >
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
         <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
+          {shop.logo || shop.coverImage ? (
+            <img
+              src={shop.logo || shop.coverImage}
+              alt={shop.name}
+              style={{
+                width: '3rem',
+                height: '3rem',
+                borderRadius: '0.5rem',
+                objectFit: 'cover',
+                border: '1px solid var(--border-color)',
+              }}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+          ) : null}
           <div
             style={{
               width: '3rem',
               height: '3rem',
               borderRadius: '0.5rem',
               background: '#e0f2fe',
-              display: 'flex',
+              display: (shop.logo || shop.coverImage) ? 'none' : 'flex',
               alignItems: 'center',
               justify: 'center',
               fontWeight: '700',
@@ -113,7 +130,7 @@ export function ShopCard({ shop, onClick }) {
               border: '1px solid #bae6fd',
             }}
           >
-            {shop.name.charAt(0)}
+            {shop.name ? shop.name.charAt(0).toUpperCase() : 'S'}
           </div>
           <div>
             <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-primary)' }}>{shop.name}</h4>

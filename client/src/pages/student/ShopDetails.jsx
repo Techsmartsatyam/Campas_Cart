@@ -96,13 +96,31 @@ export default function ShopDetails() {
         }}
       >
         <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-start', flexWrap: 'wrap', minWidth: 0, width: '100%' }}>
+          {shop.logo || shop.coverImage ? (
+            <img
+              src={shop.logo || shop.coverImage}
+              alt={shop.name}
+              style={{
+                width: '4rem',
+                height: '4rem',
+                borderRadius: '0.75rem',
+                objectFit: 'cover',
+                border: '1px solid var(--border-color)',
+                flexShrink: 0,
+              }}
+              onError={(e) => {
+                e.target.style.display = 'none';
+                if (e.target.nextSibling) e.target.nextSibling.style.display = 'flex';
+              }}
+            />
+          ) : null}
           <div
             style={{
               width: '4rem',
               height: '4rem',
               borderRadius: '0.75rem',
               background: 'var(--surface-light)',
-              display: 'flex',
+              display: (shop.logo || shop.coverImage) ? 'none' : 'flex',
               alignItems: 'center',
               justify: 'center',
               fontWeight: '800',
@@ -112,7 +130,7 @@ export default function ShopDetails() {
               flexShrink: 0,
             }}
           >
-            {shop.name.charAt(0)}
+            {shop.name ? shop.name.charAt(0).toUpperCase() : 'S'}
           </div>
           <div style={{ flex: 1, minWidth: 0, maxWidth: '100%', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.35rem', flexWrap: 'wrap', minWidth: 0 }}>
