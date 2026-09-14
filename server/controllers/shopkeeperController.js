@@ -5,12 +5,48 @@ import Order from '../models/Order.js';
 import Notification from '../models/Notification.js';
 import Coupon from '../models/Coupon.js';
 
+/**
+ * Helper to fetch a shop and enforce ownership check if shopId is provided.
+ * - If shopId is supplied:
+ *     - 400 if invalid ObjectId format
+ *     - 404 if shop does not exist in DB
+ *     - 403 if shop.owner !== userId
+ * - If shopId is NOT supplied:
+ *     - Returns the first shop owned by userId (or null if shopkeeper has no shops)
+ */
+const getShopWithOwnership = async (shopId, userId, res, populateCategory = false) => {
+  if (shopId) {
+    if (!mongoose.Types.ObjectId.isValid(shopId)) {
+      res.status(400).json({ success: false, message: 'Invalid shop ID format' });
+      return null;
+    }
+    let query = Shop.findById(shopId);
+    if (populateCategory) query = query.populate('category', 'name image');
+    const existingShop = await query;
+    if (!existingShop) {
+      res.status(404).json({ success: false, message: 'Shop not found' });
+      return null;
+    }
+    if (existingShop.owner.toString() !== userId.toString()) {
+      res.status(403).json({ success: false, message: 'Forbidden: Access denied to this shop' });
+      return null;
+    }
+    return existingShop;
+  }
+  let query = Shop.findOne({ owner: userId });
+  if (populateCategory) query = query.populate('category', 'name image');
+  return await query;
+};
+
 // @route   GET /api/shopkeeper/stats
-// @desc    Get real-time dashboard statistics for logged-in shopkeeper
+// @desc    Get real-time dashboard statistics for logged-in shopkeeper (supports ?shopId=)
 // @access  Private/Shopkeeper
 export const getShopkeeperStats = async (req, res, next) => {
   try {
-    const shop = await Shop.findOne({ owner: req.user._id });
+    const { shopId } = req.query;
+    const shop = await getShopWithOwnership(shopId, req.user._id, res);
+    if (res.headersSent) return;
+
     if (!shop) {
       return res.status(200).json({
         success: true,
@@ -68,8 +104,27 @@ export const getShopkeeperStats = async (req, res, next) => {
   }
 };
 
+// @route   GET /api/shopkeeper/shops
+// @desc    Get all shops owned by the logged-in shopkeeper
+// @access  Private/Shopkeeper
+export const getMyShops = async (req, res, next) => {
+  try {
+    const shops = await Shop.find({ owner: req.user._id })
+      .populate('category', 'name image')
+      .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      success: true,
+      count: shops.length,
+      shops,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // @route   POST /api/shopkeeper/shop
-// @desc    Create a new shop for logged-in shopkeeper
+// @desc    Create a new shop for logged-in shopkeeper (supports multiple shops)
 // @access  Private/Shopkeeper
 export const createShop = async (req, res, next) => {
   try {
@@ -91,14 +146,6 @@ export const createShop = async (req, res, next) => {
       return res.status(400).json({
         success: false,
         message: 'Shop name, category, and address are required.',
-      });
-    }
-
-    const existingShop = await Shop.findOne({ owner: req.user._id });
-    if (existingShop) {
-      return res.status(400).json({
-        success: false,
-        message: 'You already have a shop created.',
       });
     }
 
@@ -131,11 +178,13 @@ export const createShop = async (req, res, next) => {
 };
 
 // @route   GET /api/shopkeeper/shop
-// @desc    Get logged-in shopkeeper's shop details
+// @desc    Get logged-in shopkeeper's shop details (supports ?shopId= for multi-shop)
 // @access  Private/Shopkeeper
 export const getMyShop = async (req, res, next) => {
   try {
-    const shop = await Shop.findOne({ owner: req.user._id }).populate('category', 'name image');
+    const { shopId } = req.query;
+    const shop = await getShopWithOwnership(shopId, req.user._id, res, true);
+    if (res.headersSent) return;
 
     res.status(200).json({
       success: true,
@@ -147,11 +196,14 @@ export const getMyShop = async (req, res, next) => {
 };
 
 // @route   PUT /api/shopkeeper/shop
-// @desc    Update shop details for logged-in shopkeeper
+// @desc    Update shop details for logged-in shopkeeper (supports ?shopId= for multi-shop)
 // @access  Private/Shopkeeper
 export const updateShop = async (req, res, next) => {
   try {
-    const shop = await Shop.findOne({ owner: req.user._id });
+    const { shopId } = req.query;
+    const shop = await getShopWithOwnership(shopId, req.user._id, res);
+    if (res.headersSent) return;
+
     if (!shop) {
       return res.status(404).json({ success: false, message: 'Shop not found' });
     }
@@ -203,11 +255,14 @@ export const updateShop = async (req, res, next) => {
 };
 
 // @route   GET /api/shopkeeper/products
-// @desc    Get all products belonging to logged-in shopkeeper's shop
+// @desc    Get all products belonging to logged-in shopkeeper's shop (supports ?shopId=)
 // @access  Private/Shopkeeper
 export const getShopkeeperProducts = async (req, res, next) => {
   try {
-    const shop = await Shop.findOne({ owner: req.user._id });
+    const { shopId } = req.query;
+    const shop = await getShopWithOwnership(shopId, req.user._id, res);
+    if (res.headersSent) return;
+
     if (!shop) {
       return res.status(200).json({ success: true, products: [] });
     }
@@ -227,11 +282,14 @@ export const getShopkeeperProducts = async (req, res, next) => {
 };
 
 // @route   POST /api/shopkeeper/products
-// @desc    Add a product to shopkeeper's shop
+// @desc    Add a product to shopkeeper's shop (supports ?shopId= for multi-shop)
 // @access  Private/Shopkeeper
 export const createProduct = async (req, res, next) => {
   try {
-    const shop = await Shop.findOne({ owner: req.user._id });
+    const { shopId } = req.query;
+    const shop = await getShopWithOwnership(shopId, req.user._id, res);
+    if (res.headersSent) return;
+
     if (!shop) {
       return res.status(400).json({
         success: false,
@@ -305,16 +363,20 @@ export const createProduct = async (req, res, next) => {
 };
 
 // @route   PUT /api/shopkeeper/products/:id
-// @desc    Update product belonging to shopkeeper's shop
+// @desc    Update product belonging to shopkeeper's shop (supports ?shopId=)
 // @access  Private/Shopkeeper
 export const updateProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const { shopId } = req.query;
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ success: false, message: 'Invalid product ID' });
     }
 
-    const shop = await Shop.findOne({ owner: req.user._id });
+    const shop = await getShopWithOwnership(shopId, req.user._id, res);
+    if (res.headersSent) return;
+
     if (!shop) {
       return res.status(404).json({ success: false, message: 'Shop not found' });
     }
@@ -380,16 +442,20 @@ export const updateProduct = async (req, res, next) => {
 };
 
 // @route   DELETE /api/shopkeeper/products/:id
-// @desc    Delete product belonging to shopkeeper's shop
+// @desc    Delete product belonging to shopkeeper's shop (supports ?shopId=)
 // @access  Private/Shopkeeper
 export const deleteProduct = async (req, res, next) => {
   try {
     const { id } = req.params;
+    const { shopId } = req.query;
+
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ success: false, message: 'Invalid product ID' });
     }
 
-    const shop = await Shop.findOne({ owner: req.user._id });
+    const shop = await getShopWithOwnership(shopId, req.user._id, res);
+    if (res.headersSent) return;
+
     if (!shop) {
       return res.status(404).json({ success: false, message: 'Shop not found' });
     }
@@ -412,11 +478,14 @@ export const deleteProduct = async (req, res, next) => {
 };
 
 // @route   GET /api/shopkeeper/inventory
-// @desc    Get inventory items with low-stock / stock status
+// @desc    Get inventory items with low-stock / stock status (supports ?shopId=)
 // @access  Private/Shopkeeper
 export const getInventory = async (req, res, next) => {
   try {
-    const shop = await Shop.findOne({ owner: req.user._id });
+    const { shopId } = req.query;
+    const shop = await getShopWithOwnership(shopId, req.user._id, res);
+    if (res.headersSent) return;
+
     if (!shop) {
       return res.status(200).json({ success: true, inventory: [] });
     }
@@ -455,11 +524,14 @@ export const getInventory = async (req, res, next) => {
 };
 
 // @route   GET /api/shopkeeper/orders
-// @desc    Get orders belonging to shopkeeper's shop
+// @desc    Get orders belonging to shopkeeper's shop (supports ?shopId=)
 // @access  Private/Shopkeeper
 export const getShopkeeperOrders = async (req, res, next) => {
   try {
-    const shop = await Shop.findOne({ owner: req.user._id });
+    const { shopId } = req.query;
+    const shop = await getShopWithOwnership(shopId, req.user._id, res);
+    if (res.headersSent) return;
+
     if (!shop) {
       return res.status(200).json({ success: true, orders: [] });
     }
@@ -480,18 +552,30 @@ export const getShopkeeperOrders = async (req, res, next) => {
 };
 
 // @route   PATCH /api/shopkeeper/orders/:id/status
-// @desc    Update order status within shopkeeper lifecycle limits
+// @desc    Update order status within shopkeeper lifecycle limits (supports ?shopId=)
 // @access  Private/Shopkeeper
 export const updateOrderStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { orderStatus, cancellationReason } = req.body;
+    const { shopId } = req.query;
 
     if (!mongoose.Types.ObjectId.isValid(id)) {
       return res.status(400).json({ success: false, message: 'Invalid order ID format' });
     }
 
-    const shop = await Shop.findOne({ owner: req.user._id });
+    let shop;
+    if (shopId) {
+      shop = await getShopWithOwnership(shopId, req.user._id, res);
+      if (res.headersSent) return;
+    } else {
+      // Fallback: find the shop that owns this specific order
+      const orderForShop = await Order.findById(id).select('shop');
+      if (orderForShop) {
+        shop = await Shop.findOne({ _id: orderForShop.shop, owner: req.user._id });
+      }
+    }
+
     if (!shop) {
       return res.status(404).json({ success: false, message: 'Shop not found' });
     }
@@ -635,11 +719,14 @@ export const updateOrderStatus = async (req, res, next) => {
 // ==========================================
 
 // @route   GET /api/shopkeeper/coupons
-// @desc    Get all coupons for logged-in shopkeeper's shop
+// @desc    Get all coupons for logged-in shopkeeper's shop (supports ?shopId=)
 // @access  Private/Shopkeeper
 export const getShopkeeperCoupons = async (req, res, next) => {
   try {
-    const shop = await Shop.findOne({ owner: req.user._id });
+    const { shopId } = req.query;
+    const shop = await getShopWithOwnership(shopId, req.user._id, res);
+    if (res.headersSent) return;
+
     if (!shop) {
       return res.status(200).json({
         success: true,
@@ -659,11 +746,14 @@ export const getShopkeeperCoupons = async (req, res, next) => {
 };
 
 // @route   POST /api/shopkeeper/coupons
-// @desc    Create a new coupon for shopkeeper's shop
+// @desc    Create a new coupon for shopkeeper's shop (supports ?shopId=)
 // @access  Private/Shopkeeper
 export const createShopkeeperCoupon = async (req, res, next) => {
   try {
-    const shop = await Shop.findOne({ owner: req.user._id });
+    const { shopId } = req.query;
+    const shop = await getShopWithOwnership(shopId, req.user._id, res);
+    if (res.headersSent) return;
+
     if (!shop) {
       return res.status(400).json({
         success: false,
@@ -762,11 +852,14 @@ export const createShopkeeperCoupon = async (req, res, next) => {
 };
 
 // @route   PUT /api/shopkeeper/coupons/:id
-// @desc    Update an existing coupon
+// @desc    Update an existing coupon (supports ?shopId=)
 // @access  Private/Shopkeeper
 export const updateShopkeeperCoupon = async (req, res, next) => {
   try {
-    const shop = await Shop.findOne({ owner: req.user._id });
+    const { shopId } = req.query;
+    const shop = await getShopWithOwnership(shopId, req.user._id, res);
+    if (res.headersSent) return;
+
     if (!shop) {
       return res.status(404).json({ success: false, message: 'Shop not found' });
     }
@@ -839,11 +932,14 @@ export const updateShopkeeperCoupon = async (req, res, next) => {
 };
 
 // @route   PATCH /api/shopkeeper/coupons/:id/toggle
-// @desc    Toggle coupon active status
+// @desc    Toggle coupon active status (supports ?shopId=)
 // @access  Private/Shopkeeper
 export const toggleShopkeeperCoupon = async (req, res, next) => {
   try {
-    const shop = await Shop.findOne({ owner: req.user._id });
+    const { shopId } = req.query;
+    const shop = await getShopWithOwnership(shopId, req.user._id, res);
+    if (res.headersSent) return;
+
     if (!shop) {
       return res.status(404).json({ success: false, message: 'Shop not found' });
     }
@@ -867,11 +963,14 @@ export const toggleShopkeeperCoupon = async (req, res, next) => {
 };
 
 // @route   DELETE /api/shopkeeper/coupons/:id
-// @desc    Delete a coupon
+// @desc    Delete a coupon (supports ?shopId=)
 // @access  Private/Shopkeeper
 export const deleteShopkeeperCoupon = async (req, res, next) => {
   try {
-    const shop = await Shop.findOne({ owner: req.user._id });
+    const { shopId } = req.query;
+    const shop = await getShopWithOwnership(shopId, req.user._id, res);
+    if (res.headersSent) return;
+
     if (!shop) {
       return res.status(404).json({ success: false, message: 'Shop not found' });
     }
@@ -889,4 +988,3 @@ export const deleteShopkeeperCoupon = async (req, res, next) => {
     next(error);
   }
 };
-

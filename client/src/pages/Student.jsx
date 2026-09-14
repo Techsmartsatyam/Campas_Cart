@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getCategories, getProducts } from '../services/studentService';
+import { getCategories, getProducts, getShops } from '../services/studentService';
 import {
   SearchBar,
   CategoryCard,
+  ShopCard,
   ProductCard,
   LoadingSpinner,
   EmptyState,
@@ -15,6 +16,7 @@ export default function Student() {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [shops, setShops] = useState([]);
   const [categories, setCategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0, limit: 24 });
@@ -29,11 +31,13 @@ export default function Student() {
     setLoading(true);
     setError('');
     try {
-      const [catRes, prodRes] = await Promise.all([
+      const [shopsRes, catRes, prodRes] = await Promise.all([
+        getShops(search),
         getCategories(),
         getProducts({ limit: 24, page: currentPage, search, category: selectedCategory }),
       ]);
 
+      if (shopsRes.success) setShops(shopsRes.shops || []);
       if (catRes.success) setCategories(catRes.categories);
       if (prodRes.success) {
         setProducts(prodRes.products);
@@ -100,9 +104,39 @@ export default function Student() {
           <SearchBar
             value={search}
             onChange={setSearch}
-            placeholder="Search Maggi, notebooks, snacks, drinks, pens..."
+            placeholder="Search shops, Maggi, notebooks, snacks, drinks, pens..."
           />
         </div>
+      </div>
+
+      {/* Nearby Shops Section */}
+      <div style={{ marginBottom: '2.5rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
+              Nearby Shops & Hotels
+            </h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>
+              Select a shop to view its exclusive items and menu
+            </p>
+          </div>
+        </div>
+
+        {shops.length === 0 ? (
+          <div className="glass-card" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            No active shops available right now.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem' }}>
+            {shops.map((shopItem) => (
+              <ShopCard
+                key={shopItem._id}
+                shop={shopItem}
+                onClick={() => navigate(`/student/shops/${shopItem._id}`)}
+              />
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Categories Horizontal Selector */}

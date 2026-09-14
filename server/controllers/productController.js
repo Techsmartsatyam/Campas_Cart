@@ -33,11 +33,23 @@ export const getProducts = async (req, res, next) => {
     };
 
     if (shop) {
-      if (mongoose.Types.ObjectId.isValid(shop)) {
-        query.shop = shop;
-      } else {
+      if (!mongoose.Types.ObjectId.isValid(shop)) {
         return res.status(400).json({ success: false, message: 'Invalid shop ID format' });
       }
+      const isShopActive = activeShopIds.some((id) => id.toString() === shop.toString());
+      if (!isShopActive) {
+        return res.status(200).json({
+          success: true,
+          products: [],
+          pagination: {
+            page: pageNum,
+            limit: limitNum,
+            total: 0,
+            totalPages: 1,
+          },
+        });
+      }
+      query.shop = shop;
     }
 
     if (category) {

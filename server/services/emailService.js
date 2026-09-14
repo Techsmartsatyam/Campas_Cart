@@ -160,19 +160,26 @@ export const verifyTransporterConnection = async () => {
 };
 
 /**
- * Send email notification to Shopkeeper when a new order is placed
+ * Send complete order notification email to Shopkeeper when a new order is placed.
+ * All monetary values are read directly from server-calculated Order document — never recalculated here.
  */
 export const sendOrderPlacedEmailToShopkeeper = async ({
   shopkeeperEmail,
   shopName,
   studentName,
+  customerPhone,
   orderNumber,
+  orderId,
   items = [],
+  subtotal = 0,
+  deliveryFee = 0,
+  gstAmount = 0,
+  discount = 0,
+  couponCode,
   totalAmount,
   paymentMethod,
   deliveryAddress,
   orderTime,
-  orderId,
 }) => {
   console.log(`[EMAIL TRACE] Email function called: PASS (Shopkeeper Order Email)`);
 
@@ -184,41 +191,141 @@ export const sendOrderPlacedEmailToShopkeeper = async ({
   console.log(`[EMAIL TRACE] Shopkeeper email resolved: PASS (${shopkeeperEmail})`);
   console.log(`[EMAIL] Shopkeeper recipient: ${shopkeeperEmail}`);
 
-  const itemsListHtml = items
-    .map(
-      (item) =>
-        `<li style="margin-bottom: 0.35rem;"><strong>${item.name}</strong> × ${item.quantity} — ₹${item.subtotal || item.price * item.quantity}</li>`
-    )
+  // Build order items table rows
+  const itemRowsHtml = items
+    .map((item) => {
+      const itemTotal = (Number(item.subtotal) || (Number(item.price) * Number(item.quantity))) || 0;
+      const gstPct = item.gstPercentage ? ` (GST ${item.gstPercentage}%)` : '';
+      return `
+        <tr>
+          <td style="padding:8px 10px; border-bottom:1px solid #f1f5f9;">${item.name}${gstPct}</td>
+          <td style="padding:8px 10px; border-bottom:1px solid #f1f5f9; text-align:center;">${item.quantity}</td>
+          <td style="padding:8px 10px; border-bottom:1px solid #f1f5f9; text-align:right;">₹${Number(item.price).toFixed(2)}</td>
+          <td style="padding:8px 10px; border-bottom:1px solid #f1f5f9; text-align:right;">₹${itemTotal.toFixed(2)}</td>
+        </tr>`;
+    })
     .join('');
 
-  const subject = `New NearCart Order — #${orderNumber}`;
+  // Payment method display
+  const paymentDisplay =
+    paymentMethod === 'COD' ? 'Cash on Delivery' :
+    paymentMethod === 'UPI' ? 'UPI' :
+    paymentMethod === 'ONLINE' ? 'Online Payment' :
+    paymentMethod || 'N/A';
+
+  // Coupon row
+  const couponRowHtml = couponCode
+    ? `<tr><td style="padding:5px 0; color:#16a34a;">Coupon (${couponCode}):</td><td style="padding:5px 0; color:#16a34a; text-align:right;">-₹${Number(discount).toFixed(2)}</td></tr>`
+    : `<tr><td style="padding:5px 0; color:#64748b;">Coupon Discount:</td><td style="padding:5px 0; text-align:right;">₹0.00</td></tr>`;
+
+  const subject = `New Order Received — ${shopName} — NearCart`;
 
   const htmlContent = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; background: #ffffff;">
-      <h2 style="color: #0284c7; margin-top: 0;">🛒 New Order Received!</h2>
-      <p>Hello <strong>${shopName}</strong> Manager,</p>
-      <p>A new order <strong>#${orderNumber}</strong> has been placed by <strong>${studentName}</strong>.</p>
-      
-      <div style="background: #f8fafc; padding: 16px; border-radius: 6px; margin: 18px 0; border: 1px solid #e2e8f0;">
-        <h3 style="margin-top: 0; color: #334155; font-size: 1rem;">Order Summary</h3>
-        <ul style="padding-left: 20px; margin-bottom: 12px;">
-          ${itemsListHtml}
-        </ul>
-        <hr style="border: 0; border-top: 1px dashed #cbd5e1; margin: 12px 0;" />
-        <p style="margin: 4px 0;"><strong>Total Amount:</strong> ₹${totalAmount}</p>
-        <p style="margin: 4px 0;"><strong>Payment Method:</strong> ${paymentMethod}</p>
-        <p style="margin: 4px 0;"><strong>Delivery Address:</strong> ${deliveryAddress}</p>
-        <p style="margin: 4px 0;"><strong>Order Placed At:</strong> ${orderTime || new Date().toLocaleString()}</p>
+    <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; background: #ffffff;">
+      <!-- Header -->
+      <div style="background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%); padding: 24px 28px;">
+        <h2 style="color: #ffffff; margin: 0; font-size: 1.4rem;">🛒 New Order Received!</h2>
+        <p style="color: #bae6fd; margin: 6px 0 0 0; font-size: 0.9rem;">NearCart — ${shopName}</p>
       </div>
 
-      <p style="font-size: 0.9rem; color: #64748b;">
-        Please open your <strong>NearCart Shopkeeper Dashboard</strong> to accept and start preparing this order.
-      </p>
+      <div style="padding: 24px 28px;">
+        <!-- Shop & Order Summary -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+            <tr>
+              <td style="padding:4px 0; color:#64748b; width:45%;">Shop:</td>
+              <td style="padding:4px 0; font-weight:700;">${shopName}</td>
+            </tr>
+            <tr>
+              <td style="padding:4px 0; color:#64748b;">Order ID:</td>
+              <td style="padding:4px 0; font-weight:700; color:#0284c7;">#${orderNumber}</td>
+            </tr>
+            <tr>
+              <td style="padding:4px 0; color:#64748b;">Order Date:</td>
+              <td style="padding:4px 0;">${orderTime || new Date().toLocaleString('en-IN')}</td>
+            </tr>
+            <tr>
+              <td style="padding:4px 0; color:#64748b;">Order Status:</td>
+              <td style="padding:4px 0;"><span style="background:#dcfce7; color:#16a34a; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:700;">PLACED</span></td>
+            </tr>
+          </table>
+        </div>
 
-      <hr style="border: 0; border-top: 1px solid #f1f5f9; margin-top: 24px;" />
-      <p style="font-size: 0.75rem; color: #94a3b8; text-align: center;">
-        NearCart Platform Notification System — Automatic Message
-      </p>
+        <!-- Customer Details -->
+        <h3 style="font-size:1rem; color:#334155; margin:0 0 10px 0; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">👤 Customer Details</h3>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 20px;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+            <tr>
+              <td style="padding:4px 0; color:#64748b; width:45%;">Name:</td>
+              <td style="padding:4px 0; font-weight:600;">${studentName}</td>
+            </tr>
+            <tr>
+              <td style="padding:4px 0; color:#64748b;">Phone:</td>
+              <td style="padding:4px 0; font-weight:600;">${customerPhone || 'Not available'}</td>
+            </tr>
+          </table>
+        </div>
+
+        <!-- Delivery Address -->
+        <h3 style="font-size:1rem; color:#334155; margin:0 0 10px 0; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">📍 Delivery Address</h3>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 20px; font-size:0.9rem; line-height:1.5;">
+          ${deliveryAddress || 'See dashboard for delivery details'}
+        </div>
+
+        <!-- Order Items -->
+        <h3 style="font-size:1rem; color:#334155; margin:0 0 10px 0; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">📦 Order Items</h3>
+        <table style="width:100%; border-collapse:collapse; font-size:0.88rem; margin-bottom:20px;">
+          <thead>
+            <tr style="background:#f1f5f9;">
+              <th style="padding:9px 10px; text-align:left; color:#475569;">Product</th>
+              <th style="padding:9px 10px; text-align:center; color:#475569;">Qty</th>
+              <th style="padding:9px 10px; text-align:right; color:#475569;">Unit Price</th>
+              <th style="padding:9px 10px; text-align:right; color:#475569;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemRowsHtml || '<tr><td colspan="4" style="padding:8px 10px; color:#94a3b8;">No items</td></tr>'}
+          </tbody>
+        </table>
+
+        <!-- Payment & Billing -->
+        <h3 style="font-size:1rem; color:#334155; margin:0 0 10px 0; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">💳 Payment & Billing</h3>
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
+          <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+            <tr>
+              <td style="padding:5px 0; color:#64748b;">Subtotal:</td>
+              <td style="padding:5px 0; text-align:right;">₹${Number(subtotal).toFixed(2)}</td>
+            </tr>
+            ${couponRowHtml}
+            <tr>
+              <td style="padding:5px 0; color:#64748b;">Delivery Charge:</td>
+              <td style="padding:5px 0; text-align:right;">₹${Number(deliveryFee).toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td style="padding:5px 0; color:#64748b;">GST:</td>
+              <td style="padding:5px 0; text-align:right;">₹${Number(gstAmount).toFixed(2)}</td>
+            </tr>
+            <tr style="border-top:2px solid #cbd5e1;">
+              <td style="padding:10px 0 5px 0; font-weight:800; font-size:1rem; color:#0f172a;">Final Total:</td>
+              <td style="padding:10px 0 5px 0; font-weight:800; font-size:1rem; color:#0284c7; text-align:right;">₹${Number(totalAmount).toFixed(2)}</td>
+            </tr>
+          </table>
+          <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #e2e8f0; font-size:0.88rem; color:#475569;">
+            Payment Method: <strong>${paymentDisplay}</strong>
+          </div>
+        </div>
+
+        <p style="font-size: 0.9rem; color: #64748b; text-align:center;">
+          Please open your <strong>NearCart Shopkeeper Dashboard</strong> to accept and start preparing this order.
+        </p>
+      </div>
+
+      <!-- Footer -->
+      <div style="background:#f8fafc; padding:14px 28px; border-top:1px solid #e2e8f0; text-align:center;">
+        <p style="font-size: 0.75rem; color: #94a3b8; margin:0;">
+          NearCart Platform — Automatic Order Notification System
+        </p>
+      </div>
     </div>
   `;
 

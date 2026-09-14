@@ -32,6 +32,10 @@ export default function Shopkeeper() {
   const { user, refreshUser } = useAuth();
   const [activeTab, setActiveTab] = useState('DASHBOARD');
 
+  const [shops, setShops] = useState([]);
+  const [selectedShopId, setSelectedShopId] = useState('');
+  const [isCreatingNewShop, setIsCreatingNewShop] = useState(false);
+
   const [shop, setShop] = useState(null);
   const [stats, setStats] = useState(null);
   const [products, setProducts] = useState([]);
@@ -80,12 +84,12 @@ export default function Shopkeeper() {
 
   const [imageInput, setImageInput] = useState('');
 
-  const fetchData = async () => {
+  const fetchData = async (targetShopId = null) => {
     setLoading(true);
     setError('');
     try {
-      const [shopRes, catRes] = await Promise.all([
-        api.get('/shopkeeper/shop'),
+      const [shopsRes, catRes] = await Promise.all([
+        api.get('/shopkeeper/shops'),
         getCategories(),
       ]);
 
@@ -93,9 +97,24 @@ export default function Shopkeeper() {
         setCategories(catRes.categories);
       }
 
-      if (shopRes.success) {
-        setShop(shopRes.shop);
-        if (shopRes.shop) {
+      const ownedShops = shopsRes.success ? (shopsRes.shops || []) : [];
+      setShops(ownedShops);
+
+      const activeShopId = targetShopId || selectedShopId || (ownedShops.length > 0 ? ownedShops[0]._id : '');
+      if (activeShopId) {
+        setSelectedShopId(activeShopId);
+        setIsCreatingNewShop(false);
+
+        const [shopRes, statsRes, prodRes, invRes, ordRes] = await Promise.all([
+          api.get(`/shopkeeper/shop?shopId=${activeShopId}`),
+          api.get(`/shopkeeper/stats?shopId=${activeShopId}`),
+          api.get(`/shopkeeper/products?shopId=${activeShopId}`),
+          api.get(`/shopkeeper/inventory?shopId=${activeShopId}`),
+          api.get(`/shopkeeper/orders?shopId=${activeShopId}`),
+        ]);
+
+        if (shopRes.success && shopRes.shop) {
+          setShop(shopRes.shop);
           setShopForm({
             name: shopRes.shop.name || '',
             description: shopRes.shop.description || '',
@@ -111,20 +130,20 @@ export default function Shopkeeper() {
             upiId: shopRes.shop.upiId || '',
             upiQrImage: shopRes.shop.upiQrImage || '',
           });
-
-          // Fetch Stats, Products, Inventory, Orders
-          const [statsRes, prodRes, invRes, ordRes] = await Promise.all([
-            api.get('/shopkeeper/stats'),
-            api.get('/shopkeeper/products'),
-            api.get('/shopkeeper/inventory'),
-            api.get('/shopkeeper/orders'),
-          ]);
-
-          if (statsRes.success) setStats(statsRes.stats);
-          if (prodRes.success) setProducts(prodRes.products);
-          if (invRes.success) setInventory(invRes.inventory);
-          if (ordRes.success) setOrders(ordRes.orders);
+        } else {
+          setShop(null);
         }
+
+        if (statsRes.success) setStats(statsRes.stats);
+        if (prodRes.success) setProducts(prodRes.products);
+        if (invRes.success) setInventory(invRes.inventory);
+        if (ordRes.success) setOrders(ordRes.orders);
+      } else {
+        setShop(null);
+        setStats(null);
+        setProducts([]);
+        setInventory([]);
+        setOrders([]);
       }
     } catch (err) {
       setError(err.message || 'Failed to load shopkeeper data');
@@ -141,14 +160,14 @@ export default function Shopkeeper() {
 
   // Listen to real-time order events for Shopkeeper
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !selectedShopId) return;
 
     const handleNewOrder = async (data) => {
       console.log('⚡ [Shopkeeper Realtime] order:new received:', data);
       try {
-        const ordRes = await api.get('/shopkeeper/orders');
+        const ordRes = await api.get(`/shopkeeper/orders?shopId=${selectedShopId}`);
         if (ordRes.success) setOrders(ordRes.orders);
-        const statsRes = await api.get('/shopkeeper/stats');
+        const statsRes = await api.get(`/shopkeeper/stats?shopId=${selectedShopId}`);
         if (statsRes.success) setStats(statsRes.stats);
       } catch (err) {
         console.warn('Realtime shopkeeper refresh notice:', err.message);
@@ -158,9 +177,9 @@ export default function Shopkeeper() {
     const handleOrderUpdated = async (data) => {
       console.log('⚡ [Shopkeeper Realtime] order:updated received:', data);
       try {
-        const ordRes = await api.get('/shopkeeper/orders');
+        const ordRes = await api.get(`/shopkeeper/orders?shopId=${selectedShopId}`);
         if (ordRes.success) setOrders(ordRes.orders);
-        const statsRes = await api.get('/shopkeeper/stats');
+        const statsRes = await api.get(`/shopkeeper/stats?shopId=${selectedShopId}`);
         if (statsRes.success) setStats(statsRes.stats);
       } catch (err) {
         console.warn('Realtime shopkeeper refresh notice:', err.message);
@@ -174,7 +193,7 @@ export default function Shopkeeper() {
       socket.off('order:new', handleNewOrder);
       socket.off('order:updated', handleOrderUpdated);
     };
-  }, [socket]);
+  }, [socket, selectedShopId]);
 
   // Handle Shop Create / Edit
   const handleSaveShop = async (e) => {
@@ -189,16 +208,17 @@ export default function Shopkeeper() {
 
     try {
       let res;
-      if (shop) {
-        res = await api.put('/shopkeeper/shop', shopForm);
+      if (shop && !isCreatingNewShop) {
+        res = await api.put(`/shopkeeper/shop?shopId=${shop._id}`, shopForm);
       } else {
         res = await api.post('/shopkeeper/shop', shopForm);
       }
 
       if (res.success) {
-        setSuccess(`Shop ${shop ? 'updated' : 'created'} successfully!`);
-        setShop(res.shop);
-        fetchData();
+        setSuccess(`Shop ${shop && !isCreatingNewShop ? 'updated' : 'created'} successfully!`);
+        setIsCreatingNewShop(false);
+        setSelectedShopId(res.shop._id);
+        fetchData(res.shop._id);
       }
     } catch (err) {
       setError(err.message || 'Failed to save shop.');
@@ -322,16 +342,17 @@ export default function Shopkeeper() {
 
     try {
       let res;
+      const shopParam = selectedShopId ? `?shopId=${selectedShopId}` : '';
       if (editingProductId) {
-        res = await api.put(`/shopkeeper/products/${editingProductId}`, productForm);
+        res = await api.put(`/shopkeeper/products/${editingProductId}${shopParam}`, productForm);
       } else {
-        res = await api.post('/shopkeeper/products', productForm);
+        res = await api.post(`/shopkeeper/products${shopParam}`, productForm);
       }
 
       if (res.success) {
         setSuccess(`Product ${editingProductId ? 'updated' : 'added'} successfully!`);
         setShowProductModal(false);
-        fetchData();
+        fetchData(selectedShopId);
       }
     } catch (err) {
       setError(err.message || 'Failed to save product.');
@@ -342,10 +363,11 @@ export default function Shopkeeper() {
   const handleDeleteProduct = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
     try {
-      const res = await api.delete(`/shopkeeper/products/${id}`);
+      const shopParam = selectedShopId ? `?shopId=${selectedShopId}` : '';
+      const res = await api.delete(`/shopkeeper/products/${id}${shopParam}`);
       if (res.success) {
         setSuccess('Product deleted successfully.');
-        fetchData();
+        fetchData(selectedShopId);
       }
     } catch (err) {
       setError(err.message || 'Failed to delete product.');
@@ -357,13 +379,14 @@ export default function Shopkeeper() {
     setError('');
     setSuccess('');
     try {
-      const res = await api.patch(`/shopkeeper/orders/${orderId}/status`, {
+      const shopParam = selectedShopId ? `?shopId=${selectedShopId}` : '';
+      const res = await api.patch(`/shopkeeper/orders/${orderId}/status${shopParam}`, {
         orderStatus: nextStatus,
         cancellationReason,
       });
       if (res && res.success) {
         setSuccess(`Order status updated to ${nextStatus}`);
-        fetchData();
+        fetchData(selectedShopId);
       }
     } catch (err) {
       setError(err.message || 'Failed to update order status.');
@@ -392,7 +415,7 @@ export default function Shopkeeper() {
             </div>
             <div>
               <h1 style={{ fontSize: '1.8rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                {shop ? shop.name : 'Shopkeeper Portal'}
+                {isCreatingNewShop ? 'Create New Shop' : shop ? shop.name : 'Shopkeeper Portal'}
               </h1>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
                 Owner: <strong>{user?.name}</strong> • Account Status: <strong style={{ color: 'var(--success)' }}>{user?.accountStatus}</strong>
@@ -400,13 +423,78 @@ export default function Shopkeeper() {
             </div>
           </div>
 
-          {shop && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+            {shops.length > 0 && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <label style={{ fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Current Shop:</label>
+                <select
+                  value={isCreatingNewShop ? '__NEW__' : (selectedShopId || shop?._id || '')}
+                  onChange={(e) => {
+                    if (e.target.value === '__NEW__') {
+                      setIsCreatingNewShop(true);
+                      setShop(null);
+                      setShopForm({
+                        name: '',
+                        description: '',
+                        phone: '',
+                        category: categories.length > 0 ? categories[0]._id : '',
+                        address: '',
+                        openingTime: '09:00 AM',
+                        closingTime: '09:00 PM',
+                        minimumOrderAmount: 0,
+                        deliveryFee: 0,
+                        isOpen: true,
+                      });
+                    } else {
+                      setIsCreatingNewShop(false);
+                      setSelectedShopId(e.target.value);
+                      fetchData(e.target.value);
+                    }
+                  }}
+                  className="form-input"
+                  style={{ padding: '0.4rem 0.75rem', fontSize: '0.9rem', fontWeight: '700', width: 'auto', background: '#ffffff', cursor: 'pointer' }}
+                >
+                  {shops.map((s) => (
+                    <option key={s._id} value={s._id}>
+                      {s.name}
+                    </option>
+                  ))}
+                  <option value="__NEW__">+ Add New Shop</option>
+                </select>
+              </div>
+            )}
+
+            {!isCreatingNewShop && (
+              <button
+                onClick={() => {
+                  setIsCreatingNewShop(true);
+                  setShop(null);
+                  setShopForm({
+                    name: '',
+                    description: '',
+                    phone: '',
+                    category: categories.length > 0 ? categories[0]._id : '',
+                    address: '',
+                    openingTime: '09:00 AM',
+                    closingTime: '09:00 PM',
+                    minimumOrderAmount: 0,
+                    deliveryFee: 0,
+                    isOpen: true,
+                  });
+                }}
+                className="btn-secondary"
+                style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem' }}
+              >
+                <Plus size={14} /> Add New Shop
+              </button>
+            )}
+
+            {shop && !isCreatingNewShop && (
               <span style={{ padding: '0.3rem 0.75rem', borderRadius: '9999px', fontSize: '0.8rem', fontWeight: '700', background: shop.isOpen ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', color: shop.isOpen ? 'var(--success)' : 'var(--danger)', border: `1px solid ${shop.isOpen ? 'rgba(16, 185, 129, 0.3)' : 'rgba(239, 68, 68, 0.3)'}` }}>
                 SHOP {shop.isOpen ? 'OPEN' : 'CLOSED'}
               </span>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
@@ -422,14 +510,16 @@ export default function Shopkeeper() {
         </div>
       )}
 
-      {/* Case 1: No Shop Created Yet */}
-      {!shop ? (
+      {/* Case 1: No Shop Created Yet OR Creating New Shop */}
+      {(!shop || isCreatingNewShop) ? (
         <div className="glass-card" style={{ maxWidth: '600px', margin: '0 auto', padding: '2.5rem' }}>
           <h2 style={{ fontSize: '1.5rem', fontWeight: '700', marginBottom: '1rem', color: 'var(--text-primary)' }}>
-            Register Your Campus Shop
+            {isCreatingNewShop ? 'Create Another Campus Shop' : 'Register Your Campus Shop'}
           </h2>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-            Create your store profile to start adding products and accepting orders.
+            {isCreatingNewShop
+              ? 'Add a new shop to your account. All your shops are managed from this single shopkeeper account.'
+              : 'Create your store profile to start adding products and accepting orders.'}
           </p>
 
           <form onSubmit={handleSaveShop}>
@@ -477,9 +567,27 @@ export default function Shopkeeper() {
               </div>
             </div>
 
-            <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }}>
-              Create Campus Shop
-            </button>
+            <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+              <button type="submit" className="btn-primary" style={{ flex: 1 }}>
+                {isCreatingNewShop ? 'Create Shop' : 'Create Campus Shop'}
+              </button>
+              {shops.length > 0 && isCreatingNewShop && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCreatingNewShop(false);
+                    if (shops.length > 0) {
+                      setSelectedShopId(shops[0]._id);
+                      fetchData(shops[0]._id);
+                    }
+                  }}
+                  className="btn-secondary"
+                  style={{ flex: 1 }}
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
           </form>
         </div>
       ) : (

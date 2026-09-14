@@ -2,6 +2,7 @@ import express from 'express';
 import {
   createShop,
   getMyShop,
+  getMyShops,
   updateShop,
   getShopkeeperStats,
   getShopkeeperProducts,
@@ -31,6 +32,7 @@ router.use(protect, authorizeRoles('SHOPKEEPER'));
 
 router.get('/stats', getShopkeeperStats);
 
+router.get('/shops', getMyShops);  // List all owned shops
 router.post('/shop', createShop);
 router.get('/shop', getMyShop);
 router.put('/shop', updateShop);

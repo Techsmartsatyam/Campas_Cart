@@ -505,7 +505,24 @@ export const getOrderReviews = async (req, res, next) => {
  */
 export const getShopkeeperReviewsOverview = async (req, res, next) => {
   try {
-    const shop = await Shop.findOne({ owner: req.user._id });
+    const { shopId } = req.query;
+    let shop;
+
+    if (shopId) {
+      if (!mongoose.Types.ObjectId.isValid(shopId)) {
+        return res.status(400).json({ success: false, message: 'Invalid shop ID format' });
+      }
+      shop = await Shop.findById(shopId);
+      if (!shop) {
+        return res.status(404).json({ success: false, message: 'Shop not found' });
+      }
+      if (shop.owner.toString() !== req.user._id.toString()) {
+        return res.status(403).json({ success: false, message: 'Forbidden: Access denied to this shop' });
+      }
+    } else {
+      shop = await Shop.findOne({ owner: req.user._id });
+    }
+
     if (!shop) {
       return res.status(404).json({ success: false, message: 'Shop not found' });
     }

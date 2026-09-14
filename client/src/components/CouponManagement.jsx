@@ -48,14 +48,17 @@ export default function CouponManagement({ shop }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchCoupons();
-  }, []);
+    if (shop?._id) {
+      fetchCoupons();
+    }
+  }, [shop?._id]);
 
   const fetchCoupons = async () => {
     try {
       setLoading(true);
       setError('');
-      const res = await api.get('/shopkeeper/coupons');
+      const shopParam = shop?._id ? `?shopId=${shop._id}` : '';
+      const res = await api.get(`/shopkeeper/coupons${shopParam}`);
       if (res.success) {
         setCoupons(res.coupons || []);
       } else {
@@ -141,10 +144,11 @@ export default function CouponManagement({ shop }) {
     try {
       setSaving(true);
       let res;
+      const shopParam = shop?._id ? `?shopId=${shop._id}` : '';
       if (editingCoupon) {
-        res = await api.put(`/shopkeeper/coupons/${editingCoupon._id}`, formData);
+        res = await api.put(`/shopkeeper/coupons/${editingCoupon._id}${shopParam}`, formData);
       } else {
-        res = await api.post('/shopkeeper/coupons', formData);
+        res = await api.post(`/shopkeeper/coupons${shopParam}`, formData);
       }
 
       if (res.success) {
@@ -163,7 +167,8 @@ export default function CouponManagement({ shop }) {
 
   const handleToggleActive = async (couponId, currentStatus) => {
     try {
-      const res = await api.patch(`/shopkeeper/coupons/${couponId}/toggle`);
+      const shopParam = shop?._id ? `?shopId=${shop._id}` : '';
+      const res = await api.patch(`/shopkeeper/coupons/${couponId}/toggle${shopParam}`);
       if (res.success) {
         setCoupons((prev) =>
           prev.map((c) => (c._id === couponId ? { ...c, isActive: !currentStatus } : c))
@@ -187,7 +192,8 @@ export default function CouponManagement({ shop }) {
     const { id, code } = deleteTarget;
     setDeleteTarget(null);
     try {
-      const res = await api.delete(`/shopkeeper/coupons/${id}`);
+      const shopParam = shop?._id ? `?shopId=${shop._id}` : '';
+      const res = await api.delete(`/shopkeeper/coupons/${id}${shopParam}`);
       if (res.success) {
         setCoupons((prev) => prev.filter((c) => c._id !== id));
         setSuccess(`Coupon "${code}" deleted successfully`);
