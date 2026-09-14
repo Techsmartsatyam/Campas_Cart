@@ -149,21 +149,23 @@ export const createShop = async (req, res, next) => {
       });
     }
 
-    const finalOpen = openingTime ? openingTime.trim() : '09:00';
-    const finalClose = closingTime ? closingTime.trim() : '21:00';
+    const finalOpen = (openingTime && typeof openingTime === 'string' && openingTime.trim()) ? openingTime.trim() : null;
+    const finalClose = (closingTime && typeof closingTime === 'string' && closingTime.trim()) ? closingTime.trim() : null;
 
-    const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
-    if (!timeRegex.test(finalOpen) || !timeRegex.test(finalClose)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid time format. Please use HH:mm format (e.g., 09:00, 21:00).',
-      });
-    }
-    if (finalClose <= finalOpen) {
-      return res.status(400).json({
-        success: false,
-        message: 'Closing time must be after opening time.',
-      });
+    if (finalOpen && finalClose) {
+      const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+      if (!timeRegex.test(finalOpen) || !timeRegex.test(finalClose)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid time format. Please use HH:mm format (e.g., 09:00, 21:00).',
+        });
+      }
+      if (finalClose <= finalOpen) {
+        return res.status(400).json({
+          success: false,
+          message: 'Closing time must be after opening time.',
+        });
+      }
     }
 
     const shop = await Shop.create({
@@ -243,21 +245,23 @@ export const updateShop = async (req, res, next) => {
       upiQrImage,
     } = req.body;
 
-    const newOpen = openingTime !== undefined ? openingTime.trim() : (shop.openingTime || '09:00');
-    const newClose = closingTime !== undefined ? closingTime.trim() : (shop.closingTime || '21:00');
+    const newOpen = openingTime !== undefined ? (openingTime && openingTime.trim() ? openingTime.trim() : null) : shop.openingTime;
+    const newClose = closingTime !== undefined ? (closingTime && closingTime.trim() ? closingTime.trim() : null) : shop.closingTime;
 
-    const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
-    if (!timeRegex.test(newOpen) || !timeRegex.test(newClose)) {
-      return res.status(400).json({
-        success: false,
-        message: 'Invalid time format. Please use HH:mm format (e.g., 09:00, 21:00).',
-      });
-    }
-    if (newClose <= newOpen) {
-      return res.status(400).json({
-        success: false,
-        message: 'Closing time must be after opening time.',
-      });
+    if (newOpen || newClose) {
+      const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+      if ((newOpen && !timeRegex.test(newOpen)) || (newClose && !timeRegex.test(newClose))) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid time format. Please use HH:mm format (e.g., 09:00, 21:00).',
+        });
+      }
+      if (newOpen && newClose && newClose <= newOpen) {
+        return res.status(400).json({
+          success: false,
+          message: 'Closing time must be after opening time.',
+        });
+      }
     }
 
     if (name) shop.name = name.trim();

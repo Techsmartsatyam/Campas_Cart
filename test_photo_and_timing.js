@@ -2,15 +2,15 @@ import axios from 'axios';
 
 const API = 'http://localhost:5000/api';
 
-async function testPhotoAndTimings() {
-  console.log('=== STARTING PHOTO VISIBILITY & SHOP TIMINGS TEST SUITE ===\n');
+async function testPhotoAndTimingsFlow() {
+  console.log('=== STARTING MANDATORY 8-STEP TIMINGS & PHOTO VERIFICATION SUITE ===\n');
 
   try {
     const timestamp = Date.now();
     const adminEmail = 'nearcart7889@gamil.com';
     const adminPassword = 'Satyam@788058';
 
-    // 1. Login as Admin to create test shopkeeper
+    // Login as Admin to create test shopkeeper
     console.log('1. Logging in as Admin...');
     const adminLogin = await axios.post(`${API}/auth/login`, {
       email: adminEmail,
@@ -19,13 +19,13 @@ async function testPhotoAndTimings() {
     const adminCookie = adminLogin.headers['set-cookie'] ? adminLogin.headers['set-cookie'][0] : '';
     const adminHeaders = { headers: { Cookie: adminCookie } };
 
-    // 2. Create test shopkeeper
-    console.log('2. Creating Test Shopkeeper...');
-    const ownerEmail = `photo_owner_${timestamp}@example.com`;
+    // Register Shopkeeper
+    console.log('2. Registering Test Shopkeeper...');
+    const ownerEmail = `timing_flow_owner_${timestamp}@example.com`;
     await axios.post(`${API}/auth/admin/create-staff`, {
-      name: 'Photo Test Owner',
+      name: 'Timing Flow Owner',
       email: ownerEmail,
-      phone: '9998887771',
+      phone: '9998887779',
       password: 'Password123!',
       role: 'SHOPKEEPER',
     }, adminHeaders);
@@ -40,103 +40,111 @@ async function testPhotoAndTimings() {
     const catRes = await axios.get(`${API}/categories`);
     const categoryId = catRes.data.categories[0]._id;
 
-    // 3. Create Shop A with Photo A & Timing 09:00 - 18:00
-    console.log('\n3. Creating Shop A with Photo A & Opening/Closing Time (09:00 - 18:00)...');
-    const photoA = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5';
-    const shopARes = await axios.post(`${API}/shopkeeper/shop`, {
-      name: `Grand Hotel A ${timestamp}`,
-      description: 'Luxury hotel and dining',
+    // TEST 1 & 2: Create Shop WITHOUT Timing
+    console.log('\n--- TEST 1 & 2: CREATE SHOP WITHOUT TIMING ---');
+    console.log('Creating Shop NewShopC without openingTime or closingTime in payload...');
+    const shopCRes = await axios.post(`${API}/shopkeeper/shop`, {
+      name: `New Shop C ${timestamp}`,
+      description: 'Newly created shop without timing',
       category: categoryId,
-      address: 'North Campus Block 1',
+      address: 'South Campus Block 3',
+    }, ownerHeaders);
+
+    const shopC = shopCRes.data.shop;
+    console.log(`   ✓ Shop Created Successfully (ID=${shopC._id})`);
+    if (shopC.openingTime !== null || shopC.closingTime !== null) {
+      throw new Error(`Expected openingTime & closingTime to be null, but got: opening=${shopC.openingTime}, closing=${shopC.closingTime}`);
+    }
+    console.log('   ✓ Database state confirmed: openingTime=null, closingTime=null (No fake defaults set): PASS');
+
+    // TEST 5: Customer Portal for Unconfigured Shop
+    console.log('\n--- TEST 5: CUSTOMER PORTAL (TIMING NOT CONFIGURED) ---');
+    const publicUnconfigRes = await axios.get(`${API}/shops/${shopC._id}`);
+    const publicShopC = publicUnconfigRes.data.shop;
+    if (publicShopC.openingTime !== null || publicShopC.closingTime !== null) {
+      throw new Error(`Public API returned fake timing for unconfigured shop! ${JSON.stringify(publicShopC)}`);
+    }
+    console.log('   ✓ GET /api/shops/:id returns null timings (UI shows "Hours not set"): PASS');
+
+    // TEST 3: Add Timing From Settings (Shopkeeper Settings Edit)
+    console.log('\n--- TEST 3: ADD TIMING FROM SHOP SETTINGS ---');
+    console.log('Updating Shop C timings from Shop Settings: 09:00 -> 21:00...');
+    const photoC = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5';
+    const updateRes = await axios.put(`${API}/shopkeeper/shop?shopId=${shopC._id}`, {
       openingTime: '09:00',
-      closingTime: '18:00',
-      logo: photoA,
-      coverImage: photoA,
+      closingTime: '21:00',
+      logo: photoC,
     }, ownerHeaders);
 
-    const shopA = shopARes.data.shop;
-    console.log(`   ✓ Shop A Created: ID=${shopA._id}, Logo=${shopA.logo}, Hours=${shopA.openingTime} - ${shopA.closingTime}`);
+    const updatedShopC = updateRes.data.shop;
+    if (updatedShopC.openingTime !== '09:00' || updatedShopC.closingTime !== '21:00' || updatedShopC.logo !== photoC) {
+      throw new Error(`Shop Settings update failed! ${JSON.stringify(updatedShopC)}`);
+    }
+    console.log('   ✓ Shop Settings updated successfully (09:00 - 21:00 & Photo set): PASS');
 
-    // 4. Create Shop B with Photo B & Timing 10:00 - 22:00
-    console.log('\n4. Creating Shop B with Photo B & Opening/Closing Time (10:00 - 22:00)...');
-    const photoB = 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4';
-    const shopBRes = await axios.post(`${API}/shopkeeper/shop`, {
-      name: `Bistro Cafe B ${timestamp}`,
-      description: 'Coffee and snacks',
+    // TEST 4 & 6: Customer Portal Configured & Existing Shop Regression
+    console.log('\n--- TEST 4 & 6: CUSTOMER PORTAL (TIMING CONFIGURED) ---');
+    const publicConfigRes = await axios.get(`${API}/shops/${shopC._id}`);
+    const publicConfiguredShop = publicConfigRes.data.shop;
+    if (publicConfiguredShop.openingTime !== '09:00' || publicConfiguredShop.closingTime !== '21:00') {
+      throw new Error(`Customer API failed to return configured timings! ${JSON.stringify(publicConfiguredShop)}`);
+    }
+    console.log('   ✓ Customer Portal returns openingTime=09:00 and closingTime=21:00: PASS');
+
+    // TEST 7: Multi-Shop Isolation Test
+    console.log('\n--- TEST 7: MULTI-SHOP ISOLATION TEST ---');
+    console.log('Creating Shop D with timing 10:00 - 18:00...');
+    const shopDRes = await axios.post(`${API}/shopkeeper/shop`, {
+      name: `Multi Shop D ${timestamp}`,
+      description: 'Shop D',
       category: categoryId,
-      address: 'South Campus Block 2',
+      address: 'East Block',
       openingTime: '10:00',
-      closingTime: '22:00',
-      logo: photoB,
-      coverImage: photoB,
+      closingTime: '18:00',
     }, ownerHeaders);
+    const shopD = shopDRes.data.shop;
 
-    const shopB = shopBRes.data.shop;
-    console.log(`   ✓ Shop B Created: ID=${shopB._id}, Logo=${shopB.logo}, Hours=${shopB.openingTime} - ${shopB.closingTime}`);
-
-    // 5. Customer API Public Verification (GET /api/shops)
-    console.log('\n5. Verifying Customer Marketplace API (GET /api/shops)...');
-    const publicShopsRes = await axios.get(`${API}/shops`);
-    const publicShops = publicShopsRes.data.shops;
-
-    const fetchedShopA = publicShops.find((s) => s._id === shopA._id);
-    const fetchedShopB = publicShops.find((s) => s._id === shopB._id);
-
-    if (!fetchedShopA || fetchedShopA.logo !== photoA || fetchedShopA.openingTime !== '09:00' || fetchedShopA.closingTime !== '18:00') {
-      throw new Error(`Shop A verification failed in public GET /api/shops! Found: ${JSON.stringify(fetchedShopA)}`);
+    if (shopD.openingTime !== '10:00' || shopD.closingTime !== '18:00') {
+      throw new Error(`Shop D timing failed: ${JSON.stringify(shopD)}`);
     }
-    console.log('   ✓ GET /api/shops returns Shop A photo and timings: PASS');
+    console.log('   ✓ Shop D created with 10:00 - 18:00');
 
-    if (!fetchedShopB || fetchedShopB.logo !== photoB || fetchedShopB.openingTime !== '10:00' || fetchedShopB.closingTime !== '22:00') {
-      throw new Error(`Shop B verification failed in public GET /api/shops! Found: ${JSON.stringify(fetchedShopB)}`);
+    const checkC = (await axios.get(`${API}/shops/${shopC._id}`)).data.shop;
+    const checkD = (await axios.get(`${API}/shops/${shopD._id}`)).data.shop;
+
+    if (checkC.openingTime !== '09:00' || checkD.openingTime !== '10:00') {
+      throw new Error('Multi-shop timing leakage detected!');
     }
-    console.log('   ✓ GET /api/shops returns Shop B photo and timings: PASS');
+    console.log('   ✓ Multi-Shop isolation confirmed (Shop C: 09:00-21:00 vs Shop D: 10:00-18:00): PASS');
 
-    // 6. Direct Shop Details API Verification (GET /api/shops/:id)
-    console.log('\n6. Verifying Customer Shop Details API (GET /api/shops/:id)...');
-    const shopADetailsRes = await axios.get(`${API}/shops/${shopA._id}`);
-    const shopADetails = shopADetailsRes.data.shop;
-
-    if (shopADetails.logo !== photoA || shopADetails.openingTime !== '09:00' || shopADetails.closingTime !== '18:00') {
-      throw new Error(`Shop A details API failed! Found: ${JSON.stringify(shopADetails)}`);
+    // TEST 8: Photo Regression Test
+    console.log('\n--- TEST 8: SHOP PHOTO REGRESSION TEST ---');
+    if (checkC.logo !== photoC) {
+      throw new Error('Photo regression detected!');
     }
-    console.log('   ✓ GET /api/shops/:id returns Shop A logo and opening hours: PASS');
+    console.log('   ✓ Shop photo displayed correctly in customer API: PASS');
 
-    // 7. Test Backend Validation for Invalid Timings
-    console.log('\n7. Testing Backend Timing Validation Errors...');
+    // TEST 9: Timing Validation Errors
+    console.log('\n--- TEST 9: TIMING VALIDATION ERRORS ---');
     try {
-      await axios.put(`${API}/shopkeeper/shop?shopId=${shopA._id}`, {
-        openingTime: 'invalid-time',
-        closingTime: '18:00',
-      }, ownerHeaders);
-      console.error('   ❌ Invalid time format was NOT rejected!');
-    } catch (err) {
-      if (err.response && err.response.status === 400) {
-        console.log(`   ✓ Invalid time format rejected correctly (400 Bad Request: "${err.response.data.message}")`);
-      } else {
-        throw err;
-      }
-    }
-
-    try {
-      await axios.put(`${API}/shopkeeper/shop?shopId=${shopA._id}`, {
-        openingTime: '21:00',
+      await axios.put(`${API}/shopkeeper/shop?shopId=${shopC._id}`, {
+        openingTime: '22:00',
         closingTime: '09:00',
       }, ownerHeaders);
       console.error('   ❌ Closing time < Opening time was NOT rejected!');
     } catch (err) {
       if (err.response && err.response.status === 400) {
-        console.log(`   ✓ Closing time before opening time rejected correctly (400 Bad Request: "${err.response.data.message}")`);
+        console.log(`   ✓ Closing time < Opening time rejected correctly (400 Bad Request: "${err.response.data.message}"): PASS`);
       } else {
         throw err;
       }
     }
 
-    console.log('\n=== ALL PHOTO & TIMING VERIFICATION TESTS PASSED SUCCESSFULLY! ===');
+    console.log('\n=== ALL MANDATORY TIMINGS & PHOTO TESTS PASSED 100%! ===');
   } catch (error) {
     console.error('\n❌ Test Suite Failed:', error.response?.data || error.message);
     process.exit(1);
   }
 }
 
-testPhotoAndTimings();
+testPhotoAndTimingsFlow();

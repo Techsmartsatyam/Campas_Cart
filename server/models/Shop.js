@@ -65,13 +65,11 @@ const shopSchema = new mongoose.Schema(
     },
     openingTime: {
       type: String,
-      default: '09:00',
-      trim: true,
+      default: null,
     },
     closingTime: {
       type: String,
-      default: '21:00',
-      trim: true,
+      default: null,
     },
     minimumOrderAmount: {
       type: Number,

@@ -73,10 +73,11 @@ export default function ShopDetails() {
     );
   }
 
+  const hasTiming = Boolean(shop.openingTime && shop.closingTime);
   const currentlyOpen = isShopOpen(shop);
   const shopImage = shop.logo || shop.coverImage;
-  const openTimeFormatted = formatTimeAMPM(shop.openingTime || '09:00');
-  const closeTimeFormatted = formatTimeAMPM(shop.closingTime || '21:00');
+  const openTimeFormatted = hasTiming ? formatTimeAMPM(shop.openingTime) : '';
+  const closeTimeFormatted = hasTiming ? formatTimeAMPM(shop.closingTime) : '';
 
   return (
     <div className="container" style={{ padding: '2.5rem 1.5rem 5rem 1.5rem' }}>
@@ -148,13 +149,13 @@ export default function ShopDetails() {
                   borderRadius: '9999px',
                   fontSize: '0.75rem',
                   fontWeight: '700',
-                  background: currentlyOpen ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                  color: currentlyOpen ? 'var(--success)' : 'var(--danger)',
+                  background: !hasTiming ? 'rgba(100, 116, 139, 0.15)' : currentlyOpen ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  color: !hasTiming ? '#64748b' : currentlyOpen ? 'var(--success)' : 'var(--danger)',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                 }}
               >
-                {currentlyOpen ? 'OPEN' : 'CLOSED'}
+                {!hasTiming ? 'Hours not set' : currentlyOpen ? 'OPEN' : 'CLOSED'}
               </span>
             </div>
 
@@ -173,7 +174,7 @@ export default function ShopDetails() {
             <div style={{ display: 'flex', gap: '0.75rem 1.5rem', flexWrap: 'wrap', fontSize: '0.85rem', color: 'var(--text-muted)', overflowWrap: 'anywhere', wordBreak: 'break-word', maxWidth: '100%' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                 <Clock size={14} style={{ flexShrink: 0 }} />
-                <span>Opening Hours: <strong>{openTimeFormatted} – {closeTimeFormatted}</strong></span>
+                <span>{hasTiming ? <>Opening Hours: <strong>{openTimeFormatted} – {closeTimeFormatted}</strong></> : 'Hours not set'}</span>
               </span>
               {shop.address && (
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>

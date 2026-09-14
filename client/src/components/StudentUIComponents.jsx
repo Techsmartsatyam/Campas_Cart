@@ -108,6 +108,7 @@ export function isShopOpen(shop) {
   if (!shop) return false;
   if (shop.isActive === false || shop.isApproved === false) return false;
   if (shop.isOpen === false) return false;
+  if (!shop.openingTime || !shop.closingTime) return shop.isOpen !== false;
 
   const parseMinutes = (tStr) => {
     if (!tStr) return null;
@@ -126,8 +127,8 @@ export function isShopOpen(shop) {
     return h * 60 + m;
   };
 
-  const openMin = parseMinutes(shop.openingTime || '09:00');
-  const closeMin = parseMinutes(shop.closingTime || '21:00');
+  const openMin = parseMinutes(shop.openingTime);
+  const closeMin = parseMinutes(shop.closingTime);
 
   if (openMin === null || closeMin === null) return shop.isOpen !== false;
 
@@ -143,10 +144,11 @@ export function isShopOpen(shop) {
 }
 
 export function ShopCard({ shop, onClick }) {
+  const hasTiming = Boolean(shop.openingTime && shop.closingTime);
   const currentlyOpen = isShopOpen(shop);
   const shopImage = shop.logo || shop.coverImage;
-  const openTimeFormatted = formatTimeAMPM(shop.openingTime || '09:00');
-  const closeTimeFormatted = formatTimeAMPM(shop.closingTime || '21:00');
+  const openTimeFormatted = hasTiming ? formatTimeAMPM(shop.openingTime) : '';
+  const closeTimeFormatted = hasTiming ? formatTimeAMPM(shop.closingTime) : '';
 
   return (
     <div
@@ -202,12 +204,12 @@ export function ShopCard({ shop, onClick }) {
             borderRadius: '9999px',
             fontSize: '0.75rem',
             fontWeight: '600',
-            background: currentlyOpen ? '#d1fae5' : '#fee2e2',
-            color: currentlyOpen ? '#047857' : '#b91c1c',
-            border: `1px solid ${currentlyOpen ? '#a7f3d0' : '#fca5a5'}`,
+            background: !hasTiming ? '#f1f5f9' : currentlyOpen ? '#d1fae5' : '#fee2e2',
+            color: !hasTiming ? '#64748b' : currentlyOpen ? '#047857' : '#b91c1c',
+            border: `1px solid ${!hasTiming ? '#cbd5e1' : currentlyOpen ? '#a7f3d0' : '#fca5a5'}`,
           }}
         >
-          {currentlyOpen ? 'OPEN' : 'CLOSED'}
+          {!hasTiming ? 'Hours not set' : currentlyOpen ? 'OPEN' : 'CLOSED'}
         </span>
       </div>
 
@@ -217,7 +219,7 @@ export function ShopCard({ shop, onClick }) {
 
       <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
         <span>🕐</span>
-        <span>{openTimeFormatted} – {closeTimeFormatted}</span>
+        <span>{hasTiming ? `${openTimeFormatted} – ${closeTimeFormatted}` : 'Hours not set'}</span>
       </div>
 
       <div
