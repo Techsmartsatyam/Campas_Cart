@@ -1,8 +1,13 @@
 import React from 'react';
 
-export function SearchBar({ value, onChange, placeholder = 'Search products, shops...' }) {
+export function SearchBar({ value, onChange, onSubmit, placeholder = 'Search products, shops...' }) {
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (onSubmit) onSubmit(value);
+  };
+
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
+    <form onSubmit={handleSubmit} style={{ position: 'relative', width: '100%' }}>
       <input
         type="text"
         className="form-input"
@@ -11,6 +16,7 @@ export function SearchBar({ value, onChange, placeholder = 'Search products, sho
         onChange={(e) => onChange(e.target.value)}
         style={{
           paddingLeft: '2.5rem',
+          paddingRight: '3rem',
           borderRadius: 'var(--radius-md)',
           background: '#ffffff',
           border: '1px solid #cbd5e1',
@@ -35,7 +41,26 @@ export function SearchBar({ value, onChange, placeholder = 'Search products, sho
         <circle cx="11" cy="11" r="8" />
         <path d="m21 21-4.3-4.3" />
       </svg>
-    </div>
+      <button
+        type="submit"
+        style={{
+          position: 'absolute',
+          right: '0.5rem',
+          top: '50%',
+          transform: 'translateY(-50%)',
+          background: 'var(--primary)',
+          color: '#ffffff',
+          border: 'none',
+          borderRadius: 'var(--radius-sm)',
+          padding: '0.3rem 0.6rem',
+          fontSize: '0.75rem',
+          fontWeight: '700',
+          cursor: 'pointer',
+        }}
+      >
+        Search
+      </button>
+    </form>
   );
 }
 

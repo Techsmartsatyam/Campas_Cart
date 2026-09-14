@@ -11,51 +11,52 @@ export default function ShopDetails() {
   const [shop, setShop] = useState(null);
   const [products, setProducts] = useState([]);
   const [pagination, setPagination] = useState({ page: 1, totalPages: 1, total: 0, limit: 24 });
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [submittedSearch, setSubmittedSearch] = useState('');
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    setPage(1);
-  }, [search]);
+  const fetchShopData = async (activeQuery = submittedSearch) => {
+    setLoading(true);
+    setError('');
+    try {
+      const [shopRes, prodRes] = await Promise.all([
+        getShopById(id),
+        getProducts({ shop: id, search: activeQuery ? activeQuery.trim() : '', page, limit: 24 }),
+      ]);
 
-  useEffect(() => {
-    let isSubscribed = true;
-    const timer = setTimeout(async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const [shopRes, prodRes] = await Promise.all([
-          getShopById(id),
-          getProducts({ shop: id, search: search ? search.trim() : '', page, limit: 24 }),
-        ]);
-
-        if (isSubscribed) {
-          if (shopRes.success) {
-            setShop(shopRes.shop);
-          }
-          if (prodRes.success) {
-            setProducts(prodRes.products);
-            if (prodRes.pagination) setPagination(prodRes.pagination);
-          }
-        }
-      } catch (err) {
-        if (isSubscribed) {
-          setError(err.message || 'Shop is currently unavailable.');
-        }
-      } finally {
-        if (isSubscribed) {
-          setLoading(false);
-        }
+      if (shopRes.success) {
+        setShop(shopRes.shop);
       }
-    }, 300);
+      if (prodRes.success) {
+        setProducts(prodRes.products);
+        if (prodRes.pagination) setPagination(prodRes.pagination);
+      }
+    } catch (err) {
+      setError(err.message || 'Shop is currently unavailable.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    return () => {
-      isSubscribed = false;
-      clearTimeout(timer);
-    };
-  }, [id, search, page]);
+  useEffect(() => {
+    fetchShopData(submittedSearch);
+  }, [id, submittedSearch, page]);
+
+  const handleSearchSubmit = (query) => {
+    const finalQuery = (query !== undefined ? query : searchInput).trim();
+    setPage(1);
+    setSubmittedSearch(finalQuery);
+  };
+
+  const handleSearchInputChange = (val) => {
+    setSearchInput(val);
+    if (val.trim() === '' && submittedSearch !== '') {
+      setPage(1);
+      setSubmittedSearch('');
+    }
+  };
 
   if (loading) return <LoadingSpinner />;
 
@@ -172,7 +173,12 @@ export default function ShopDetails() {
             Products at {shop.name}
           </h3>
           <div style={{ maxWidth: '300px', width: '100%' }}>
-            <SearchBar value={search} onChange={setSearch} placeholder="Search in this shop..." />
+            <SearchBar
+              value={searchInput}
+              onChange={handleSearchInputChange}
+              onSubmit={handleSearchSubmit}
+              placeholder="Search in this shop..."
+            />
           </div>
         </div>
 

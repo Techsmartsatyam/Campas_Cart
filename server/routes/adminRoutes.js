@@ -3,6 +3,9 @@ import {
   getStaffMembers,
   getAllUsers,
   updateUserStatus,
+  getAllShops,
+  updateShopStatus,
+  deleteShopAdmin,
   previewCleanData,
   executeCleanData,
 } from '../controllers/adminController.js';
@@ -17,6 +20,11 @@ router.use(protect, authorizeRoles('ADMIN'));
 router.get('/staff', getStaffMembers);
 router.get('/users', getAllUsers);
 router.patch('/users/:id/status', updateUserStatus);
+
+// Shop Management & Moderation routes
+router.get('/shops', getAllShops);
+router.patch('/shops/:id/status', updateShopStatus);
+router.delete('/shops/:id', deleteShopAdmin);
 
 // PWA App Installation Analytics for Admin Dashboard
 router.get('/analytics/installations', getInstallationAnalytics);

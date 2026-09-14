@@ -18,17 +18,18 @@ export default function Student() {
 
   const [shops, setShops] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const [submittedSearch, setSubmittedSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchData = async () => {
+  const fetchData = async (activeQuery = submittedSearch) => {
     setLoading(true);
     setError('');
     try {
       const [shopsRes, catRes] = await Promise.all([
-        getShops(search),
+        getShops(activeQuery),
         getCategories(),
       ]);
 
@@ -42,11 +43,20 @@ export default function Student() {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchData();
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [search]);
+    fetchData(submittedSearch);
+  }, [submittedSearch]);
+
+  const handleSearchSubmit = (query) => {
+    const finalQuery = (query !== undefined ? query : searchInput).trim();
+    setSubmittedSearch(finalQuery);
+  };
+
+  const handleSearchInputChange = (val) => {
+    setSearchInput(val);
+    if (val.trim() === '' && submittedSearch !== '') {
+      setSubmittedSearch('');
+    }
+  };
 
   return (
     <div className="container" style={{ padding: '2rem 0.5rem 4rem 0.5rem' }}>
@@ -87,8 +97,9 @@ export default function Student() {
           </p>
 
           <SearchBar
-            value={search}
-            onChange={setSearch}
+            value={searchInput}
+            onChange={handleSearchInputChange}
+            onSubmit={handleSearchSubmit}
             placeholder="Search shops, Maggi, notebooks, snacks, drinks, pens..."
           />
         </div>

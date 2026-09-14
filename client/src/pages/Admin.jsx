@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   Eye,
   Smartphone,
+  Store,
 } from 'lucide-react';
 
 export default function Admin() {
@@ -257,6 +258,12 @@ export default function Admin() {
           <Users size={18} /> User Access & Block Controls
         </button>
         <button
+          onClick={() => setActiveTab('SHOP_MANAGEMENT')}
+          className={activeTab === 'SHOP_MANAGEMENT' ? 'btn-primary' : 'btn-secondary'}
+        >
+          <Store size={18} /> Shops & Hotels Management
+        </button>
+        <button
           onClick={() => setActiveTab('PAYMENT_MANAGEMENT')}
           className={activeTab === 'PAYMENT_MANAGEMENT' ? 'btn-primary' : 'btn-secondary'}
         >
@@ -280,6 +287,8 @@ export default function Admin() {
           🧹 Clean App Data
         </button>
       </div>
+
+      {activeTab === 'SHOP_MANAGEMENT' && <AdminShopsTab />}
 
       {activeTab === 'CLEAN_DATA' && <AdminCleanDataTab onDataCleaned={() => { fetchUsers(); fetchPayments(); }} />}
 
@@ -1230,6 +1239,239 @@ function AdminCleanDataTab({ onDataCleaned }) {
                 style={{ padding: '0.55rem 1.5rem', background: 'var(--primary-gradient)' }}
               >
                 Close & Refresh Dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AdminShopsTab() {
+  const [shops, setShops] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [shopToDelete, setShopToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const fetchShops = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await api.get('/admin/shops');
+      if (res && res.success) {
+        setShops(res.shops || []);
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to fetch shops list');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchShops();
+  }, []);
+
+  const handleToggleShopBlock = async (shopId, currentActive, shopName) => {
+    const nextState = !currentActive;
+    const actionText = nextState ? 'unblock/activate' : 'block/deactivate';
+    if (!window.confirm(`Are you sure you want to ${actionText} "${shopName}"?`)) return;
+
+    setError('');
+    setSuccess('');
+    try {
+      const res = await api.patch(`/admin/shops/${shopId}/status`, { isActive: nextState });
+      if (res && res.success) {
+        setSuccess(res.message);
+        fetchShops();
+      }
+    } catch (err) {
+      setError(err.message || `Failed to ${actionText} shop.`);
+    }
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!shopToDelete) return;
+    setDeleting(true);
+    setError('');
+    setSuccess('');
+    try {
+      const res = await api.delete(`/admin/shops/${shopToDelete._id}`);
+      if (res && res.success) {
+        setSuccess(res.message);
+        setShopToDelete(null);
+        fetchShops();
+      }
+    } catch (err) {
+      setError(err.message || 'Failed to delete shop.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="glass-card" style={{ padding: '2rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h3 style={{ fontSize: '1.4rem', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
+            Shops & Hotels Moderation Directory
+          </h3>
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.25rem 0 0 0' }}>
+            Block/unblock stores or permanently remove a store with cascade product deletion.
+          </p>
+        </div>
+      </div>
+
+      {error && (
+        <div style={{ padding: '0.75rem 1rem', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: 'var(--radius-sm)', color: 'var(--danger)', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div style={{ padding: '0.75rem 1rem', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.2)', borderRadius: 'var(--radius-sm)', color: 'var(--success)', marginBottom: '1.25rem', fontSize: '0.85rem' }}>
+          {success}
+        </div>
+      )}
+
+      {loading ? (
+        <p style={{ color: 'var(--text-muted)' }}>Loading shops...</p>
+      ) : shops.length === 0 ? (
+        <p style={{ color: 'var(--text-muted)' }}>No shops found in database.</p>
+      ) : (
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+            <thead>
+              <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                <th style={{ padding: '0.75rem' }}>Shop / Hotel</th>
+                <th style={{ padding: '0.75rem' }}>Owner</th>
+                <th style={{ padding: '0.75rem' }}>Category</th>
+                <th style={{ padding: '0.75rem' }}>Products</th>
+                <th style={{ padding: '0.75rem' }}>Status</th>
+                <th style={{ padding: '0.75rem', textAlign: 'right' }}>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {shops.map((s) => (
+                <tr key={s._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                  <td style={{ padding: '0.75rem', color: 'var(--text-primary)', fontWeight: '700' }}>
+                    {s.name}
+                    <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', fontWeight: '400' }}>{s.address}</div>
+                  </td>
+                  <td style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}>
+                    {s.owner?.name || 'Shopkeeper'}<br />
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{s.owner?.email || 'N/A'}</span>
+                  </td>
+                  <td style={{ padding: '0.75rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.2rem 0.5rem', borderRadius: '0.25rem', background: '#f1f5f9', color: 'var(--text-primary)' }}>
+                      {s.category?.name || 'General'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '0.75rem', fontWeight: '700', color: 'var(--primary)' }}>
+                    {s.productCount || 0} items
+                  </td>
+                  <td style={{ padding: '0.75rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.2rem 0.5rem', borderRadius: '0.25rem', background: s.isActive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', color: s.isActive ? 'var(--success)' : 'var(--danger)' }}>
+                      {s.isActive ? 'ACTIVE' : 'BLOCKED'}
+                    </span>
+                  </td>
+                  <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                      <button
+                        onClick={() => handleToggleShopBlock(s._id, s.isActive, s.name)}
+                        className="btn-secondary"
+                        style={{
+                          padding: '0.35rem 0.75rem',
+                          fontSize: '0.8rem',
+                          color: s.isActive ? 'var(--danger)' : 'var(--success)',
+                        }}
+                      >
+                        {s.isActive ? (
+                          <>
+                            <Lock size={14} /> Block
+                          </>
+                        ) : (
+                          <>
+                            <Unlock size={14} /> Unblock
+                          </>
+                        )}
+                      </button>
+
+                      <button
+                        onClick={() => setShopToDelete(s)}
+                        className="btn-secondary"
+                        style={{
+                          padding: '0.35rem 0.75rem',
+                          fontSize: '0.8rem',
+                          color: '#dc2626',
+                          borderColor: '#fca5a5',
+                          background: '#fef2f2',
+                        }}
+                      >
+                        <Trash2 size={14} /> Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {shopToDelete && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '1rem',
+        }}>
+          <div className="glass-card" style={{ maxWidth: '480px', width: '100%', padding: '1.75rem', background: '#ffffff' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#dc2626', marginBottom: '1rem' }}>
+              <AlertTriangle size={24} />
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0 }}>
+                Delete Shop Permanently?
+              </h3>
+            </div>
+
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: '1.5', marginBottom: '1.25rem' }}>
+              This will permanently delete this shop and all of its products/listings. This action cannot be undone.
+            </p>
+
+            <div style={{ background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: '0.5rem', padding: '1rem', marginBottom: '1.5rem', fontSize: '0.85rem' }}>
+              <div style={{ margin: '0.2rem 0' }}><strong>Shop Name:</strong> {shopToDelete.name}</div>
+              <div style={{ margin: '0.2rem 0' }}><strong>Shop Owner:</strong> {shopToDelete.owner?.name || 'Shopkeeper'} ({shopToDelete.owner?.email || 'N/A'})</div>
+              <div style={{ margin: '0.2rem 0' }}><strong>Products to Delete:</strong> {shopToDelete.productCount || 0} listings</div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setShopToDelete(null)}
+                className="btn-secondary"
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDelete}
+                className="btn-primary"
+                disabled={deleting}
+                style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', borderColor: '#dc2626' }}
+              >
+                {deleting ? 'Deleting...' : 'Delete Permanently'}
               </button>
             </div>
           </div>
