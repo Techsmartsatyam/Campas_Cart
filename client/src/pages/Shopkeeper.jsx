@@ -58,10 +58,12 @@ export default function Shopkeeper() {
     phone: '',
     category: '',
     address: '',
-    openingTime: '09:00 AM',
-    closingTime: '09:00 PM',
+    openingTime: '09:00',
+    closingTime: '21:00',
     minimumOrderAmount: 0,
     deliveryFee: 0,
+    logo: '',
+    coverImage: '',
     isOpen: true,
   });
 
@@ -121,10 +123,12 @@ export default function Shopkeeper() {
             phone: shopRes.shop.phone || '',
             category: shopRes.shop.category?._id || shopRes.shop.category || '',
             address: shopRes.shop.address || '',
-            openingTime: shopRes.shop.openingTime || '09:00 AM',
-            closingTime: shopRes.shop.closingTime || '09:00 PM',
+            openingTime: shopRes.shop.openingTime || '09:00',
+            closingTime: shopRes.shop.closingTime || '21:00',
             minimumOrderAmount: shopRes.shop.minimumOrderAmount || 0,
             deliveryFee: shopRes.shop.deliveryFee || 0,
+            logo: shopRes.shop.logo || shopRes.shop.coverImage || '',
+            coverImage: shopRes.shop.coverImage || shopRes.shop.logo || '',
             isOpen: shopRes.shop.isOpen !== undefined ? shopRes.shop.isOpen : true,
             upiEnabled: shopRes.shop.upiEnabled !== undefined ? shopRes.shop.upiEnabled : true,
             upiId: shopRes.shop.upiId || '',
@@ -1101,6 +1105,78 @@ export default function Shopkeeper() {
                 <div className="form-group"><label className="form-label">Shop Name</label><input type="text" className="form-input" value={shopForm.name} onChange={(e) => setShopForm({ ...shopForm, name: e.target.value })} required /></div>
                 <div className="form-group"><label className="form-label">Description</label><input type="text" className="form-input" value={shopForm.description} onChange={(e) => setShopForm({ ...shopForm, description: e.target.value })} /></div>
 
+                {/* Shop Photo Upload */}
+                <div className="form-group" style={{ background: '#f8fafc', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)', marginBottom: '1.25rem' }}>
+                  <label className="form-label">Shop / Hotel Photo</label>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.75rem' }}>
+                    Upload your shop logo / photo (JPG, PNG, WEBP max 5MB) displayed to customers.
+                  </span>
+                  {shopForm.logo ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '0.5rem' }}>
+                      <img
+                        src={shopForm.logo}
+                        alt="Shop Logo"
+                        style={{ width: '80px', height: '80px', borderRadius: '0.5rem', objectFit: 'cover', border: '1px solid var(--border-color)' }}
+                      />
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <label className="btn-secondary" style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                          <Upload size={14} /> Change Photo
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/jpg,image/png,image/webp"
+                            style={{ display: 'none' }}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              if (file.size > 5 * 1024 * 1024) {
+                                setError('Image size must be less than 5MB.');
+                                return;
+                              }
+                              const reader = new FileReader();
+                              reader.onload = () => setShopForm((prev) => ({ ...prev, logo: reader.result, coverImage: reader.result }));
+                              reader.readAsDataURL(file);
+                            }}
+                          />
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => setShopForm({ ...shopForm, logo: '', coverImage: '' })}
+                          className="btn-secondary"
+                          style={{ padding: '0.4rem 0.85rem', fontSize: '0.8rem', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)' }}
+                        >
+                          <Trash2 size={14} /> Remove Photo
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ border: '2px dashed var(--border-color)', padding: '1.25rem', borderRadius: '0.5rem', textAlign: 'center' }}>
+                      <Upload size={24} style={{ color: 'var(--primary)', marginBottom: '0.35rem' }} />
+                      <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', margin: '0 0 0.5rem 0' }}>
+                        No photo uploaded yet for this shop.
+                      </p>
+                      <label className="btn-primary" style={{ display: 'inline-flex', padding: '0.4rem 0.85rem', fontSize: '0.8rem', cursor: 'pointer' }}>
+                        Upload Shop Photo
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/jpg,image/png,image/webp"
+                          style={{ display: 'none' }}
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            if (file.size > 5 * 1024 * 1024) {
+                              setError('Image size must be less than 5MB.');
+                              return;
+                            }
+                            const reader = new FileReader();
+                            reader.onload = () => setShopForm((prev) => ({ ...prev, logo: reader.result, coverImage: reader.result }));
+                            reader.readAsDataURL(file);
+                          }}
+                        />
+                      </label>
+                    </div>
+                  )}
+                </div>
+
                 <div className="form-group">
                   <label className="form-label">Shop Category / Type</label>
                   <select
@@ -1120,6 +1196,31 @@ export default function Shopkeeper() {
                 </div>
 
                 <div className="form-group"><label className="form-label">Campus Address</label><input type="text" className="form-input" value={shopForm.address} onChange={(e) => setShopForm({ ...shopForm, address: e.target.value })} required /></div>
+
+                {/* Shop Timings */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                  <div className="form-group">
+                    <label className="form-label">Opening Time</label>
+                    <input
+                      type="time"
+                      className="form-input"
+                      value={shopForm.openingTime}
+                      onChange={(e) => setShopForm({ ...shopForm, openingTime: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Closing Time</label>
+                    <input
+                      type="time"
+                      className="form-input"
+                      value={shopForm.closingTime}
+                      onChange={(e) => setShopForm({ ...shopForm, closingTime: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className="form-group"><label className="form-label">Min Order (₹)</label><input type="number" className="form-input" value={shopForm.minimumOrderAmount} onChange={(e) => setShopForm({ ...shopForm, minimumOrderAmount: e.target.value })} /></div>
                   <div className="form-group"><label className="form-label">Delivery Fee (₹)</label><input type="number" className="form-input" value={shopForm.deliveryFee} onChange={(e) => setShopForm({ ...shopForm, deliveryFee: e.target.value })} /></div>

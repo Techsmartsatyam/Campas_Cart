@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getShopById, getProducts } from '../../services/studentService';
-import { ProductCard, LoadingSpinner, EmptyState, SearchBar } from '../../components/StudentUIComponents';
-import { Store, ArrowLeft, Phone, MapPin, Star } from 'lucide-react';
+import { ProductCard, LoadingSpinner, EmptyState, SearchBar, formatTimeAMPM, isShopOpen } from '../../components/StudentUIComponents';
+import { Store, ArrowLeft, Phone, MapPin, Star, Clock } from 'lucide-react';
 
 export default function ShopDetails() {
   const { id } = useParams();
@@ -73,6 +73,11 @@ export default function ShopDetails() {
     );
   }
 
+  const currentlyOpen = isShopOpen(shop);
+  const shopImage = shop.logo || shop.coverImage;
+  const openTimeFormatted = formatTimeAMPM(shop.openingTime || '09:00');
+  const closeTimeFormatted = formatTimeAMPM(shop.closingTime || '21:00');
+
   return (
     <div className="container" style={{ padding: '2.5rem 1.5rem 5rem 1.5rem' }}>
       <button
@@ -96,9 +101,9 @@ export default function ShopDetails() {
         }}
       >
         <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-start', flexWrap: 'wrap', minWidth: 0, width: '100%' }}>
-          {shop.logo || shop.coverImage ? (
+          {shopImage ? (
             <img
-              src={shop.logo || shop.coverImage}
+              src={shopImage}
               alt={shop.name}
               style={{
                 width: '4rem',
@@ -120,7 +125,7 @@ export default function ShopDetails() {
               height: '4rem',
               borderRadius: '0.75rem',
               background: 'var(--surface-light)',
-              display: (shop.logo || shop.coverImage) ? 'none' : 'flex',
+              display: shopImage ? 'none' : 'flex',
               alignItems: 'center',
               justify: 'center',
               fontWeight: '800',
@@ -143,13 +148,13 @@ export default function ShopDetails() {
                   borderRadius: '9999px',
                   fontSize: '0.75rem',
                   fontWeight: '700',
-                  background: shop.isOpen ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
-                  color: shop.isOpen ? 'var(--success)' : 'var(--danger)',
+                  background: currentlyOpen ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)',
+                  color: currentlyOpen ? 'var(--success)' : 'var(--danger)',
                   whiteSpace: 'nowrap',
                   flexShrink: 0,
                 }}
               >
-                {shop.isOpen ? 'OPEN' : 'CLOSED'}
+                {currentlyOpen ? 'OPEN' : 'CLOSED'}
               </span>
             </div>
 
@@ -166,6 +171,10 @@ export default function ShopDetails() {
             </p>
 
             <div style={{ display: 'flex', gap: '0.75rem 1.5rem', flexWrap: 'wrap', fontSize: '0.85rem', color: 'var(--text-muted)', overflowWrap: 'anywhere', wordBreak: 'break-word', maxWidth: '100%' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                <Clock size={14} style={{ flexShrink: 0 }} />
+                <span>Opening Hours: <strong>{openTimeFormatted} – {closeTimeFormatted}</strong></span>
+              </span>
               {shop.address && (
                 <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', overflowWrap: 'anywhere', wordBreak: 'break-word' }}>
                   <MapPin size={14} style={{ flexShrink: 0 }} /> <span>{shop.address}</span>

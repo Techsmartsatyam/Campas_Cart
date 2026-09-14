@@ -149,6 +149,23 @@ export const createShop = async (req, res, next) => {
       });
     }
 
+    const finalOpen = openingTime ? openingTime.trim() : '09:00';
+    const finalClose = closingTime ? closingTime.trim() : '21:00';
+
+    const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timeRegex.test(finalOpen) || !timeRegex.test(finalClose)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid time format. Please use HH:mm format (e.g., 09:00, 21:00).',
+      });
+    }
+    if (finalClose <= finalOpen) {
+      return res.status(400).json({
+        success: false,
+        message: 'Closing time must be after opening time.',
+      });
+    }
+
     const shop = await Shop.create({
       name: name.trim(),
       description: description ? description.trim() : '',
@@ -156,8 +173,8 @@ export const createShop = async (req, res, next) => {
       owner: req.user._id,
       category,
       address: address.trim(),
-      openingTime: openingTime || '',
-      closingTime: closingTime || '',
+      openingTime: finalOpen,
+      closingTime: finalClose,
       minimumOrderAmount: Number(minimumOrderAmount) || 0,
       deliveryFee: Number(deliveryFee) || 0,
       logo: logo || '',
@@ -226,13 +243,30 @@ export const updateShop = async (req, res, next) => {
       upiQrImage,
     } = req.body;
 
+    const newOpen = openingTime !== undefined ? openingTime.trim() : (shop.openingTime || '09:00');
+    const newClose = closingTime !== undefined ? closingTime.trim() : (shop.closingTime || '21:00');
+
+    const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+    if (!timeRegex.test(newOpen) || !timeRegex.test(newClose)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid time format. Please use HH:mm format (e.g., 09:00, 21:00).',
+      });
+    }
+    if (newClose <= newOpen) {
+      return res.status(400).json({
+        success: false,
+        message: 'Closing time must be after opening time.',
+      });
+    }
+
     if (name) shop.name = name.trim();
     if (description !== undefined) shop.description = description.trim();
     if (phone !== undefined) shop.phone = phone.trim();
     if (category) shop.category = category;
     if (address) shop.address = address.trim();
-    if (openingTime !== undefined) shop.openingTime = openingTime;
-    if (closingTime !== undefined) shop.closingTime = closingTime;
+    shop.openingTime = newOpen;
+    shop.closingTime = newClose;
     if (minimumOrderAmount !== undefined) shop.minimumOrderAmount = Number(minimumOrderAmount);
     if (deliveryFee !== undefined) shop.deliveryFee = Number(deliveryFee);
     if (logo !== undefined) shop.logo = logo;

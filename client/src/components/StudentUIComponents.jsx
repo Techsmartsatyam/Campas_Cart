@@ -89,18 +89,76 @@ export function CategoryCard({ category, onClick, isSelected }) {
   );
 }
 
+export function formatTimeAMPM(timeStr) {
+  if (!timeStr) return '';
+  if (timeStr.toUpperCase().includes('AM') || timeStr.toUpperCase().includes('PM')) return timeStr;
+  const parts = timeStr.trim().split(':');
+  if (parts.length < 2) return timeStr;
+  let hours = parseInt(parts[0], 10);
+  const minutes = parts[1];
+  if (isNaN(hours)) return timeStr;
+  const ampm = hours >= 12 ? 'PM' : 'AM';
+  hours = hours % 12;
+  hours = hours ? hours : 12;
+  const strHours = hours < 10 ? '0' + hours : hours;
+  return `${strHours}:${minutes} ${ampm}`;
+}
+
+export function isShopOpen(shop) {
+  if (!shop) return false;
+  if (shop.isActive === false || shop.isApproved === false) return false;
+  if (shop.isOpen === false) return false;
+
+  const parseMinutes = (tStr) => {
+    if (!tStr) return null;
+    let time = tStr.trim();
+    let isPM = false;
+    let isAM = false;
+    if (time.toUpperCase().includes('PM')) { isPM = true; time = time.replace(/PM/i, '').trim(); }
+    if (time.toUpperCase().includes('AM')) { isAM = true; time = time.replace(/AM/i, '').trim(); }
+    const parts = time.split(':');
+    if (parts.length < 2) return null;
+    let h = parseInt(parts[0], 10);
+    let m = parseInt(parts[1], 10);
+    if (isNaN(h) || isNaN(m)) return null;
+    if (isPM && h < 12) h += 12;
+    if (isAM && h === 12) h = 0;
+    return h * 60 + m;
+  };
+
+  const openMin = parseMinutes(shop.openingTime || '09:00');
+  const closeMin = parseMinutes(shop.closingTime || '21:00');
+
+  if (openMin === null || closeMin === null) return shop.isOpen !== false;
+
+  const now = new Date();
+  const currentMin = now.getHours() * 60 + now.getMinutes();
+
+  if (openMin < closeMin) {
+    return currentMin >= openMin && currentMin < closeMin;
+  } else if (openMin > closeMin) {
+    return currentMin >= openMin || currentMin < closeMin;
+  }
+  return true;
+}
+
 export function ShopCard({ shop, onClick }) {
+  const currentlyOpen = isShopOpen(shop);
+  const shopImage = shop.logo || shop.coverImage;
+  const openTimeFormatted = formatTimeAMPM(shop.openingTime || '09:00');
+  const closeTimeFormatted = formatTimeAMPM(shop.closingTime || '21:00');
+
   return (
     <div
       onClick={onClick}
       className="glass-card"
       style={{ cursor: 'pointer', display: 'flex', flexDirection: 'column', height: '100%' }}
     >
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.85rem' }}>
         <div style={{ display: 'flex', gap: '0.85rem', alignItems: 'center' }}>
-          {shop.logo || shop.coverImage ? (
+          {shopImage ? (
             <img
-              src={shop.logo || shop.coverImage}
+              src={shopImage}
               alt={shop.name}
               style={{
                 width: '3rem',
@@ -121,7 +179,7 @@ export function ShopCard({ shop, onClick }) {
               height: '3rem',
               borderRadius: '0.5rem',
               background: '#e0f2fe',
-              display: (shop.logo || shop.coverImage) ? 'none' : 'flex',
+              display: shopImage ? 'none' : 'flex',
               alignItems: 'center',
               justify: 'center',
               fontWeight: '700',
@@ -144,18 +202,23 @@ export function ShopCard({ shop, onClick }) {
             borderRadius: '9999px',
             fontSize: '0.75rem',
             fontWeight: '600',
-            background: shop.isOpen ? '#d1fae5' : '#fee2e2',
-            color: shop.isOpen ? '#047857' : '#b91c1c',
-            border: `1px solid ${shop.isOpen ? '#a7f3d0' : '#fca5a5'}`,
+            background: currentlyOpen ? '#d1fae5' : '#fee2e2',
+            color: currentlyOpen ? '#047857' : '#b91c1c',
+            border: `1px solid ${currentlyOpen ? '#a7f3d0' : '#fca5a5'}`,
           }}
         >
-          {shop.isOpen ? 'OPEN' : 'CLOSED'}
+          {currentlyOpen ? 'OPEN' : 'CLOSED'}
         </span>
       </div>
 
-      <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.25rem', flex: 1 }}>
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.85rem', flex: 1 }}>
         {shop.description || 'Campus shop providing essential goods.'}
       </p>
+
+      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+        <span>🕐</span>
+        <span>{openTimeFormatted} – {closeTimeFormatted}</span>
+      </div>
 
       <div
         style={{
