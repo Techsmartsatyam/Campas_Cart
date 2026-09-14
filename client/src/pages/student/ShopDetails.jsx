@@ -21,29 +21,40 @@ export default function ShopDetails() {
   }, [search]);
 
   useEffect(() => {
-    async function fetchShopData() {
+    let isSubscribed = true;
+    const timer = setTimeout(async () => {
       setLoading(true);
       setError('');
       try {
         const [shopRes, prodRes] = await Promise.all([
           getShopById(id),
-          getProducts({ shop: id, search, page, limit: 24 }),
+          getProducts({ shop: id, search: search ? search.trim() : '', page, limit: 24 }),
         ]);
 
-        if (shopRes.success) {
-          setShop(shopRes.shop);
-        }
-        if (prodRes.success) {
-          setProducts(prodRes.products);
-          if (prodRes.pagination) setPagination(prodRes.pagination);
+        if (isSubscribed) {
+          if (shopRes.success) {
+            setShop(shopRes.shop);
+          }
+          if (prodRes.success) {
+            setProducts(prodRes.products);
+            if (prodRes.pagination) setPagination(prodRes.pagination);
+          }
         }
       } catch (err) {
-        setError(err.message || 'Shop not found or unavailable');
+        if (isSubscribed) {
+          setError(err.message || 'Shop is currently unavailable.');
+        }
       } finally {
-        setLoading(false);
+        if (isSubscribed) {
+          setLoading(false);
+        }
       }
-    }
-    fetchShopData();
+    }, 300);
+
+    return () => {
+      isSubscribed = false;
+      clearTimeout(timer);
+    };
   }, [id, search, page]);
 
   if (loading) return <LoadingSpinner />;
