@@ -145,7 +145,7 @@ export default function LiveDeliveryMap({
       </div>
 
       {/* Leaflet Map Rendering Container */}
-      <div className="live-map-container">
+      <div style={{ height: '340px', width: '100%', position: 'relative' }}>
         <MapContainer
           center={centerLocation}
           zoom={15}
