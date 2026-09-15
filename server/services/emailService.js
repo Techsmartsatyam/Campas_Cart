@@ -165,9 +165,14 @@ export const verifyTransporterConnection = async () => {
  */
 export const sendOrderPlacedEmailToShopkeeper = async ({
   shopkeeperEmail,
+  shopkeeperName = 'Shopkeeper',
   shopName,
-  studentName,
-  customerPhone,
+  shopPhone = '',
+  shopAddress = '',
+  shopUpiId = '',
+  studentName = 'Customer',
+  customerPhone = 'Not provided',
+  customerEmail = 'Not provided',
   orderNumber,
   orderId,
   items = [],
@@ -175,11 +180,15 @@ export const sendOrderPlacedEmailToShopkeeper = async ({
   deliveryFee = 0,
   gstAmount = 0,
   discount = 0,
-  couponCode,
-  totalAmount,
-  paymentMethod,
-  deliveryAddress,
-  orderTime,
+  couponCode = null,
+  totalAmount = 0,
+  paymentMethod = 'COD',
+  paymentStatus = 'PENDING',
+  addressDoc = null,
+  deliveryAddress = '',
+  orderTime = '',
+  orderStatus = 'PLACED',
+  notes = '',
 }) => {
   console.log(`[EMAIL TRACE] Email function called: PASS (Shopkeeper Order Email)`);
 
@@ -191,139 +200,243 @@ export const sendOrderPlacedEmailToShopkeeper = async ({
   console.log(`[EMAIL TRACE] Shopkeeper email resolved: PASS (${shopkeeperEmail})`);
   console.log(`[EMAIL] Shopkeeper recipient: ${shopkeeperEmail}`);
 
-  // Build order items table rows
-  const itemRowsHtml = items
-    .map((item) => {
-      const itemTotal = (Number(item.subtotal) || (Number(item.price) * Number(item.quantity))) || 0;
-      const gstPct = item.gstPercentage ? ` (GST ${item.gstPercentage}%)` : '';
-      return `
-        <tr>
-          <td style="padding:8px 10px; border-bottom:1px solid #f1f5f9;">${item.name}${gstPct}</td>
-          <td style="padding:8px 10px; border-bottom:1px solid #f1f5f9; text-align:center;">${item.quantity}</td>
-          <td style="padding:8px 10px; border-bottom:1px solid #f1f5f9; text-align:right;">₹${Number(item.price).toFixed(2)}</td>
-          <td style="padding:8px 10px; border-bottom:1px solid #f1f5f9; text-align:right;">₹${itemTotal.toFixed(2)}</td>
-        </tr>`;
-    })
-    .join('');
+  // Format monetary values strictly as numbers with 2 decimal places
+  const subtotalNum = Number(subtotal) || 0;
+  const deliveryFeeNum = Number(deliveryFee) || 0;
+  const gstAmountNum = Number(gstAmount) || 0;
+  const discountNum = Number(discount) || 0;
+  const totalAmountNum = Number(totalAmount) || 0;
 
-  // Payment method display
-  const paymentDisplay =
-    paymentMethod === 'COD' ? 'Cash on Delivery' :
-    paymentMethod === 'UPI' ? 'UPI' :
-    paymentMethod === 'ONLINE' ? 'Online Payment' :
-    paymentMethod || 'N/A';
+  // Subject line: New Order Received — Order #ORDER_ID — ₹FINAL_TOTAL
+  const subject = `New Order Received — Order #${orderNumber || orderId || 'N/A'} — ₹${totalAmountNum.toFixed(2)}`;
 
-  // Coupon row
-  const couponRowHtml = couponCode
-    ? `<tr><td style="padding:5px 0; color:#16a34a;">Coupon (${couponCode}):</td><td style="padding:5px 0; color:#16a34a; text-align:right;">-₹${Number(discount).toFixed(2)}</td></tr>`
-    : `<tr><td style="padding:5px 0; color:#64748b;">Coupon Discount:</td><td style="padding:5px 0; text-align:right;">₹0.00</td></tr>`;
+  // Build items rows
+  const itemRowsHtml = items && items.length > 0
+    ? items.map((item) => {
+        const qty = Number(item.quantity) || 1;
+        const unitPrice = Number(item.price) || 0;
+        const itemSubtotal = Number(item.subtotal) !== undefined && !isNaN(Number(item.subtotal))
+          ? Number(item.subtotal)
+          : unitPrice * qty;
+        const gstPct = item.gstPercentage ? ` <span style="font-size:0.75rem; color:#64748b;">(GST ${item.gstPercentage}%)</span>` : '';
+        return `
+          <tr>
+            <td style="padding:10px 12px; border-bottom:1px solid #f1f5f9; color:#1e293b; font-weight:600;">${item.name || 'Product'}${gstPct}</td>
+            <td style="padding:10px 12px; border-bottom:1px solid #f1f5f9; text-align:center; color:#334155;">${qty}</td>
+            <td style="padding:10px 12px; border-bottom:1px solid #f1f5f9; text-align:right; color:#334155;">₹${unitPrice.toFixed(2)}</td>
+            <td style="padding:10px 12px; border-bottom:1px solid #f1f5f9; text-align:right; color:#0f172a; font-weight:700;">₹${itemSubtotal.toFixed(2)}</td>
+          </tr>`;
+      }).join('')
+    : `<tr><td colspan="4" style="padding:10px; text-align:center; color:#94a3b8;">No items listed</td></tr>`;
 
-  const subject = `New Order Received — ${shopName} — NearCart`;
+  // Coupon row formatting
+  const couponRowHtml = couponCode || discountNum > 0
+    ? `
+      <tr>
+        <td style="padding:6px 0; color:#16a34a; font-weight:600;">Coupon (${couponCode || 'Applied'}):</td>
+        <td style="padding:6px 0; color:#16a34a; font-weight:600; text-align:right;">-₹${discountNum.toFixed(2)}</td>
+      </tr>`
+    : `
+      <tr>
+        <td style="padding:6px 0; color:#64748b;">Coupon:</td>
+        <td style="padding:6px 0; color:#64748b; text-align:right;">None (₹0.00)</td>
+      </tr>`;
+
+  // Payment information formatting
+  const payMethodUpper = String(paymentMethod || 'COD').toUpperCase();
+  const payStatusUpper = String(paymentStatus || 'PENDING').toUpperCase();
+  let paymentDetailsHtml = '';
+
+  if (payMethodUpper === 'UPI') {
+    paymentDetailsHtml = `
+      <tr><td style="padding:5px 0; color:#64748b; width:45%;">Payment Method:</td><td style="padding:5px 0; font-weight:700; color:#0284c7;">UPI (Direct UPI Payment)</td></tr>
+      <tr><td style="padding:5px 0; color:#64748b;">Payment Status:</td><td style="padding:5px 0; font-weight:600;">${payStatusUpper}</td></tr>
+      <tr><td style="padding:5px 0; color:#64748b;">Shop UPI ID:</td><td style="padding:5px 0; font-weight:600;">${shopUpiId || 'Not provided'}</td></tr>
+    `;
+  } else if (payMethodUpper === 'COD') {
+    paymentDetailsHtml = `
+      <tr><td style="padding:5px 0; color:#64748b; width:45%;">Payment Method:</td><td style="padding:5px 0; font-weight:700; color:#d97706;">Cash on Delivery (COD)</td></tr>
+      <tr><td style="padding:5px 0; color:#64748b;">Payment Status:</td><td style="padding:5px 0; font-weight:600;">Pending (COD)</td></tr>
+    `;
+  } else {
+    paymentDetailsHtml = `
+      <tr><td style="padding:5px 0; color:#64748b; width:45%;">Payment Method:</td><td style="padding:5px 0; font-weight:700;">${payMethodUpper}</td></tr>
+      <tr><td style="padding:5px 0; color:#64748b;">Payment Status:</td><td style="padding:5px 0; font-weight:600;">${payStatusUpper}</td></tr>
+    `;
+  }
+
+  // Address details helper
+  const renderAddressHtml = () => {
+    let html = '';
+    if (deliveryAddress) {
+      html += `<div style="color:#0f172a; font-weight:600; margin-bottom:8px; font-size:0.95rem;">${deliveryAddress}</div>`;
+    }
+    if (addressDoc && typeof addressDoc === 'object') {
+      const parts = [];
+      if (addressDoc.roomNumber) parts.push(`Room/Flat: <strong>${addressDoc.roomNumber}</strong>`);
+      if (addressDoc.hostelName) parts.push(`Hostel/Building: <strong>${addressDoc.hostelName}</strong>`);
+      if (addressDoc.landmark) parts.push(`Landmark: <strong>${addressDoc.landmark}</strong>`);
+      if (addressDoc.city) parts.push(`City: <strong>${addressDoc.city}</strong>`);
+      if (addressDoc.state) parts.push(`State: <strong>${addressDoc.state}</strong>`);
+      if (addressDoc.postalCode) parts.push(`Pincode: <strong>${addressDoc.postalCode}</strong>`);
+      
+      if (parts.length > 0) {
+        html += `<div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:10px 12px; margin-top:6px; font-size:0.85rem; color:#334155; line-height:1.6;">`;
+        html += parts.join(' • ');
+        html += `</div>`;
+      }
+    }
+    return html || '<span style="color:#64748b;">Not provided</span>';
+  };
+
+  const formattedDate = orderTime || new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
 
   const htmlContent = `
-    <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; background: #ffffff;">
-      <!-- Header -->
-      <div style="background: linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%); padding: 24px 28px;">
-        <h2 style="color: #ffffff; margin: 0; font-size: 1.4rem;">🛒 New Order Received!</h2>
-        <p style="color: #bae6fd; margin: 6px 0 0 0; font-size: 0.9rem;">NearCart — ${shopName}</p>
+    <div style="font-family: Arial, Helvetica, sans-serif; max-width: 650px; margin: 0 auto; color: #1e293b; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
+      <!-- Header Banner -->
+      <div style="background: linear-gradient(135deg, #0f172a 0%, #0284c7 100%); padding: 26px 30px; color: #ffffff;">
+        <h2 style="margin: 0; font-size: 1.4rem; font-weight: 700; tracking: -0.5px;">🛒 New Order Received!</h2>
+        <p style="margin: 6px 0 0 0; color: #bae6fd; font-size: 0.92rem;">NearCart Platform — ${shopName}</p>
       </div>
 
-      <div style="padding: 24px 28px;">
-        <!-- Shop & Order Summary -->
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-          <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+      <div style="padding: 26px 30px;">
+        <p style="font-size: 1rem; color: #334155; margin-top: 0;">Hello <strong>${shopkeeperName}</strong>,</p>
+        <p style="font-size: 0.95rem; color: #475569; margin-bottom: 22px;">You have received a new order on <strong>NearCart</strong>. Please inspect the order breakdown below:</p>
+
+        <!-- ORDER INFORMATION -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin-bottom: 22px;">
+          <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.8px; color: #0284c7; margin: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">ORDER INFORMATION</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
             <tr>
-              <td style="padding:4px 0; color:#64748b; width:45%;">Shop:</td>
-              <td style="padding:4px 0; font-weight:700;">${shopName}</td>
+              <td style="padding: 5px 0; color: #64748b; width: 45%;">Order ID:</td>
+              <td style="padding: 5px 0; font-weight: 700; color: #0284c7;">#${orderNumber || orderId || 'N/A'}</td>
             </tr>
             <tr>
-              <td style="padding:4px 0; color:#64748b;">Order ID:</td>
-              <td style="padding:4px 0; font-weight:700; color:#0284c7;">#${orderNumber}</td>
+              <td style="padding: 5px 0; color: #64748b;">Order Date:</td>
+              <td style="padding: 5px 0; font-weight: 600;">${formattedDate}</td>
             </tr>
             <tr>
-              <td style="padding:4px 0; color:#64748b;">Order Date:</td>
-              <td style="padding:4px 0;">${orderTime || new Date().toLocaleString('en-IN')}</td>
+              <td style="padding: 5px 0; color: #64748b;">Order Status:</td>
+              <td style="padding: 5px 0;"><span style="background: #dcfce7; color: #15803d; padding: 3px 10px; border-radius: 6px; font-size: 0.8rem; font-weight: 700;">${orderStatus}</span></td>
             </tr>
             <tr>
-              <td style="padding:4px 0; color:#64748b;">Order Status:</td>
-              <td style="padding:4px 0;"><span style="background:#dcfce7; color:#16a34a; padding:2px 8px; border-radius:4px; font-size:0.8rem; font-weight:700;">PLACED</span></td>
+              <td style="padding: 5px 0; color: #64748b;">Shop:</td>
+              <td style="padding: 5px 0; font-weight: 700; color: #0f172a;">${shopName || 'N/A'}</td>
             </tr>
           </table>
         </div>
 
-        <!-- Customer Details -->
-        <h3 style="font-size:1rem; color:#334155; margin:0 0 10px 0; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">👤 Customer Details</h3>
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 20px;">
-          <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+        <!-- CUSTOMER INFORMATION -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin-bottom: 22px;">
+          <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.8px; color: #0284c7; margin: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">CUSTOMER INFORMATION</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
             <tr>
-              <td style="padding:4px 0; color:#64748b; width:45%;">Name:</td>
-              <td style="padding:4px 0; font-weight:600;">${studentName}</td>
+              <td style="padding: 5px 0; color: #64748b; width: 45%;">Customer Name:</td>
+              <td style="padding: 5px 0; font-weight: 700; color: #0f172a;">${studentName || 'Not provided'}</td>
             </tr>
             <tr>
-              <td style="padding:4px 0; color:#64748b;">Phone:</td>
-              <td style="padding:4px 0; font-weight:600;">${customerPhone || 'Not available'}</td>
+              <td style="padding: 5px 0; color: #64748b;">Mobile Number:</td>
+              <td style="padding: 5px 0; font-weight: 700; color: #0f172a;">${customerPhone && String(customerPhone).trim() ? customerPhone : 'Not provided'}</td>
+            </tr>
+            <tr>
+              <td style="padding: 5px 0; color: #64748b;">Customer Email:</td>
+              <td style="padding: 5px 0; font-weight: 600; color: #334155;">${customerEmail && String(customerEmail).trim() ? customerEmail : 'Not provided'}</td>
             </tr>
           </table>
         </div>
 
-        <!-- Delivery Address -->
-        <h3 style="font-size:1rem; color:#334155; margin:0 0 10px 0; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">📍 Delivery Address</h3>
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 14px; margin-bottom: 20px; font-size:0.9rem; line-height:1.5;">
-          ${deliveryAddress || 'See dashboard for delivery details'}
+        <!-- DELIVERY INFORMATION -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin-bottom: 22px;">
+          <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.8px; color: #0284c7; margin: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">DELIVERY INFORMATION</h3>
+          <div style="font-size: 0.9rem;">
+            ${renderAddressHtml()}
+          </div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 10px; border-top: 1px dashed #cbd5e1; padding-top: 8px;">
+            <tr>
+              <td style="padding: 6px 0 0 0; color: #64748b; width: 45%;">Delivery Fee:</td>
+              <td style="padding: 6px 0 0 0; font-weight: 700; color: #0f172a;">₹${deliveryFeeNum.toFixed(2)}</td>
+            </tr>
+          </table>
         </div>
 
-        <!-- Order Items -->
-        <h3 style="font-size:1rem; color:#334155; margin:0 0 10px 0; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">📦 Order Items</h3>
-        <table style="width:100%; border-collapse:collapse; font-size:0.88rem; margin-bottom:20px;">
-          <thead>
-            <tr style="background:#f1f5f9;">
-              <th style="padding:9px 10px; text-align:left; color:#475569;">Product</th>
-              <th style="padding:9px 10px; text-align:center; color:#475569;">Qty</th>
-              <th style="padding:9px 10px; text-align:right; color:#475569;">Unit Price</th>
-              <th style="padding:9px 10px; text-align:right; color:#475569;">Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${itemRowsHtml || '<tr><td colspan="4" style="padding:8px 10px; color:#94a3b8;">No items</td></tr>'}
-          </tbody>
-        </table>
+        <!-- ORDER ITEMS -->
+        <div style="margin-bottom: 22px;">
+          <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.8px; color: #0284c7; margin: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">ORDER ITEMS</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+            <thead>
+              <tr style="background: #f1f5f9; color: #475569;">
+                <th style="padding: 10px 12px; text-align: left; font-weight: 700;">Product</th>
+                <th style="padding: 10px 12px; text-align: center; font-weight: 700;">Qty</th>
+                <th style="padding: 10px 12px; text-align: right; font-weight: 700;">Unit Price</th>
+                <th style="padding: 10px 12px; text-align: right; font-weight: 700;">Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${itemRowsHtml}
+            </tbody>
+          </table>
+        </div>
 
-        <!-- Payment & Billing -->
-        <h3 style="font-size:1rem; color:#334155; margin:0 0 10px 0; border-bottom:2px solid #e2e8f0; padding-bottom:6px;">💳 Payment & Billing</h3>
-        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin-bottom: 20px;">
-          <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+        <!-- BILLING SUMMARY -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin-bottom: 22px;">
+          <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.8px; color: #0284c7; margin: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">BILLING SUMMARY</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.92rem;">
             <tr>
-              <td style="padding:5px 0; color:#64748b;">Subtotal:</td>
-              <td style="padding:5px 0; text-align:right;">₹${Number(subtotal).toFixed(2)}</td>
+              <td style="padding: 6px 0; color: #64748b;">Subtotal:</td>
+              <td style="padding: 6px 0; font-weight: 600; text-align: right;">₹${subtotalNum.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; color: #64748b;">Delivery Fee:</td>
+              <td style="padding: 6px 0; font-weight: 600; text-align: right;">₹${deliveryFeeNum.toFixed(2)}</td>
+            </tr>
+            <tr>
+              <td style="padding: 6px 0; color: #64748b;">GST Amount:</td>
+              <td style="padding: 6px 0; font-weight: 600; text-align: right;">₹${gstAmountNum.toFixed(2)}</td>
             </tr>
             ${couponRowHtml}
-            <tr>
-              <td style="padding:5px 0; color:#64748b;">Delivery Charge:</td>
-              <td style="padding:5px 0; text-align:right;">₹${Number(deliveryFee).toFixed(2)}</td>
-            </tr>
-            <tr>
-              <td style="padding:5px 0; color:#64748b;">GST:</td>
-              <td style="padding:5px 0; text-align:right;">₹${Number(gstAmount).toFixed(2)}</td>
-            </tr>
-            <tr style="border-top:2px solid #cbd5e1;">
-              <td style="padding:10px 0 5px 0; font-weight:800; font-size:1rem; color:#0f172a;">Final Total:</td>
-              <td style="padding:10px 0 5px 0; font-weight:800; font-size:1rem; color:#0284c7; text-align:right;">₹${Number(totalAmount).toFixed(2)}</td>
+            <tr style="border-top: 2px solid #94a3b8;">
+              <td style="padding: 12px 0 6px 0; font-weight: 800; font-size: 1.05rem; color: #0f172a;">Grand Total:</td>
+              <td style="padding: 12px 0 6px 0; font-weight: 800; font-size: 1.1rem; color: #0284c7; text-align: right;">₹${totalAmountNum.toFixed(2)}</td>
             </tr>
           </table>
-          <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #e2e8f0; font-size:0.88rem; color:#475569;">
-            Payment Method: <strong>${paymentDisplay}</strong>
-          </div>
         </div>
 
-        <p style="font-size: 0.9rem; color: #64748b; text-align:center;">
-          Please open your <strong>NearCart Shopkeeper Dashboard</strong> to accept and start preparing this order.
+        <!-- PAYMENT INFORMATION -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin-bottom: 22px;">
+          <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.8px; color: #0284c7; margin: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">PAYMENT INFORMATION</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+            ${paymentDetailsHtml}
+          </table>
+        </div>
+
+        <!-- ORDER NOTES -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin-bottom: 22px;">
+          <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.8px; color: #0284c7; margin: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">ORDER NOTES</h3>
+          <p style="margin: 0; font-size: 0.9rem; color: #334155;">${notes && String(notes).trim() ? notes.trim() : 'None'}</p>
+        </div>
+
+        <!-- SHOP INFORMATION -->
+        <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 18px; margin-bottom: 22px;">
+          <h3 style="font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.8px; color: #0284c7; margin: 0 0 12px 0; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px;">SHOP INFORMATION</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+            <tr>
+              <td style="padding: 4px 0; color: #64748b; width: 45%;">Shop Name:</td>
+              <td style="padding: 4px 0; font-weight: 700; color: #0f172a;">${shopName || 'Not provided'}</td>
+            </tr>
+            ${shopPhone ? `<tr><td style="padding: 4px 0; color: #64748b;">Shop Phone:</td><td style="padding: 4px 0; font-weight: 600;">${shopPhone}</td></tr>` : ''}
+            ${shopAddress ? `<tr><td style="padding: 4px 0; color: #64748b;">Shop Address:</td><td style="padding: 4px 0; font-weight: 600;">${shopAddress}</td></tr>` : ''}
+          </table>
+        </div>
+
+        <p style="font-size: 0.9rem; color: #64748b; text-align: center; margin-top: 25px;">
+          Please log in to your <strong>NearCart Shopkeeper Dashboard</strong> to manage and process this order.
         </p>
       </div>
 
       <!-- Footer -->
-      <div style="background:#f8fafc; padding:14px 28px; border-top:1px solid #e2e8f0; text-align:center;">
-        <p style="font-size: 0.75rem; color: #94a3b8; margin:0;">
-          NearCart Platform — Automatic Order Notification System
+      <div style="background: #f8fafc; padding: 16px 30px; border-top: 1px solid #e2e8f0; text-align: center;">
+        <p style="font-size: 0.8rem; color: #94a3b8; margin: 0;">
+          Thank you,<br><strong>NearCart Platform</strong>
         </p>
       </div>
     </div>

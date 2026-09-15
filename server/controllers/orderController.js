@@ -707,7 +707,7 @@ try {
     console.log(`[SHOP EMAIL TRACE] Order Number: ${order.orderNumber}`);
     const targetShopId = order.shop._id || order.shop;
     console.log(`[SHOP EMAIL TRACE] Shop ID: ${targetShopId}`);
-    const shopDoc = await Shop.findById(targetShopId).populate('owner', 'email name');
+    const shopDoc = await Shop.findById(targetShopId).populate('owner', 'email name phone');
 
     if (shopDoc) {
       console.log(`[SHOP EMAIL TRACE] Shop resolved: PASS (${shopDoc.name})`);
@@ -726,21 +726,57 @@ try {
       console.log(`[SHOP EMAIL TRACE] Shopkeeper Email: ${shopDoc.owner.email}`);
       console.log(`[SHOP EMAIL TRACE] Email Function Called: PASS`);
 
-      const formattedAddress = address
-        ? `${address.addressLine1 || address.street || ''}, ${address.city || ''}, ${address.pincode || ''}`
-        : 'Customer Delivery Address';
+      // Address resolution
+      let addressDoc = address;
+      if ((!addressDoc || !addressDoc.fullAddress) && order.address) {
+        addressDoc = await Address.findById(order.address);
+      }
+
+      let formattedAddress = 'Customer Delivery Address';
+      if (addressDoc) {
+        if (addressDoc.fullAddress) {
+          formattedAddress = addressDoc.fullAddress;
+        } else {
+          const parts = [
+            addressDoc.roomNumber ? `Room/Flat ${addressDoc.roomNumber}` : '',
+            addressDoc.hostelName,
+            addressDoc.landmark ? `Near ${addressDoc.landmark}` : '',
+            addressDoc.city,
+            addressDoc.state,
+            addressDoc.postalCode,
+          ].filter(Boolean);
+          formattedAddress = parts.length > 0 ? parts.join(', ') : 'Customer Delivery Address';
+        }
+      }
 
       const emailResult = await sendOrderPlacedEmailToShopkeeper({
         shopkeeperEmail: shopDoc.owner.email,
+        shopkeeperName: shopDoc.owner.name || 'Shopkeeper',
         shopName: shopDoc.name,
-        studentName: req.user.name || 'Student',
+        shopPhone: shopDoc.phone || '',
+        shopAddress: shopDoc.address || '',
+        shopUpiId: shopDoc.upiId || order.upiQrSnapshot?.upiId || '',
+        studentName: req.user.name || 'Customer',
+        customerPhone: req.user.phone || 'Not provided',
+        customerEmail: req.user.email || 'Not provided',
         orderNumber: order.orderNumber,
+        orderId: order._id,
         items: orderItems,
+        subtotal: order.subtotal,
+        deliveryFee: order.deliveryFee,
+        gstAmount: order.gstAmount,
+        discount: order.discount,
+        couponCode: couponCode ? couponCode.trim().toUpperCase() : null,
         totalAmount: order.totalAmount,
         paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+        addressDoc,
         deliveryAddress: formattedAddress,
-        orderTime: order.createdAt ? new Date(order.createdAt).toLocaleString() : new Date().toLocaleString(),
-        orderId: order._id,
+        orderTime: order.createdAt
+          ? new Date(order.createdAt).toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+          : new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+        orderStatus: order.orderStatus,
+        notes: order.notes,
       });
 
       if (emailResult && emailResult.messageId) {
