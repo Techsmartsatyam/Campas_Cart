@@ -217,6 +217,7 @@ export default function MainLayout() {
                         right: 0,
                         top: '2.5rem',
                         width: '320px',
+                        maxWidth: 'calc(100vw - 1.5rem)',
                         background: '#ffffff',
                         border: '1px solid var(--border-color)',
                         borderRadius: '0.75rem',
