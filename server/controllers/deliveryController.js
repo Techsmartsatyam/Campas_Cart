@@ -377,19 +377,23 @@ export const updateDeliveryStatus = async (req, res, next) => {
       const order = await Order.findById(delivery.order);
       if (order) {
         if (status === 'PICKED_UP') order.orderStatus = 'PICKED_UP';
-        else if (status === 'OUT_FOR_DELIVERY') order.orderStatus = 'OUT_FOR_DELIVERY';
-        // else if (status === 'DELIVERED') {
-        //   order.orderStatus = 'DELIVERED';
-        //   order.paymentStatus = 'PAID';
-        // }
-   else if (status === 'DELIVERED') {
-  order.orderStatus = 'DELIVERED';
+        else if (status === 'DELIVERED') {
+          order.orderStatus = 'DELIVERED';
 
-  // COD order: payment is collected by delivery boy at delivery
-  if (order.paymentMethod === 'COD') {
-    order.paymentStatus = 'PAID';
-  }
-}
+          // Automatic COD payment status update: COD payment collected at delivery
+          if (order.paymentMethod === 'COD' && order.paymentStatus !== 'PAID') {
+            order.paymentStatus = 'PAID';
+            try {
+              const Payment = (await import('../models/Payment.js')).default;
+              await Payment.findOneAndUpdate(
+                { order: order._id },
+                { status: 'SUCCESS', paidAt: now }
+              );
+            } catch (payErr) {
+              console.warn('Payment document update notice:', payErr.message);
+            }
+          }
+        }
         await order.save();
 
         // Broadcast real-time status update to delivery room & user rooms via Socket.IO
@@ -403,6 +407,8 @@ export const updateDeliveryStatus = async (req, res, next) => {
             orderNumber: order.orderNumber,
             deliveryStatus: delivery.status,
             orderStatus: order.orderStatus,
+            paymentMethod: order.paymentMethod,
+            paymentStatus: order.paymentStatus,
             shopId: order.shop,
             timestamp: now,
           };
