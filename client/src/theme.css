@@ -212,6 +212,27 @@ img, svg, video, canvas, audio {
   }
 }
 
+/* Nearby Shops & Hotels Grid — Exactly 2 Columns on Mobile (0–639px), Desktop adaptive above */
+.shop-grid-responsive {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  width: 100%;
+}
+
+@media (max-width: 480px) {
+  .shop-grid-responsive {
+    gap: 0.5rem;
+  }
+}
+
+@media (min-width: 640px) {
+  .shop-grid-responsive {
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+}
+
 @media (max-width: 768px) {
   .container {
     padding: 0 0.5rem;

@@ -156,7 +156,7 @@ export default function Student() {
             No active shops available right now.
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem' }}>
+          <div className="shop-grid-responsive">
             {shops.map((shopItem) => (
               <ShopCard
                 key={shopItem._id}
