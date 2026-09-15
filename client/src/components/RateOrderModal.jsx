@@ -505,12 +505,13 @@ export default function RateOrderModal({ order, isOpen, onClose, onReviewSubmitt
             padding: '1rem 1.5rem',
             borderTop: '1px solid var(--border-color, #e2e8f0)',
             display: 'flex',
-            justify: 'flex-end',
+            justifyContent: 'flex-end',
+            gap: '0.75rem',
             background: 'var(--surface-hover, #f8fafc)',
           }}
         >
           <button onClick={onClose} className="btn-secondary" style={{ padding: '0.5rem 1.25rem', fontSize: '0.875rem' }}>
-            Close
+            Maybe Later
           </button>
         </div>
       </div>

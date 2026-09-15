@@ -8,7 +8,7 @@ import PwaInstallButton from '../components/PwaInstallButton';
 import PwaInstallBanner from '../components/PwaInstallBanner';
 import Footer from '../components/Footer';
 import { registerPwaInstallation } from '../utils/pwaInstallTracker';
-import api from '../services/api';
+import AutoReviewPopup from '../components/AutoReviewPopup';
 
 export default function MainLayout() {
   const { user, isAuthenticated, logout } = useAuth();
@@ -447,6 +447,9 @@ export default function MainLayout() {
       </main>
 
       <PwaInstallBanner />
+
+      {/* Auto Review Popup for Delivered Orders */}
+      {isAuthenticated && user?.role === 'STUDENT' && <AutoReviewPopup />}
 
       {/* Footer */}
       <Footer />
