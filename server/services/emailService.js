@@ -172,7 +172,7 @@ export const sendOrderPlacedEmailToShopkeeper = async ({
   shopUpiId = '',
   studentName = 'Customer',
   customerPhone = 'Not provided',
-  customerEmail = 'Not provided',
+  // customerEmail = 'Not provided',
   orderNumber,
   orderId,
   items = [],
@@ -338,10 +338,7 @@ export const sendOrderPlacedEmailToShopkeeper = async ({
               <td style="padding: 5px 0; color: #64748b;">Mobile Number:</td>
               <td style="padding: 5px 0; font-weight: 700; color: #0f172a;">${customerPhone && String(customerPhone).trim() ? customerPhone : 'Not provided'}</td>
             </tr>
-            <tr>
-              <td style="padding: 5px 0; color: #64748b;">Customer Email:</td>
-              <td style="padding: 5px 0; font-weight: 600; color: #334155;">${customerEmail && String(customerEmail).trim() ? customerEmail : 'Not provided'}</td>
-            </tr>
+           
           </table>
         </div>
 
