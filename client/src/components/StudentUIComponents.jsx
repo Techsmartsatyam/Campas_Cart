@@ -374,6 +374,12 @@ export const ProductCard = React.memo(function ProductCard({ product, onClick, o
         </span>
       )}
 
+      {Number(product.packingCharges) > 0 && (
+        <span style={{ fontSize: '0.625rem', color: '#0369a1', background: '#e0f2fe', padding: '0.1rem 0.35rem', borderRadius: '0.2rem', marginBottom: '0.35rem', display: 'inline-block', width: 'fit-content' }}>
+          Packing: ₹{product.packingCharges} / item
+        </span>
+      )}
+
       {/* Card Footer Action */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto', paddingTop: '0.4rem', borderTop: '1px dashed #f1f5f9' }}>
         <span
