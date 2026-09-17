@@ -247,7 +247,8 @@ export const createOrder = async (req, res) => {
         quantity,
         price: effectivePrice,
         subtotal: itemSubtotal,
-         gstPercentage: Number(product.gstPercentage) || 0,
+        gstPercentage: Number(product.gstPercentage) || 0,
+        packingCharges: Number(product.packingCharges) || 0,
       });
 
       stockUpdates.push({
@@ -320,6 +321,7 @@ export const createOrder = async (req, res) => {
           price: effectivePrice,
           subtotal: itemSubtotal,
           gstPercentage: Number(product.gstPercentage) || 0,
+          packingCharges: Number(product.packingCharges) || 0,
         });
 
         stockUpdates.push({
@@ -373,20 +375,20 @@ export const createOrder = async (req, res) => {
       }
     }
 
-    // 7. Calculate total amount
-// 7. Calculate Packing Charges, GST, and final total amount
-const packingCharges = Number(shop.packingCharges) || 0;
+// 7. Calculate Product-Level Packing Charges, GST, and final total amount
+let packingCharges = 0;
 let gstAmount = 0;
 
 for (const item of orderItems) {
+  const itemPacking = (Number(item.packingCharges) || 0) * (Number(item.quantity) || 0);
+  packingCharges += itemPacking;
+
   const gstPercentage = Number(item.gstPercentage) || 0;
-
-  const itemGst =
-    (Number(item.subtotal) * gstPercentage) / 100;
-
+  const itemGst = (Number(item.subtotal) * gstPercentage) / 100;
   gstAmount += itemGst;
 }
 
+packingCharges = Math.round(packingCharges * 100) / 100;
 gstAmount = Math.round(gstAmount * 100) / 100;
 
 const totalAmount = Math.max(

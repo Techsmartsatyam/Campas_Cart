@@ -28,11 +28,16 @@ const orderItemSchema = new mongoose.Schema(
     },
 
   gstPercentage: {
-  type: Number,
-  default: 0,
-  min: [0, 'GST percentage cannot be negative'],
-  max: [100, 'GST percentage cannot exceed 100'],
-},
+    type: Number,
+    default: 0,
+    min: [0, 'GST percentage cannot be negative'],
+    max: [100, 'GST percentage cannot exceed 100'],
+  },
+  packingCharges: {
+    type: Number,
+    default: 0,
+    min: [0, 'Item packing charges cannot be negative'],
+  },
   },
   { _id: true }
 );

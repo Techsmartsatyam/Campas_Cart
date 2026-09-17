@@ -85,6 +85,7 @@ export default function Shopkeeper() {
     isAvailable: true,
     images: [],
     gstPercentage: 0,
+    packingCharges: 0,
   });
 
   const [imageInput, setImageInput] = useState('');
@@ -252,6 +253,7 @@ export default function Shopkeeper() {
         isAvailable: product.isAvailable,
         images: Array.isArray(product.images) ? [...product.images] : [],
         gstPercentage: product.gstPercentage || 0,
+        packingCharges: product.packingCharges !== undefined ? product.packingCharges : 0,
       });
     } else {
       setEditingProductId(null);
@@ -267,6 +269,7 @@ export default function Shopkeeper() {
         isAvailable: true,
         images: [],
         gstPercentage: 0,
+        packingCharges: 0,
       });
     }
     setShowProductModal(true);
@@ -576,14 +579,10 @@ export default function Shopkeeper() {
               <input type="text" className="form-input" placeholder="e.g. SAC Building, Room 102" value={shopForm.address} onChange={(e) => setShopForm({ ...shopForm, address: e.target.value })} required />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
               <div className="form-group">
                 <label className="form-label">Min Order (₹)</label>
                 <input type="number" className="form-input" value={shopForm.minimumOrderAmount} onChange={(e) => setShopForm({ ...shopForm, minimumOrderAmount: e.target.value })} />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Packing Charges (₹)</label>
-                <input type="number" min="0" className="form-input" value={shopForm.packingCharges} onChange={(e) => setShopForm({ ...shopForm, packingCharges: e.target.value })} placeholder="0" />
               </div>
               <div className="form-group">
                 <label className="form-label">Delivery Fee (₹)</label>
@@ -1241,9 +1240,8 @@ export default function Shopkeeper() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className="form-group"><label className="form-label">Min Order (₹)</label><input type="number" className="form-input" value={shopForm.minimumOrderAmount} onChange={(e) => setShopForm({ ...shopForm, minimumOrderAmount: e.target.value })} /></div>
-                  <div className="form-group"><label className="form-label">Packing Charges (₹)</label><input type="number" min="0" className="form-input" value={shopForm.packingCharges} onChange={(e) => setShopForm({ ...shopForm, packingCharges: e.target.value })} placeholder="0" /></div>
                   <div className="form-group"><label className="form-label">Delivery Fee (₹)</label><input type="number" className="form-input" value={shopForm.deliveryFee} onChange={(e) => setShopForm({ ...shopForm, deliveryFee: e.target.value })} /></div>
                 </div>
                 <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }}>Update Shop Settings</button>
@@ -1364,6 +1362,11 @@ export default function Shopkeeper() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div className="form-group"><label className="form-label">Price (₹)</label><input type="number" className="form-input" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} required /></div>
                 <div className="form-group"><label className="form-label">Discount Price (₹)</label><input type="number" className="form-input" value={productForm.discountPrice} onChange={(e) => setProductForm({ ...productForm, discountPrice: e.target.value })} /></div>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label">Packing Charges (per item) (₹)</label>
+                <input type="number" min="0" className="form-input" value={productForm.packingCharges} onChange={(e) => setProductForm({ ...productForm, packingCharges: e.target.value })} placeholder="0" />
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>

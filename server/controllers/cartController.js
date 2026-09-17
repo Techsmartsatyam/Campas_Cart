@@ -12,7 +12,7 @@ export const getCart = async (req, res) => {
     let cart = await Cart.findOne({ user: req.user._id })
       .populate({
         path: 'items.product',
-        select: 'name price discountPrice images isAvailable stock unit shop',
+        select: 'name price discountPrice images isAvailable stock unit shop gstPercentage packingCharges',
       })
       .populate({
         path: 'items.shop',

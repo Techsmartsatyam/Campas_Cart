@@ -351,6 +351,7 @@ export const createProduct = async (req, res, next) => {
       isAvailable,
       images,
       gstPercentage,
+      packingCharges,
       idempotencyKey,
     } = req.body;
 
@@ -384,6 +385,13 @@ export const createProduct = async (req, res, next) => {
       });
     }
 
+    if (packingCharges !== undefined && Number(packingCharges) < 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Packing charges cannot be negative.',
+      });
+    }
+
     if (numDiscount !== undefined && (numDiscount < 0 || numDiscount > numPrice)) {
       return res.status(400).json({
         success: false,
@@ -405,6 +413,7 @@ export const createProduct = async (req, res, next) => {
         isAvailable: isAvailable !== undefined ? isAvailable : numStock > 0,
         images: Array.isArray(images) ? images : [],
         gstPercentage: gstPercentage !== undefined && gstPercentage !== '' ? Math.min(100, Math.max(0, Number(gstPercentage) || 0)) : 0,
+        packingCharges: packingCharges !== undefined && packingCharges !== '' ? Math.max(0, Number(packingCharges) || 0) : 0,
         ...(key ? { idempotencyKey: key } : {}),
         isActive: true,
       });
@@ -471,10 +480,15 @@ export const updateProduct = async (req, res, next) => {
       isAvailable,
       images,
       gstPercentage,
+      packingCharges,
     } = req.body;
 
     if (price !== undefined && Number(price) < 0) {
       return res.status(400).json({ success: false, message: 'Price cannot be negative' });
+    }
+
+    if (packingCharges !== undefined && Number(packingCharges) < 0) {
+      return res.status(400).json({ success: false, message: 'Packing charges cannot be negative' });
     }
 
     if (stock !== undefined && Number(stock) < 0) {
@@ -494,6 +508,7 @@ export const updateProduct = async (req, res, next) => {
     if (isAvailable !== undefined) product.isAvailable = isAvailable;
     if (images && Array.isArray(images)) product.images = images;
     if (gstPercentage !== undefined) product.gstPercentage = Math.min(100, Math.max(0, Number(gstPercentage) || 0));
+    if (packingCharges !== undefined) product.packingCharges = Math.max(0, Number(packingCharges) || 0);
 
     if (product.stock === 0) {
       product.isAvailable = false;

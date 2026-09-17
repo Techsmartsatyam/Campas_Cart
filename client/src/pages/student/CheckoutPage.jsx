@@ -262,7 +262,10 @@ export default function CheckoutPage() {
   0
 );
 
-const packingCharges = Number(shop?.packingCharges) || 0;
+  const packingCharges = items.reduce(
+    (sum, item) => sum + (Number(item.product?.packingCharges) || 0) * item.quantity,
+    0
+  );
 
 const deliveryFee = Number(shop?.deliveryFee) || 0;
 

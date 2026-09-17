@@ -83,6 +83,11 @@ const productSchema = new mongoose.Schema(
       min: [0, 'GST percentage cannot be negative'],
       max: [100, 'GST percentage cannot exceed 100'],
     },
+    packingCharges: {
+      type: Number,
+      default: 0,
+      min: [0, 'Packing charges cannot be negative'],
+    },
     idempotencyKey: {
       type: String,
       trim: true,

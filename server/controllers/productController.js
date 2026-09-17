@@ -78,7 +78,7 @@ export const getProducts = async (req, res, next) => {
 
     const total = await Product.countDocuments(query);
     const products = await Product.find(query)
-      .select('name price discountPrice unit stock images shop category rating totalRatings gstPercentage createdAt')
+      .select('name price discountPrice unit stock images shop category rating totalRatings gstPercentage packingCharges createdAt')
       .populate('shop', 'name logo rating address isOpen deliveryFee')
       .populate('category', 'name')
       .sort(sortOptions)
