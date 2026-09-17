@@ -81,6 +81,11 @@ const shopSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'Delivery fee cannot be negative'],
     },
+    packingCharges: {
+      type: Number,
+      default: 0,
+      min: [0, 'Packing charges cannot be negative'],
+    },
     rating: {
       type: Number,
       default: 0,

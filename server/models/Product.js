@@ -83,6 +83,11 @@ const productSchema = new mongoose.Schema(
       min: [0, 'GST percentage cannot be negative'],
       max: [100, 'GST percentage cannot exceed 100'],
     },
+    idempotencyKey: {
+      type: String,
+      trim: true,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -93,6 +98,7 @@ const productSchema = new mongoose.Schema(
 productSchema.index({ shop: 1 });
 productSchema.index({ category: 1 });
 productSchema.index({ name: 1 });
+productSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });
 
 const Product = mongoose.models.Product || mongoose.model('Product', productSchema);
 

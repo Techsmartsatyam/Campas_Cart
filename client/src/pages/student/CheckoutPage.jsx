@@ -181,6 +181,8 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
+    if (submitting) return;
+
     if (!selectedAddressId) {
       setError('Please select or add a delivery address');
       return;
@@ -190,11 +192,14 @@ export default function CheckoutPage() {
       setSubmitting(true);
       setError('');
 
+      const orderKey = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'ord-' + Date.now() + '-' + Math.random().toString(36).substring(2);
+
       const payload = {
         addressId: selectedAddressId,
         paymentMethod,
         couponCode: appliedCoupon ? appliedCoupon.code : undefined,
         notes,
+        idempotencyKey: orderKey,
         ...(buyNowItem
           ? {
               isBuyNow: true,
@@ -257,6 +262,8 @@ export default function CheckoutPage() {
   0
 );
 
+const packingCharges = Number(shop?.packingCharges) || 0;
+
 const deliveryFee = Number(shop?.deliveryFee) || 0;
 
 const discountAmount = appliedCoupon
@@ -275,7 +282,7 @@ const roundedGstAmount = Math.round(gstAmount * 100) / 100;
 
 const finalTotal = Math.max(
   0,
-  subtotal + roundedGstAmount + deliveryFee - discountAmount
+  subtotal + packingCharges + roundedGstAmount + deliveryFee - discountAmount
 );
 
   if (loading) {
@@ -807,6 +814,12 @@ const finalTotal = Math.max(
                 <span className="cpn-price-label">Subtotal</span>
                 <span className="cpn-price-value">₹{subtotal.toFixed(2)}</span>
               </div>
+              {packingCharges > 0 && (
+                <div className="cpn-price-row">
+                  <span className="cpn-price-label">Packing Charges</span>
+                  <span className="cpn-price-value">₹{packingCharges.toFixed(2)}</span>
+                </div>
+              )}
               <div className="cpn-price-row">
                 <span className="cpn-price-label">Delivery Fee</span>
                 <span className="cpn-price-value">{deliveryFee > 0 ? `₹${deliveryFee.toFixed(2)}` : 'FREE'}</span>

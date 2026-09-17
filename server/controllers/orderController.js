@@ -133,7 +133,24 @@ export const applyCoupon = async (req, res) => {
  */
 export const createOrder = async (req, res) => {
   try {
-    const { addressId, paymentMethod = 'COD', couponCode, notes, isBuyNow, buyNowItem } = req.body;
+    const { addressId, paymentMethod = 'COD', couponCode, notes, isBuyNow, buyNowItem, idempotencyKey } = req.body;
+    const key = idempotencyKey || req.headers['x-idempotency-key'] || null;
+
+    if (key) {
+      const existingOrder = await Order.findOne({ user: req.user._id, idempotencyKey: key })
+        .populate([
+          { path: 'shop', select: 'name phone address bannerImage owner' },
+          { path: 'address' },
+          { path: 'items.product', select: 'name images unit' },
+        ]);
+      if (existingOrder) {
+        return res.status(200).json({
+          success: true,
+          message: 'Order created successfully',
+          data: existingOrder,
+        });
+      }
+    }
 
     if (!addressId) {
       return res.status(400).json({
@@ -357,8 +374,8 @@ export const createOrder = async (req, res) => {
     }
 
     // 7. Calculate total amount
-    // const totalAmount = Math.max(0, calculatedSubtotal + deliveryFee - discountAmount);
-// 7. Calculate GST and final total amount
+// 7. Calculate Packing Charges, GST, and final total amount
+const packingCharges = Number(shop.packingCharges) || 0;
 let gstAmount = 0;
 
 for (const item of orderItems) {
@@ -374,7 +391,7 @@ gstAmount = Math.round(gstAmount * 100) / 100;
 
 const totalAmount = Math.max(
   0,
-  calculatedSubtotal + gstAmount + deliveryFee - discountAmount
+  calculatedSubtotal + packingCharges + gstAmount + deliveryFee - discountAmount
 );
     // 8. Generate unique order number with retry on collision
     let orderNumber = generateOrderNumber();
@@ -401,24 +418,46 @@ const totalAmount = Math.max(
   imageUrl: shop.upiQrImage || '',
     };
 
-    // 9. Create Order Document
-    const order = await Order.create({
-      orderNumber,
-      user: req.user._id,
-      shop: shop._id,
-      items: orderItems,
-      address: address._id,
-      subtotal: calculatedSubtotal,
-      deliveryFee,
-      discount: discountAmount,
-      gstAmount,
-      totalAmount,
-      paymentMethod,
-      paymentStatus: 'PENDING',
-      upiQrSnapshot,
-      orderStatus: 'PLACED',
-      notes: notes ? notes.trim() : '',
-    });
+    // 9. Create Order Document (with idempotency handling)
+    let order;
+    try {
+      order = await Order.create({
+        orderNumber,
+        user: req.user._id,
+        shop: shop._id,
+        items: orderItems,
+        address: address._id,
+        subtotal: calculatedSubtotal,
+        packingCharges,
+        deliveryFee,
+        discount: discountAmount,
+        gstAmount,
+        totalAmount,
+        paymentMethod,
+        paymentStatus: 'PENDING',
+        upiQrSnapshot,
+        orderStatus: 'PLACED',
+        notes: notes ? notes.trim() : '',
+        ...(key ? { idempotencyKey: key } : {}),
+      });
+    } catch (createErr) {
+      if (createErr.code === 11000 && key) {
+        const existingOrder = await Order.findOne({ user: req.user._id, idempotencyKey: key })
+          .populate([
+            { path: 'shop', select: 'name phone address bannerImage owner' },
+            { path: 'address' },
+            { path: 'items.product', select: 'name images unit' },
+          ]);
+        if (existingOrder) {
+          return res.status(200).json({
+            success: true,
+            message: 'Order created successfully',
+            data: existingOrder,
+          });
+        }
+      }
+      throw createErr;
+    }
 
     // 9b. Create initial unassigned Delivery Record (status: PENDING, deliveryBoy: null)
     try {
@@ -763,6 +802,7 @@ try {
         orderId: order._id,
         items: orderItems,
         subtotal: order.subtotal,
+        packingCharges: order.packingCharges,
         deliveryFee: order.deliveryFee,
         gstAmount: order.gstAmount,
         discount: order.discount,

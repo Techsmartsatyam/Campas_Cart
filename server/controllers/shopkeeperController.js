@@ -138,6 +138,7 @@ export const createShop = async (req, res, next) => {
       closingTime,
       minimumOrderAmount,
       deliveryFee,
+      packingCharges,
       logo,
       coverImage,
     } = req.body;
@@ -179,6 +180,7 @@ export const createShop = async (req, res, next) => {
       closingTime: finalClose,
       minimumOrderAmount: Number(minimumOrderAmount) || 0,
       deliveryFee: Number(deliveryFee) || 0,
+      packingCharges: packingCharges !== undefined ? Math.max(0, Number(packingCharges) || 0) : 0,
       logo: logo || '',
       coverImage: coverImage || '',
       isApproved: true, // Auto approve for convenience in development
@@ -237,6 +239,7 @@ export const updateShop = async (req, res, next) => {
       closingTime,
       minimumOrderAmount,
       deliveryFee,
+      packingCharges,
       logo,
       coverImage,
       isOpen,
@@ -273,6 +276,7 @@ export const updateShop = async (req, res, next) => {
     shop.closingTime = newClose;
     if (minimumOrderAmount !== undefined) shop.minimumOrderAmount = Number(minimumOrderAmount);
     if (deliveryFee !== undefined) shop.deliveryFee = Number(deliveryFee);
+    if (packingCharges !== undefined) shop.packingCharges = Math.max(0, Number(packingCharges) || 0);
     if (logo !== undefined) shop.logo = logo;
     if (coverImage !== undefined) shop.coverImage = coverImage;
     if (isOpen !== undefined) shop.isOpen = Boolean(isOpen);
@@ -347,7 +351,20 @@ export const createProduct = async (req, res, next) => {
       isAvailable,
       images,
       gstPercentage,
+      idempotencyKey,
     } = req.body;
+
+    const key = idempotencyKey || req.headers['x-idempotency-key'] || null;
+    if (key) {
+      const existingProduct = await Product.findOne({ shop: shop._id, idempotencyKey: key });
+      if (existingProduct) {
+        return res.status(200).json({
+          success: true,
+          message: 'Product created successfully',
+          product: existingProduct,
+        });
+      }
+    }
 
     if (!name || price === undefined || !category || !unit) {
       return res.status(400).json({
@@ -374,27 +391,42 @@ export const createProduct = async (req, res, next) => {
       });
     }
 
-    const product = await Product.create({
-      shop: shop._id,
-      category,
-      name: name.trim(),
-      description: description ? description.trim() : '',
-      price: numPrice,
-      discountPrice: numDiscount,
-      unit: unit.trim(),
-      stock: numStock,
-      sku: sku ? sku.trim() : '',
-      isAvailable: isAvailable !== undefined ? isAvailable : numStock > 0,
-      images: Array.isArray(images) ? images : [],
-      gstPercentage: gstPercentage !== undefined && gstPercentage !== '' ? Math.min(100, Math.max(0, Number(gstPercentage) || 0)) : 0,
-      isActive: true,
-    });
+    try {
+      const product = await Product.create({
+        shop: shop._id,
+        category,
+        name: name.trim(),
+        description: description ? description.trim() : '',
+        price: numPrice,
+        discountPrice: numDiscount,
+        unit: unit.trim(),
+        stock: numStock,
+        sku: sku ? sku.trim() : '',
+        isAvailable: isAvailable !== undefined ? isAvailable : numStock > 0,
+        images: Array.isArray(images) ? images : [],
+        gstPercentage: gstPercentage !== undefined && gstPercentage !== '' ? Math.min(100, Math.max(0, Number(gstPercentage) || 0)) : 0,
+        ...(key ? { idempotencyKey: key } : {}),
+        isActive: true,
+      });
 
-    res.status(201).json({
-      success: true,
-      message: 'Product created successfully',
-      product,
-    });
+      return res.status(201).json({
+        success: true,
+        message: 'Product created successfully',
+        product,
+      });
+    } catch (createErr) {
+      if (createErr.code === 11000 && key) {
+        const existingProduct = await Product.findOne({ shop: shop._id, idempotencyKey: key });
+        if (existingProduct) {
+          return res.status(200).json({
+            success: true,
+            message: 'Product created successfully',
+            product: existingProduct,
+          });
+        }
+      }
+      throw createErr;
+    }
   } catch (error) {
     next(error);
   }

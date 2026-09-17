@@ -62,10 +62,13 @@ export default function Shopkeeper() {
     closingTime: '',
     minimumOrderAmount: 0,
     deliveryFee: 0,
+    packingCharges: 0,
     logo: '',
     coverImage: '',
     isOpen: true,
   });
+
+  const [productSubmitting, setProductSubmitting] = useState(false);
 
   // Product Add/Edit Modal & Multi-Image State
   const [showProductModal, setShowProductModal] = useState(false);
@@ -127,6 +130,7 @@ export default function Shopkeeper() {
             closingTime: shopRes.shop.closingTime || '',
             minimumOrderAmount: shopRes.shop.minimumOrderAmount || 0,
             deliveryFee: shopRes.shop.deliveryFee || 0,
+            packingCharges: shopRes.shop.packingCharges || 0,
             logo: shopRes.shop.logo || shopRes.shop.coverImage || '',
             coverImage: shopRes.shop.coverImage || shopRes.shop.logo || '',
             isOpen: shopRes.shop.isOpen !== undefined ? shopRes.shop.isOpen : true,
@@ -324,6 +328,8 @@ export default function Shopkeeper() {
   // Save Product
   const handleSaveProduct = async (e) => {
     e.preventDefault();
+    if (productSubmitting) return;
+
     setError('');
     setSuccess('');
 
@@ -345,12 +351,17 @@ export default function Shopkeeper() {
     }
 
     try {
+      setProductSubmitting(true);
       let res;
       const shopParam = selectedShopId ? `?shopId=${selectedShopId}` : '';
       if (editingProductId) {
         res = await api.put(`/shopkeeper/products/${editingProductId}${shopParam}`, productForm);
       } else {
-        res = await api.post(`/shopkeeper/products${shopParam}`, productForm);
+        const clientKey = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'prod-' + Date.now() + '-' + Math.random().toString(36).substring(2);
+        res = await api.post(`/shopkeeper/products${shopParam}`, {
+          ...productForm,
+          idempotencyKey: clientKey,
+        });
       }
 
       if (res.success) {
@@ -360,6 +371,8 @@ export default function Shopkeeper() {
       }
     } catch (err) {
       setError(err.message || 'Failed to save product.');
+    } finally {
+      setProductSubmitting(false);
     }
   };
 
@@ -483,6 +496,7 @@ export default function Shopkeeper() {
                     closingTime: '',
                     minimumOrderAmount: 0,
                     deliveryFee: 0,
+                    packingCharges: 0,
                     logo: '',
                     coverImage: '',
                     isOpen: true,
@@ -562,10 +576,14 @@ export default function Shopkeeper() {
               <input type="text" className="form-input" placeholder="e.g. SAC Building, Room 102" value={shopForm.address} onChange={(e) => setShopForm({ ...shopForm, address: e.target.value })} required />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
               <div className="form-group">
                 <label className="form-label">Min Order (₹)</label>
                 <input type="number" className="form-input" value={shopForm.minimumOrderAmount} onChange={(e) => setShopForm({ ...shopForm, minimumOrderAmount: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Packing Charges (₹)</label>
+                <input type="number" min="0" className="form-input" value={shopForm.packingCharges} onChange={(e) => setShopForm({ ...shopForm, packingCharges: e.target.value })} placeholder="0" />
               </div>
               <div className="form-group">
                 <label className="form-label">Delivery Fee (₹)</label>
@@ -1223,8 +1241,9 @@ export default function Shopkeeper() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                   <div className="form-group"><label className="form-label">Min Order (₹)</label><input type="number" className="form-input" value={shopForm.minimumOrderAmount} onChange={(e) => setShopForm({ ...shopForm, minimumOrderAmount: e.target.value })} /></div>
+                  <div className="form-group"><label className="form-label">Packing Charges (₹)</label><input type="number" min="0" className="form-input" value={shopForm.packingCharges} onChange={(e) => setShopForm({ ...shopForm, packingCharges: e.target.value })} placeholder="0" /></div>
                   <div className="form-group"><label className="form-label">Delivery Fee (₹)</label><input type="number" className="form-input" value={shopForm.deliveryFee} onChange={(e) => setShopForm({ ...shopForm, deliveryFee: e.target.value })} /></div>
                 </div>
                 <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }}>Update Shop Settings</button>
@@ -1469,7 +1488,9 @@ export default function Shopkeeper() {
               </div>
 
               <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                <button type="submit" className="btn-primary" style={{ flex: 1 }}>Save Product</button>
+                <button type="submit" disabled={productSubmitting} className="btn-primary" style={{ flex: 1, opacity: productSubmitting ? 0.7 : 1 }}>
+                  {productSubmitting ? (editingProductId ? 'Saving Product...' : 'Adding Product...') : (editingProductId ? 'Save Product' : 'Add Product')}
+                </button>
                 <button type="button" onClick={() => setShowProductModal(false)} className="btn-secondary" style={{ flex: 1 }}>Cancel</button>
               </div>
             </form>

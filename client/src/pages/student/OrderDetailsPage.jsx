@@ -537,6 +537,12 @@ export default function OrderDetailsPage() {
               <span>Subtotal</span>
               <span>₹{order.subtotal.toFixed(2)}</span>
             </div>
+            {order.packingCharges > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
+                <span>Packing Charges</span>
+                <span>₹{order.packingCharges.toFixed(2)}</span>
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
               <span>Delivery Fee</span>
               <span>₹{order.deliveryFee.toFixed(2)}</span>
