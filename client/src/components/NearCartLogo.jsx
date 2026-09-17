@@ -1,9 +1,9 @@
 import React from 'react';
-import { MapPin, ShoppingBag } from 'lucide-react';
+import newLogo from '../assets/newLogo.jpeg';
 
 /**
  * NearCart Professional Logo Component
- * Design Concept: Modern location pin integrated with shopping cart / bag icon
+ * Uses official NearCart logo image
  * @param {'small'|'medium'|'large'} size - Logo size preset
  * @param {boolean} showText - Whether to show the text portion
  * @param {string} textColor - Custom text color override (used when variant is not set)
@@ -25,24 +25,18 @@ export default function NearCartLogo({ size = 'medium', showText = true, textCol
 
   return (
     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', userSelect: 'none' }}>
-      {/* Icon Mark: Location Pin frame with embedded Shopping Bag */}
-      <div
+      {/* Official NearCart Logo Image */}
+      <img
+        src={newLogo}
+        alt="NearCart Logo"
         style={{
           width: dimensions.iconBg,
           height: dimensions.iconBg,
           borderRadius: '0.6rem',
-          background: 'linear-gradient(135deg, #0284c7 0%, #3b82f6 100%)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)',
-          position: 'relative',
+          objectFit: 'cover',
           flexShrink: 0,
         }}
-      >
-        <MapPin style={{ width: '80%', height: '80%', color: 'rgba(255, 255, 255, 0.35)', position: 'absolute' }} />
-        <ShoppingBag style={{ width: dimensions.iconSize, height: dimensions.iconSize, color: '#ffffff', position: 'relative', zIndex: 2 }} />
-      </div>
+      />
 
       {showText && (
         <span
