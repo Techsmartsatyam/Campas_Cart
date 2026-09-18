@@ -113,7 +113,20 @@ export default function Shopkeeper() {
   // Product Add/Edit Modal & Multi-Image State
   const [showProductModal, setShowProductModal] = useState(false);
   const [editingProductId, setEditingProductId] = useState(null);
+
+  // Product Details View Modal State (Click State)
+  const [showProductDetailModal, setShowProductDetailModal] = useState(false);
+  const [selectedDetailProduct, setSelectedDetailProduct] = useState(null);
+  const [activeDetailImageIndex, setActiveDetailImageIndex] = useState(0);
+
+  const openProductDetailModal = (p) => {
+    setSelectedDetailProduct(p);
+    setActiveDetailImageIndex(0);
+    setShowProductDetailModal(true);
+  };
+
   const [productForm, setProductForm] = useState({
+
     name: '',
     description: '',
     category: '',
@@ -720,21 +733,23 @@ export default function Shopkeeper() {
 
           {/* TAB 2: PRODUCTS MANAGEMENT */}
           {activeTab === 'PRODUCTS' && (
-            <div className="glass-card" style={{ padding: '2rem' }}>
+            <div className="glass-card sk-products-card-container" style={{ padding: '1.5rem' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
-                <h3 style={{ fontSize: '1.3rem', fontWeight: '700', color: 'var(--text-primary)' }}>Product Inventory ({filteredProducts.length})</h3>
+                <h3 style={{ fontSize: '1.3rem', fontWeight: '700', color: 'var(--text-primary)', margin: 0 }}>
+                  Product Inventory ({filteredProducts.length})
+                </h3>
 
-                <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <div className="sk-product-header-controls" style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <input
                     type="text"
-                    className="form-input"
+                    className="form-input sk-product-search-input"
                     placeholder="Search products..."
                     value={productSearch}
                     onChange={(e) => setProductSearch(e.target.value)}
                     style={{ width: '200px', padding: '0.4rem 0.75rem', fontSize: '0.85rem' }}
                   />
                   <select
-                    className="form-input"
+                    className="form-input sk-product-category-select"
                     value={selectedCategoryFilter}
                     onChange={(e) => setSelectedCategoryFilter(e.target.value)}
                     style={{ width: '160px', padding: '0.4rem 0.75rem', fontSize: '0.85rem' }}
@@ -751,64 +766,224 @@ export default function Shopkeeper() {
               {filteredProducts.length === 0 ? (
                 <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No products added yet.</p>
               ) : (
-                <div style={{ overflowX: 'auto' }}>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
-                    <thead>
-                      <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
-                        <th style={{ padding: '0.75rem' }}>Main Image</th>
-                        <th style={{ padding: '0.75rem' }}>Product Name</th>
-                        <th style={{ padding: '0.75rem' }}>Category</th>
-                        <th style={{ padding: '0.75rem' }}>Price</th>
-                        <th style={{ padding: '0.75rem' }}>Stock</th>
-                        <th style={{ padding: '0.75rem' }}>Status</th>
-                        <th style={{ padding: '0.75rem', textAlign: 'right' }}>Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {filteredProducts.map((p) => (
-                        <tr key={p._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                          <td style={{ padding: '0.75rem' }}>
-                            <div style={{ width: '45px', height: '45px', borderRadius: '0.375rem', background: '#f1f5f9', border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              {p.images && p.images.length > 0 ? (
-                                <img src={p.images[0]} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                              ) : (
-                                <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>No img</span>
+                <>
+                  {/* DESKTOP TABLE VIEW (Visible on Desktop >= 769px) */}
+                  <div className="sk-products-desktop-table" style={{ overflowX: 'auto' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                      <thead>
+                        <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
+                          <th style={{ padding: '0.75rem' }}>Main Image</th>
+                          <th style={{ padding: '0.75rem' }}>Product Name</th>
+                          <th style={{ padding: '0.75rem' }}>Category</th>
+                          <th style={{ padding: '0.75rem' }}>Price</th>
+                          <th style={{ padding: '0.75rem' }}>Stock</th>
+                          <th style={{ padding: '0.75rem' }}>Status</th>
+                          <th style={{ padding: '0.75rem', textAlign: 'right' }}>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {filteredProducts.map((p) => (
+                          <tr key={p._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
+                            <td style={{ padding: '0.75rem', cursor: 'pointer' }} onClick={() => openProductDetailModal(p)}>
+                              <div style={{ width: '45px', height: '45px', borderRadius: '0.375rem', background: '#f1f5f9', border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                {p.images && p.images.length > 0 ? (
+                                  <img src={p.images[0]} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                ) : (
+                                  <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>No img</span>
+                                )}
+                              </div>
+                            </td>
+                            <td style={{ padding: '0.75rem', color: 'var(--text-primary)', fontWeight: '600', cursor: 'pointer' }} onClick={() => openProductDetailModal(p)}>
+                              {p.name}
+                              <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.unit} ({p.images ? p.images.length : 0} imgs)</span>
+                            </td>
+                            <td style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}>{p.category?.name || 'General'}</td>
+                            <td style={{ padding: '0.75rem' }}>
+                              ₹{p.discountPrice != null && p.discountPrice < p.price ? p.discountPrice : p.price}
+                              {p.discountPrice != null && p.discountPrice < p.price && (
+                                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textDecoration: 'line-through', marginLeft: '0.4rem' }}>₹{p.price}</span>
                               )}
-                            </div>
-                          </td>
-                          <td style={{ padding: '0.75rem', color: 'var(--text-primary)', fontWeight: '600' }}>
-                            {p.name}
-                            <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.unit} ({p.images ? p.images.length : 0} imgs)</span>
-                          </td>
-                          <td style={{ padding: '0.75rem', color: 'var(--text-secondary)' }}>{p.category?.name || 'General'}</td>
-                          <td style={{ padding: '0.75rem' }}>
-                            ₹{p.discountPrice !== undefined ? p.discountPrice : p.price}
-                            {p.discountPrice !== undefined && (
-                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textDecoration: 'line-through', marginLeft: '0.4rem' }}>₹{p.price}</span>
+                            </td>
+                            <td style={{ padding: '0.75rem' }}>{p.stock}</td>
+                            <td style={{ padding: '0.75rem' }}>
+                              <span style={{ padding: '0.2rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: '700', background: p.stock > 0 && p.isAvailable ? '#d1fae5' : '#fee2e2', color: p.stock > 0 && p.isAvailable ? '#047857' : '#b91c1c' }}>
+                                {p.stock === 0 ? 'OUT OF STOCK' : p.stock <= 5 ? 'LOW STOCK' : 'IN STOCK'}
+                              </span>
+                            </td>
+                            <td style={{ padding: '0.75rem', textAlign: 'right' }}>
+                              <button onClick={() => openProductModal(p)} className="btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem', marginRight: '0.5rem' }}>
+                                <Edit2 size={14} /> Edit
+                              </button>
+                              <button onClick={() => handleDeleteProduct(p._id)} className="btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem', color: 'var(--danger)' }}>
+                                <Trash2 size={14} /> Delete
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* MOBILE CARDS VIEW (Visible on Mobile <= 768px) */}
+                  <div className="sk-products-mobile-cards">
+                    {filteredProducts.map((p) => {
+                      const effectivePrice = p.discountPrice != null && p.discountPrice < p.price ? p.discountPrice : p.price;
+                      return (
+                        <div
+                          key={p._id}
+                          style={{
+                            background: '#ffffff',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '0.75rem',
+                            overflow: 'hidden',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            width: '100%',
+                            boxSizing: 'border-box',
+                          }}
+                        >
+                          {/* Image Container */}
+                          <div
+                            onClick={() => openProductDetailModal(p)}
+                            style={{
+                              position: 'relative',
+                              width: '100%',
+                              height: '160px',
+                              background: '#f8fafc',
+                              borderBottom: '1px solid var(--border-color)',
+                              overflow: 'hidden',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                            }}
+                          >
+                            {p.images && p.images.length > 0 ? (
+                              <img
+                                src={p.images[0]}
+                                alt={p.name}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                            ) : (
+                              <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No Image</div>
                             )}
-                          </td>
-                          <td style={{ padding: '0.75rem' }}>{p.stock}</td>
-                          <td style={{ padding: '0.75rem' }}>
-                            <span style={{ padding: '0.2rem 0.5rem', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: '700', background: p.stock > 0 && p.isAvailable ? '#d1fae5' : '#fee2e2', color: p.stock > 0 && p.isAvailable ? '#047857' : '#b91c1c' }}>
+
+                            {/* Category Badge */}
+                            <span
+                              style={{
+                                position: 'absolute',
+                                top: '0.5rem',
+                                left: '0.5rem',
+                                background: 'rgba(15, 23, 42, 0.75)',
+                                backdropFilter: 'blur(4px)',
+                                color: '#ffffff',
+                                fontSize: '0.7rem',
+                                fontWeight: '700',
+                                padding: '0.2rem 0.55rem',
+                                borderRadius: '0.25rem',
+                                maxWidth: '140px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {p.category?.name || 'General'}
+                            </span>
+
+                            {/* Stock Badge */}
+                            <span
+                              style={{
+                                position: 'absolute',
+                                top: '0.5rem',
+                                right: '0.5rem',
+                                padding: '0.2rem 0.55rem',
+                                borderRadius: '0.25rem',
+                                fontSize: '0.7rem',
+                                fontWeight: '800',
+                                background: p.stock > 0 && p.isAvailable ? '#d1fae5' : '#fee2e2',
+                                color: p.stock > 0 && p.isAvailable ? '#047857' : '#b91c1c',
+                              }}
+                            >
                               {p.stock === 0 ? 'OUT OF STOCK' : p.stock <= 5 ? 'LOW STOCK' : 'IN STOCK'}
                             </span>
-                          </td>
-                          <td style={{ padding: '0.75rem', textAlign: 'right' }}>
-                            <button onClick={() => openProductModal(p)} className="btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem', marginRight: '0.5rem' }}>
-                              <Edit2 size={14} /> Edit
+                          </div>
+
+                          {/* Content Section */}
+                          <div
+                            onClick={() => openProductDetailModal(p)}
+                            style={{ padding: '0.85rem 1rem', flex: 1, cursor: 'pointer', display: 'flex', flexDirection: 'column', gap: '0.35rem' }}
+                          >
+                            <h4
+                              style={{
+                                margin: 0,
+                                fontSize: '0.95rem',
+                                fontWeight: '700',
+                                color: 'var(--text-primary)',
+                                overflowWrap: 'break-word',
+                                wordBreak: 'break-word',
+                                lineHeight: '1.3',
+                              }}
+                            >
+                              {p.name}
+                            </h4>
+
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.5rem', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '1.1rem', fontWeight: '800', color: 'var(--primary)' }}>
+                                ₹{effectivePrice}
+                              </span>
+                              {p.discountPrice != null && p.discountPrice < p.price && (
+                                <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
+                                  ₹{p.price}
+                                </span>
+                              )}
+                              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: 'auto' }}>
+                                Unit: {p.unit || 'piece'}
+                              </span>
+                            </div>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.825rem', color: 'var(--text-secondary)', marginTop: '0.2rem', flexWrap: 'wrap', gap: '0.25rem' }}>
+                              <span>Stock: <strong>{p.stock}</strong></span>
+                              <span>Packing: <strong>₹{p.packingCharges || 0} / item</strong></span>
+                            </div>
+                          </div>
+
+                          {/* Actions Footer */}
+                          <div
+                            style={{
+                              padding: '0.65rem 1rem',
+                              borderTop: '1px solid var(--border-color)',
+                              background: '#f8fafc',
+                              display: 'flex',
+                              gap: '0.5rem',
+                            }}
+                          >
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); openProductModal(p); }}
+                              className="btn-secondary"
+                              style={{ flex: 1, minHeight: '40px', padding: '0.45rem', fontSize: '0.85rem' }}
+                            >
+                              <Edit2 size={15} /> Edit
                             </button>
-                            <button onClick={() => handleDeleteProduct(p._id)} className="btn-secondary" style={{ padding: '0.3rem 0.6rem', fontSize: '0.8rem', color: 'var(--danger)' }}>
-                              <Trash2 size={14} /> Delete
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); handleDeleteProduct(p._id); }}
+                              className="btn-secondary"
+                              style={{ flex: 1, minHeight: '40px', padding: '0.45rem', fontSize: '0.85rem', color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                            >
+                              <Trash2 size={15} /> Delete
                             </button>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
               )}
             </div>
           )}
+
 
           {/* TAB 3: INVENTORY TRACKING */}
           {activeTab === 'INVENTORY' && (
@@ -1460,8 +1635,152 @@ export default function Shopkeeper() {
         </div>
       )}
 
+      {/* Product Details View Modal (Click State for Shopkeeper Products) */}
+      {showProductDetailModal && selectedDetailProduct && (
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '0.75rem' }}>
+          <div style={{ width: 'min(100% - 1.5rem, 540px)', maxWidth: '540px', background: '#ffffff', borderRadius: '0.85rem', boxShadow: '0 25px 50px -12px rgba(0,0,0,0.25)', border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+            {/* Header */}
+            <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0, overflowWrap: 'break-word', wordBreak: 'break-word', paddingRight: '0.5rem' }}>
+                {selectedDetailProduct.name}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowProductDetailModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '0.35rem', borderRadius: '0.375rem', display: 'flex', alignItems: 'center', justifyContent: 'center', minWidth: '36px', minHeight: '36px' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: '1.25rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem', flex: 1 }}>
+              {/* Images gallery / preview */}
+              {selectedDetailProduct.images && selectedDetailProduct.images.length > 0 ? (
+                <div>
+                  <div style={{ width: '100%', height: '200px', borderRadius: '0.5rem', overflow: 'hidden', background: '#f1f5f9', border: '1px solid var(--border-color)', marginBottom: '0.5rem' }}>
+                    <img
+                      src={selectedDetailProduct.images[activeDetailImageIndex || 0] || selectedDetailProduct.images[0]}
+                      alt={selectedDetailProduct.name}
+                      style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    />
+                  </div>
+                  {selectedDetailProduct.images.length > 1 && (
+                    <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.25rem' }}>
+                      {selectedDetailProduct.images.map((img, idx) => (
+                        <button
+                          key={idx}
+                          type="button"
+                          onClick={() => setActiveDetailImageIndex(idx)}
+                          style={{
+                            width: '50px',
+                            height: '50px',
+                            borderRadius: '0.375rem',
+                            overflow: 'hidden',
+                            border: (activeDetailImageIndex || 0) === idx ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+                            padding: 0,
+                            background: '#f8fafc',
+                            cursor: 'pointer',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{ width: '100%', height: '120px', borderRadius: '0.5rem', background: '#f8fafc', border: '1px dashed var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+                  No Product Images
+                </div>
+              )}
+
+              {/* Product Details summary */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', fontSize: '0.9rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '1.25rem', fontWeight: '800', color: 'var(--primary)' }}>
+                    ₹{selectedDetailProduct.discountPrice != null && selectedDetailProduct.discountPrice < selectedDetailProduct.price ? selectedDetailProduct.discountPrice : selectedDetailProduct.price}
+                    {selectedDetailProduct.discountPrice != null && selectedDetailProduct.discountPrice < selectedDetailProduct.price && (
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textDecoration: 'line-through', marginLeft: '0.5rem' }}>
+                        ₹{selectedDetailProduct.price}
+                      </span>
+                    )}
+                  </span>
+
+                  <span style={{ padding: '0.25rem 0.6rem', borderRadius: '0.25rem', fontSize: '0.75rem', fontWeight: '800', background: selectedDetailProduct.stock > 0 && selectedDetailProduct.isAvailable ? '#d1fae5' : '#fee2e2', color: selectedDetailProduct.stock > 0 && selectedDetailProduct.isAvailable ? '#047857' : '#b91c1c' }}>
+                    {selectedDetailProduct.stock === 0 ? 'OUT OF STOCK' : selectedDetailProduct.stock <= 5 ? 'LOW STOCK' : 'IN STOCK'}
+                  </span>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.5rem', background: '#f8fafc', padding: '0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)' }}>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Category</span>
+                    <strong style={{ color: 'var(--text-primary)' }}>{selectedDetailProduct.category?.name || 'General'}</strong>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Unit / Portion</span>
+                    <strong style={{ color: 'var(--text-primary)' }}>{selectedDetailProduct.unit || 'piece'}</strong>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Stock Quantity</span>
+                    <strong style={{ color: 'var(--text-primary)' }}>{selectedDetailProduct.stock}</strong>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Packing Charges</span>
+                    <strong style={{ color: 'var(--text-primary)' }}>₹{selectedDetailProduct.packingCharges || 0} / item</strong>
+                  </div>
+                  {selectedDetailProduct.gstPercentage > 0 && (
+                    <div>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>GST Rate</span>
+                      <strong style={{ color: 'var(--text-primary)' }}>{selectedDetailProduct.gstPercentage}%</strong>
+                    </div>
+                  )}
+                </div>
+
+                {selectedDetailProduct.description && (
+                  <div>
+                    <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)', display: 'block', marginBottom: '0.2rem' }}>Description</span>
+                    <p style={{ color: 'var(--text-primary)', fontSize: '0.875rem', margin: 0, lineHeight: 1.4, wordBreak: 'break-word' }}>
+                      {selectedDetailProduct.description}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer Actions */}
+              <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem', paddingTop: '0.75rem', borderTop: '1px solid var(--border-color)', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowProductDetailModal(false);
+                    openProductModal(selectedDetailProduct);
+                  }}
+                  className="btn-primary"
+                  style={{ flex: 1, minHeight: '42px', fontSize: '0.9rem' }}
+                >
+                  <Edit2 size={16} /> Edit Product
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowProductDetailModal(false);
+                    handleDeleteProduct(selectedDetailProduct._id);
+                  }}
+                  className="btn-secondary"
+                  style={{ flex: 1, minHeight: '42px', fontSize: '0.9rem', color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.3)' }}
+                >
+                  <Trash2 size={16} /> Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add / Edit Product Modal with Multi-Image Management */}
       {showProductModal && (
+
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '0.75rem' }}>
           <div style={{ width: '100%', maxWidth: '640px', background: '#ffffff', borderRadius: '0.85rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
             {/* Modal Header */}
@@ -1744,9 +2063,49 @@ export default function Shopkeeper() {
         </div>
       )}
 
+      <style>{`
+        @media (max-width: 768px) {
+          .sk-products-desktop-table {
+            display: none !important;
+          }
+          .sk-products-mobile-cards {
+            display: grid !important;
+            grid-template-columns: 1fr !important;
+            gap: 1rem !important;
+            width: 100% !important;
+          }
+          .sk-product-header-controls {
+            width: 100% !important;
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 0.5rem !important;
+          }
+          .sk-product-search-input,
+          .sk-product-category-select {
+            width: 100% !important;
+          }
+          .sk-products-card-container {
+            padding: 1rem !important;
+          }
+        }
+        @media (min-width: 480px) and (max-width: 768px) {
+          .sk-products-mobile-cards {
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)) !important;
+          }
+        }
+        @media (min-width: 769px) {
+          .sk-products-desktop-table {
+            display: block !important;
+          }
+          .sk-products-mobile-cards {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
+
 
 function ShopkeeperReviewsTab({ shop }) {
   const [reviews, setReviews] = useState([]);
