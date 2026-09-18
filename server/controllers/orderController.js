@@ -13,7 +13,8 @@ import Delivery from '../models/Delivery.js';
 import { getIO } from '../config/socket.js';
 import { sendPushToUser, sendPushToTokens } from '../services/pushNotificationService.js';
 import { sendOrderPlacedEmailToShopkeeper } from '../services/emailService.js';
-import { calculateDeliveryFeeForShopAndAddress } from '../utils/distanceCalculator.js';
+import { calculateDeliveryFeeForShopAndAddress, calculateDeliveryFeeFromDistance } from '../utils/distanceCalculator.js';
+
 
 /**
  * Helper to generate human-readable unique order number: CC-2026-XXXXXX
@@ -134,8 +135,9 @@ export const applyCoupon = async (req, res) => {
  */
 export const createOrder = async (req, res) => {
   try {
-    const { addressId, paymentMethod = 'COD', couponCode, notes, isBuyNow, buyNowItem, idempotencyKey } = req.body;
+    const { addressId, paymentMethod = 'COD', couponCode, notes, isBuyNow, buyNowItem, idempotencyKey, deliveryDistance: reqDeliveryDistance } = req.body;
     const key = idempotencyKey || req.headers['x-idempotency-key'] || null;
+
 
     if (key) {
       const existingOrder = await Order.findOne({ user: req.user._id, idempotencyKey: key })
@@ -341,8 +343,8 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // 5. Calculate delivery fee using distance calculator (validates shop & address location coordinates)
-    const deliveryCalc = calculateDeliveryFeeForShopAndAddress(shop, address);
+    // 5. Calculate delivery fee server-side using customer-entered distance (or fallback)
+    const deliveryCalc = calculateDeliveryFeeForShopAndAddress(shop, address, reqDeliveryDistance);
     if (!deliveryCalc.success) {
       return res.status(400).json({
         success: false,
@@ -352,6 +354,7 @@ export const createOrder = async (req, res) => {
 
     const deliveryFee = deliveryCalc.deliveryFee;
     const deliveryDistance = deliveryCalc.distanceKm;
+
 
     // 6. Validate & calculate coupon discount server-side if provided
     let discountAmount = 0;

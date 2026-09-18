@@ -1462,29 +1462,72 @@ export default function Shopkeeper() {
 
       {/* Add / Edit Product Modal with Multi-Image Management */}
       {showProductModal && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.5)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 200, padding: '1rem' }}>
-          <div className="glass-card" style={{ width: '100%', maxWidth: '580px', padding: '2rem', maxHeight: '90vh', overflowY: 'auto', background: '#ffffff' }}>
-            <h3 style={{ fontSize: '1.3rem', fontWeight: '700', marginBottom: '1.25rem', color: 'var(--text-primary)' }}>
-              {editingProductId ? 'Edit Product' : 'Add New Product'}
-            </h3>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.6)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '0.75rem' }}>
+          <div style={{ width: '100%', maxWidth: '640px', background: '#ffffff', borderRadius: '0.85rem', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', border: '1px solid var(--border-color)', overflow: 'hidden', display: 'flex', flexDirection: 'column', maxHeight: '90vh' }}>
+            {/* Modal Header */}
+            <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#f8fafc' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0, color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Package size={20} style={{ color: 'var(--primary)' }} />
+                {editingProductId ? 'Edit Product' : 'Add New Product'}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setShowProductModal(false)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '0.25rem', borderRadius: '0.375rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
 
-            <form onSubmit={handleSaveProduct}>
-              <div className="form-group"><label className="form-label">Product Name</label><input type="text" className="form-input" value={productForm.name} onChange={(e) => setProductForm({ ...productForm, name: e.target.value })} required /></div>
-              <div className="form-group"><label className="form-label">Category</label><select className="form-input" value={productForm.category} onChange={(e) => setProductForm({ ...productForm, category: e.target.value })} required><option value="">Select Category</option>{categories.map((c) => (<option key={c._id} value={c._id}>{c.name}</option>))}</select></div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="form-group"><label className="form-label">Price (₹)</label><input type="number" className="form-input" value={productForm.price} onChange={(e) => setProductForm({ ...productForm, price: e.target.value })} required /></div>
-                <div className="form-group"><label className="form-label">Discount Price (₹)</label><input type="number" className="form-input" value={productForm.discountPrice} onChange={(e) => setProductForm({ ...productForm, discountPrice: e.target.value })} /></div>
+            {/* Modal Body */}
+            <form onSubmit={handleSaveProduct} style={{ padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1.25rem', flex: 1 }}>
+              {/* Product Name */}
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>Product Name *</label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Masala Dosa, Spiral Notebook, Coffee"
+                  value={productForm.name}
+                  onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                  required
+                  style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+                />
               </div>
 
-              <div className="form-group">
-                <label className="form-label">Packing Charges (per item) (₹)</label>
-                <input type="number" min="0" className="form-input" value={productForm.packingCharges} onChange={(e) => setProductForm({ ...productForm, packingCharges: e.target.value })} placeholder="0" />
-              </div>
+              {/* Category & Unit/Portion */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>Category *</label>
+                  <select
+                    className="form-input"
+                    value={productForm.category}
+                    onChange={(e) => setProductForm({ ...productForm, category: e.target.value })}
+                    required
+                    style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map((c) => (
+                      <option key={c._id} value={c._id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="form-group"><label className="form-label">Unit / Portion</label>
-                  <select className="form-input" value={['piece','kg','gram','litre','ml','packet','bottle','plate','half','full','box','dozen'].includes(productForm.unit) ? productForm.unit : '_custom'} onChange={(e) => { if (e.target.value === '_custom') { setProductForm({ ...productForm, unit: '' }); } else { setProductForm({ ...productForm, unit: e.target.value }); } }} required>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>Unit / Portion *</label>
+                  <select
+                    className="form-input"
+                    value={['piece','kg','gram','litre','ml','packet','bottle','plate','half','full','box','dozen'].includes(productForm.unit) ? productForm.unit : '_custom'}
+                    onChange={(e) => {
+                      if (e.target.value === '_custom') {
+                        setProductForm({ ...productForm, unit: '' });
+                      } else {
+                        setProductForm({ ...productForm, unit: e.target.value });
+                      }
+                    }}
+                    required
+                    style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+                  >
                     <option value="piece">Piece</option>
                     <option value="kg">Kg</option>
                     <option value="gram">Gram</option>
@@ -1500,35 +1543,122 @@ export default function Shopkeeper() {
                     <option value="_custom">Custom...</option>
                   </select>
                   {!['piece','kg','gram','litre','ml','packet','bottle','plate','half','full','box','dozen'].includes(productForm.unit) && (
-                    <input type="text" className="form-input" style={{ marginTop: '0.5rem' }} placeholder="Enter custom unit" value={productForm.unit} onChange={(e) => setProductForm({ ...productForm, unit: e.target.value })} required />
+                    <input
+                      type="text"
+                      className="form-input"
+                      style={{ marginTop: '0.5rem', width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+                      placeholder="Enter custom unit"
+                      value={productForm.unit}
+                      onChange={(e) => setProductForm({ ...productForm, unit: e.target.value })}
+                      required
+                    />
                   )}
                 </div>
-                <div className="form-group"><label className="form-label">Stock Quantity</label><input type="number" className="form-input" value={productForm.stock} onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })} required /></div>
               </div>
 
-              <div className="form-group">
-                <label className="form-label">GST (included in price)</label>
-                <select className="form-input" value={productForm.gstPercentage} onChange={(e) => setProductForm({ ...productForm, gstPercentage: Number(e.target.value) })}>
+              {/* Price & Discount Price */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>Regular Price (₹) *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="form-input"
+                    value={productForm.price}
+                    onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                    placeholder="0.00"
+                    required
+                    style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+                  />
+                </div>
+
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>Discount Price (₹)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="form-input"
+                    value={productForm.discountPrice}
+                    onChange={(e) => setProductForm({ ...productForm, discountPrice: e.target.value })}
+                    placeholder="Optional sale price"
+                    style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+                  />
+                </div>
+              </div>
+
+              {/* Stock Quantity & Packing Charges */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>Stock Quantity *</label>
+                  <input
+                    type="number"
+                    min="0"
+                    className="form-input"
+                    value={productForm.stock}
+                    onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
+                    required
+                    style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+                  />
+                </div>
+
+                <div className="form-group" style={{ margin: 0 }}>
+                  <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>Packing Charges (per item) (₹)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    className="form-input"
+                    value={productForm.packingCharges}
+                    onChange={(e) => setProductForm({ ...productForm, packingCharges: e.target.value })}
+                    placeholder="0"
+                    style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+                  />
+                </div>
+              </div>
+
+              {/* GST */}
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>GST Rate (included in price)</label>
+                <select
+                  className="form-input"
+                  value={productForm.gstPercentage}
+                  onChange={(e) => setProductForm({ ...productForm, gstPercentage: Number(e.target.value) })}
+                  style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+                >
                   <option value={0}>No GST (0%)</option>
                   <option value={5}>5% GST</option>
                   <option value={12}>12% GST</option>
                   <option value={18}>18% GST</option>
                   <option value={28}>28% GST</option>
                 </select>
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>GST is informational — the product price already includes GST.</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>GST is informational — product price includes GST.</span>
               </div>
 
-              {/* Multi-Image Upload & Preview Section */}
-              <div className="form-group" style={{ background: '#f8fafc', padding: '1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border-color)' }}>
-                <label className="form-label">Product Images (Max 5)</label>
+              {/* Description */}
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>Description</label>
+                <textarea
+                  className="form-input"
+                  rows={2}
+                  placeholder="Describe ingredients, taste, size, or usage..."
+                  value={productForm.description}
+                  onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+                  style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem', resize: 'vertical' }}
+                />
+              </div>
+
+              {/* Product Images */}
+              <div className="form-group" style={{ margin: 0, background: '#f8fafc', padding: '1rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)' }}>
+                <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.25rem', display: 'block' }}>Product Images (Max 5)</label>
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block', marginBottom: '0.75rem' }}>
-                  First image will automatically be used as the main product cover.
+                  First image will be used as the main cover image.
                 </span>
 
-                {/* Local File Upload Input */}
-                <div style={{ marginBottom: '0.75rem' }}>
-                  <label className="btn-secondary" style={{ display: 'inline-flex', padding: '0.4rem 0.85rem', fontSize: '0.8rem', cursor: 'pointer' }}>
-                    <Upload size={16} /> Choose Image Files (JPG, PNG, WEBP)
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.75rem' }}>
+                  <label className="btn-secondary" style={{ display: 'inline-flex', padding: '0.45rem 0.85rem', fontSize: '0.825rem', cursor: 'pointer', alignItems: 'center', gap: '0.4rem' }}>
+                    <Upload size={15} /> Choose Files (JPG, PNG, WEBP)
                     <input
                       type="file"
                       accept="image/jpeg,image/jpg,image/png,image/webp"
@@ -1539,7 +1669,6 @@ export default function Shopkeeper() {
                   </label>
                 </div>
 
-                {/* Image URL Input option */}
                 <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
                   <input
                     type="url"
@@ -1547,30 +1676,30 @@ export default function Shopkeeper() {
                     placeholder="Or enter Image URL..."
                     value={imageInput}
                     onChange={(e) => setImageInput(e.target.value)}
-                    style={{ fontSize: '0.85rem' }}
+                    style={{ flex: 1, padding: '0.45rem 0.75rem', fontSize: '0.85rem', borderRadius: '0.4rem', border: '1px solid #cbd5e1' }}
                   />
-                  <button type="button" onClick={handleAddImageUrl} className="btn-secondary" style={{ padding: '0.4rem 0.75rem', fontSize: '0.8rem', flexShrink: 0 }}>
+                  <button type="button" onClick={handleAddImageUrl} className="btn-secondary" style={{ padding: '0.45rem 0.85rem', fontSize: '0.825rem', flexShrink: 0 }}>
                     Add URL
                   </button>
                 </div>
 
-                {/* Image Thumbnails List with Remove X */}
                 {productForm.images.length > 0 && (
                   <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
                     {productForm.images.map((imgUrl, index) => (
                       <div
                         key={index}
                         style={{
-                          width: '75px',
-                          height: '75px',
+                          width: '70px',
+                          height: '70px',
                           borderRadius: '0.375rem',
                           border: index === 0 ? '2px solid var(--primary)' : '1px solid var(--border-color)',
                           position: 'relative',
                           overflow: 'hidden',
                           background: '#f1f5f9',
+                          flexShrink: 0,
                         }}
                       >
-                        <img src={imgUrl} alt={`Prod Preview ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={imgUrl} alt={`Preview ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         {index === 0 && (
                           <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(2, 132, 199, 0.9)', color: '#ffffff', fontSize: '0.6rem', fontWeight: '800', textAlign: 'center' }}>
                             MAIN
@@ -1583,7 +1712,7 @@ export default function Shopkeeper() {
                             position: 'absolute',
                             top: '2px',
                             right: '2px',
-                            background: 'rgba(239, 68, 68, 0.85)',
+                            background: 'rgba(239, 68, 68, 0.9)',
                             color: '#fff',
                             border: 'none',
                             borderRadius: '50%',
@@ -1591,7 +1720,7 @@ export default function Shopkeeper() {
                             height: '18px',
                             display: 'flex',
                             alignItems: 'center',
-                            justify: 'center',
+                            justifyContent: 'center',
                             cursor: 'pointer',
                           }}
                         >
@@ -1603,16 +1732,18 @@ export default function Shopkeeper() {
                 )}
               </div>
 
-              <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
-                <button type="submit" disabled={productSubmitting} className="btn-primary" style={{ flex: 1, opacity: productSubmitting ? 0.7 : 1 }}>
-                  {productSubmitting ? (editingProductId ? 'Saving Product...' : 'Adding Product...') : (editingProductId ? 'Save Product' : 'Add Product')}
+              {/* Buttons */}
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem', paddingTop: '1rem', borderTop: '1px solid var(--border-color)' }}>
+                <button type="submit" disabled={productSubmitting} className="btn-primary" style={{ flex: 1, padding: '0.75rem', fontSize: '0.95rem', fontWeight: '700', opacity: productSubmitting ? 0.7 : 1 }}>
+                  {productSubmitting ? (editingProductId ? 'Saving...' : 'Adding...') : (editingProductId ? 'Save Product' : 'Add Product')}
                 </button>
-                <button type="button" onClick={() => setShowProductModal(false)} className="btn-secondary" style={{ flex: 1 }}>Cancel</button>
+                <button type="button" onClick={() => setShowProductModal(false)} className="btn-secondary" style={{ flex: 1, padding: '0.75rem', fontSize: '0.95rem' }}>Cancel</button>
               </div>
             </form>
           </div>
         </div>
       )}
+
     </div>
   );
 }

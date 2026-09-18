@@ -102,74 +102,87 @@ export function getFeeForDistance(slabs, distanceKm, defaultFee = 0) {
 }
 
 /**
- * Calculates delivery distance and fee between shop and customer delivery address
- * @param {Object} shop - Shop document/object containing location and deliveryChargeSlabs
- * @param {Object} address - Address document/object containing location coordinates
+ * Calculates delivery distance and fee from manual distance input supplied by customer
+ * @param {Object} shop - Shop document containing deliveryChargeSlabs and deliveryFee
+ * @param {number|string} distanceInput - Distance in kilometers supplied by customer
  * @returns {Object} Result { success, distanceKm, deliveryFee, error }
  */
-export function calculateDeliveryFeeForShopAndAddress(shop, address) {
+export function calculateDeliveryFeeFromDistance(shop, distanceInput) {
+  if (distanceInput === undefined || distanceInput === null || distanceInput === '') {
+    return { success: false, error: 'Please enter a valid delivery distance.' };
+  }
+
+  const distanceKm = Number(distanceInput);
+
+  if (
+    isNaN(distanceKm) ||
+    !isFinite(distanceKm) ||
+    distanceKm < 0 ||
+    distanceKm > 100
+  ) {
+    return { success: false, error: 'Please enter a valid delivery distance.' };
+  }
+
+  const fallbackFee = shop?.deliveryFee !== undefined ? Number(shop.deliveryFee) : 0;
+  const deliveryFee = getFeeForDistance(shop?.deliveryChargeSlabs, distanceKm, fallbackFee);
+
+  return {
+    success: true,
+    distanceKm: Math.round(distanceKm * 100) / 100,
+    deliveryFee,
+  };
+}
+
+/**
+ * Legacy wrapper for distance fee calculation that defaults to manual distance if provided
+ * @param {Object} shop - Shop document/object containing location and deliveryChargeSlabs
+ * @param {Object} address - Address document/object containing location coordinates
+ * @param {number|string} [manualDistance] - Optional manual distance in km
+ * @returns {Object} Result { success, distanceKm, deliveryFee, error }
+ */
+export function calculateDeliveryFeeForShopAndAddress(shop, address, manualDistance) {
+  if (manualDistance !== undefined && manualDistance !== null && manualDistance !== '') {
+    return calculateDeliveryFeeFromDistance(shop, manualDistance);
+  }
+
   if (!shop) {
     return { success: false, error: 'Shop is required to calculate delivery charge' };
   }
 
   // Extract shop coordinates [longitude, latitude]
   const shopCoords = shop.location?.coordinates;
-  if (
-    !shopCoords ||
-    !Array.isArray(shopCoords) ||
-    shopCoords.length < 2 ||
-    (shopCoords[0] === 0 && shopCoords[1] === 0)
-  ) {
-    return {
-      success: false,
-      error: "Delivery charge cannot be calculated because this shop's location is not configured.",
-    };
-  }
-
-  const shopLon = Number(shopCoords[0]);
-  const shopLat = Number(shopCoords[1]);
-
-  if (isNaN(shopLon) || isNaN(shopLat)) {
-    return {
-      success: false,
-      error: "Delivery charge cannot be calculated because this shop's location is not configured.",
-    };
-  }
-
-  // Extract address coordinates [longitude, latitude]
   const addressCoords = address?.location?.coordinates;
-  if (
-    !addressCoords ||
-    !Array.isArray(addressCoords) ||
-    addressCoords.length < 2 ||
-    (addressCoords[0] === 0 && addressCoords[1] === 0)
-  ) {
-    return {
-      success: false,
-      error: 'Please select a delivery address with a valid location.',
-    };
+
+  const hasShopCoords =
+    shopCoords &&
+    Array.isArray(shopCoords) &&
+    shopCoords.length >= 2 &&
+    !(shopCoords[0] === 0 && shopCoords[1] === 0) &&
+    !isNaN(Number(shopCoords[0])) &&
+    !isNaN(Number(shopCoords[1]));
+
+  const hasAddrCoords =
+    addressCoords &&
+    Array.isArray(addressCoords) &&
+    addressCoords.length >= 2 &&
+    !(addressCoords[0] === 0 && addressCoords[1] === 0) &&
+    !isNaN(Number(addressCoords[0])) &&
+    !isNaN(Number(addressCoords[1]));
+
+  if (hasShopCoords && hasAddrCoords) {
+    const distanceKm = calculateHaversineDistanceKm(
+      Number(shopCoords[1]),
+      Number(shopCoords[0]),
+      Number(addressCoords[1]),
+      Number(addressCoords[0])
+    );
+    const fallbackFee = shop.deliveryFee !== undefined ? Number(shop.deliveryFee) : 0;
+    const deliveryFee = getFeeForDistance(shop.deliveryChargeSlabs, distanceKm, fallbackFee);
+    return { success: true, distanceKm, deliveryFee };
   }
 
-  const addrLon = Number(addressCoords[0]);
-  const addrLat = Number(addressCoords[1]);
-
-  if (isNaN(addrLon) || isNaN(addrLat)) {
-    return {
-      success: false,
-      error: 'Please select a delivery address with a valid location.',
-    };
-  }
-
-  // Calculate distance in km
-  const distanceKm = calculateHaversineDistanceKm(shopLat, shopLon, addrLat, addrLon);
-
-  // Determine delivery fee
+  // Fallback: If no GPS coordinates but fallback fee exists
   const fallbackFee = shop.deliveryFee !== undefined ? Number(shop.deliveryFee) : 0;
-  const deliveryFee = getFeeForDistance(shop.deliveryChargeSlabs, distanceKm, fallbackFee);
-
-  return {
-    success: true,
-    distanceKm,
-    deliveryFee,
-  };
+  return { success: true, distanceKm: 0, deliveryFee: fallbackFee };
 }
+
