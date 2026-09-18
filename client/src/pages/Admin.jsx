@@ -427,47 +427,48 @@ export default function Admin() {
             <p style={{ color: 'var(--text-muted)' }}>No users found matching filter.</p>
           ) : (
             <div className="admin-table-wrapper">
-              <table style={{ width: '100%', minWidth: '550px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+              <table style={{ width: 'max-content', minWidth: '850px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
-                    <th style={{ padding: '0.65rem 0.75rem' }}>User</th>
-                    <th style={{ padding: '0.65rem 0.75rem' }}>Contact</th>
-                    <th style={{ padding: '0.65rem 0.75rem' }}>Role</th>
-                    <th style={{ padding: '0.65rem 0.75rem' }}>Account Status</th>
-                    <th style={{ padding: '0.65rem 0.75rem' }}>Access State</th>
-                    <th style={{ padding: '0.65rem 0.75rem', textAlign: 'right' }}>Actions</th>
+                    <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>User</th>
+                    <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Contact Email & Phone</th>
+                    <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Role</th>
+                    <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Account Status</th>
+                    <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Access State</th>
+                    <th style={{ padding: '0.75rem 1rem', textAlign: 'right', whiteSpace: 'nowrap' }}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredUsers.map((u) => (
                     <tr key={u._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '0.65rem 0.75rem', color: 'var(--text-primary)', fontWeight: '600', maxWidth: '140px', wordBreak: 'break-word' }}>
+                      <td style={{ padding: '0.75rem 1rem', color: 'var(--text-primary)', fontWeight: '600', whiteSpace: 'nowrap' }}>
                         {u.name}
                       </td>
-                      <td style={{ padding: '0.65rem 0.75rem', color: 'var(--text-secondary)', maxWidth: '160px', wordBreak: 'break-word' }}>
+                      <td style={{ padding: '0.75rem 1rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                         {u.email}<br />
                         <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>{u.phone}</span>
                       </td>
-                      <td style={{ padding: '0.65rem 0.75rem' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.2rem 0.5rem', borderRadius: '0.25rem', background: 'rgba(56, 189, 248, 0.15)', color: 'var(--primary)' }}>
+                      <td style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap', minWidth: '140px' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.25rem 0.6rem', borderRadius: '0.25rem', background: 'rgba(56, 189, 248, 0.15)', color: 'var(--primary)', whiteSpace: 'nowrap', display: 'inline-block' }}>
                           {u.role}
                         </span>
                       </td>
-                      <td style={{ padding: '0.65rem 0.75rem' }}>{u.accountStatus || 'APPROVED'}</td>
-                      <td style={{ padding: '0.65rem 0.75rem' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.2rem 0.5rem', borderRadius: '0.25rem', background: u.isActive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', color: u.isActive ? 'var(--success)' : 'var(--danger)' }}>
+                      <td style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>{u.accountStatus || 'APPROVED'}</td>
+                      <td style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.25rem 0.6rem', borderRadius: '0.25rem', background: u.isActive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', color: u.isActive ? 'var(--success)' : 'var(--danger)', whiteSpace: 'nowrap', display: 'inline-block' }}>
                           {u.isActive ? 'ACTIVE' : 'BLOCKED'}
                         </span>
                       </td>
-                      <td style={{ padding: '0.65rem 0.75rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '0.75rem 1rem', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '150px' }}>
                         {u.role !== 'ADMIN' && (
                           <button
                             onClick={() => handleToggleBlockUser(u._id, u.isActive, u.name)}
                             className="btn-secondary"
                             style={{
-                              padding: '0.35rem 0.75rem',
+                              padding: '0.35rem 0.85rem',
                               fontSize: '0.8rem',
                               color: u.isActive ? 'var(--danger)' : 'var(--success)',
+                              whiteSpace: 'nowrap',
                             }}
                           >
                             {u.isActive ? (
@@ -529,37 +530,37 @@ export default function Admin() {
             <div style={{ padding: '2rem', textAlign: 'center' }}>Loading payment records...</div>
           ) : (
             <div className="admin-table-wrapper">
-              <table style={{ width: '100%', minWidth: '650px', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+              <table style={{ width: 'max-content', minWidth: '900px', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', textAlign: 'left' }}>
-                    <th style={{ padding: '0.65rem 0.75rem' }}>Order</th>
-                    <th style={{ padding: '0.65rem 0.75rem' }}>Student</th>
-                    <th style={{ padding: '0.65rem 0.75rem' }}>Amount</th>
-                    <th style={{ padding: '0.65rem 0.75rem' }}>Method</th>
-                    <th style={{ padding: '0.65rem 0.75rem' }}>Status</th>
-                    <th style={{ padding: '0.65rem 0.75rem' }}>Razorpay Order ID</th>
-                    <th style={{ padding: '0.65rem 0.75rem' }}>Payment / Txn ID</th>
+                    <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Order</th>
+                    <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Student</th>
+                    <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Amount</th>
+                    <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Method</th>
+                    <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Status</th>
+                    <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Razorpay Order ID</th>
+                    <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Payment / Txn ID</th>
                   </tr>
                 </thead>
                 <tbody>
                   {paymentsList.map((p) => (
                     <tr key={p._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                      <td style={{ padding: '0.65rem 0.75rem', fontWeight: '700', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '0.75rem 1rem', fontWeight: '700', whiteSpace: 'nowrap' }}>
                         {p.order?.orderNumber || 'N/A'}
                       </td>
-                      <td style={{ padding: '0.65rem 0.75rem', maxWidth: '140px', wordBreak: 'break-word' }}>
+                      <td style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>
                         <div>{p.user?.name || 'User'}</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{p.user?.email}</div>
                       </td>
-                      <td style={{ padding: '0.65rem 0.75rem', fontWeight: '700', color: 'var(--primary)', whiteSpace: 'nowrap' }}>
+                      <td style={{ padding: '0.75rem 1rem', fontWeight: '700', color: 'var(--primary)', whiteSpace: 'nowrap' }}>
                         ₹{p.amount?.toFixed(2)}
                       </td>
-                      <td style={{ padding: '0.65rem 0.75rem' }}>
-                        <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.2rem 0.5rem', borderRadius: '0.25rem', background: '#f1f5f9', color: 'var(--text-primary)' }}>
+                      <td style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.2rem 0.5rem', borderRadius: '0.25rem', background: '#f1f5f9', color: 'var(--text-primary)', whiteSpace: 'nowrap', display: 'inline-block' }}>
                           {p.method}
                         </span>
                       </td>
-                      <td style={{ padding: '0.65rem 0.75rem' }}>
+                      <td style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>
                         <span style={{
                           fontSize: '0.75rem',
                           fontWeight: '700',
@@ -567,14 +568,16 @@ export default function Admin() {
                           borderRadius: '0.25rem',
                           background: p.status === 'SUCCESS' ? 'rgba(16, 185, 129, 0.15)' : p.status === 'FAILED' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(245, 158, 11, 0.15)',
                           color: p.status === 'SUCCESS' ? 'var(--success)' : p.status === 'FAILED' ? 'var(--danger)' : '#d97706',
+                          whiteSpace: 'nowrap',
+                          display: 'inline-block',
                         }}>
                           {p.status}
                         </span>
                       </td>
-                      <td style={{ padding: '0.65rem 0.75rem', fontFamily: 'monospace', fontSize: '0.78rem', maxWidth: '140px', wordBreak: 'break-all' }}>
+                      <td style={{ padding: '0.75rem 1rem', fontFamily: 'monospace', fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
                         {p.providerOrderId || '—'}
                       </td>
-                      <td style={{ padding: '0.65rem 0.75rem', fontFamily: 'monospace', fontSize: '0.78rem', maxWidth: '140px', wordBreak: 'break-all' }}>
+                      <td style={{ padding: '0.75rem 1rem', fontFamily: 'monospace', fontSize: '0.78rem', whiteSpace: 'nowrap' }}>
                         {p.providerPaymentId || p.transactionId || '—'}
                       </td>
                     </tr>
@@ -669,16 +672,16 @@ function AdminReviewsTab() {
         </div>
       ) : (
         <div className="admin-table-wrapper">
-          <table style={{ width: '100%', minWidth: '600px', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
+          <table style={{ width: 'max-content', minWidth: '800px', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
             <thead>
               <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
-                <th style={{ padding: '0.65rem 0.75rem' }}>Type</th>
-                <th style={{ padding: '0.65rem 0.75rem' }}>Student</th>
-                <th style={{ padding: '0.65rem 0.75rem' }}>Target Name</th>
-                <th style={{ padding: '0.65rem 0.75rem' }}>Rating</th>
-                <th style={{ padding: '0.65rem 0.75rem' }}>Comment</th>
-                <th style={{ padding: '0.65rem 0.75rem' }}>Date</th>
-                <th style={{ padding: '0.65rem 0.75rem', textAlign: 'center' }}>Actions</th>
+                <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Type</th>
+                <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Student</th>
+                <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Target Name</th>
+                <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Rating</th>
+                <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Comment</th>
+                <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Date</th>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'center', whiteSpace: 'nowrap' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -698,32 +701,32 @@ function AdminReviewsTab() {
 
                 return (
                   <tr key={rev._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                    <td style={{ padding: '0.65rem 0.75rem', whiteSpace: 'nowrap' }}>
-                      <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '0.2rem 0.45rem', borderRadius: '0.25rem', background: '#f1f5f9', color: 'var(--text-primary)' }}>
+                    <td style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>
+                      <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '0.2rem 0.45rem', borderRadius: '0.25rem', background: '#f1f5f9', color: 'var(--text-primary)', whiteSpace: 'nowrap', display: 'inline-block' }}>
                         {rev.type}
                       </span>
                     </td>
-                    <td style={{ padding: '0.65rem 0.75rem', fontWeight: '600', maxWidth: '120px', wordBreak: 'break-word' }}>
+                    <td style={{ padding: '0.75rem 1rem', fontWeight: '600', whiteSpace: 'nowrap' }}>
                       {rev.user?.name || 'Student'}
                     </td>
-                    <td style={{ padding: '0.65rem 0.75rem', maxWidth: '140px', wordBreak: 'break-word' }}>
+                    <td style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>
                       {targetText}
                     </td>
-                    <td style={{ padding: '0.65rem 0.75rem', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>
                       <span style={{ color: '#f59e0b', fontWeight: '700' }}>★ {rev.rating}</span>
                     </td>
-                    <td style={{ padding: '0.65rem 0.75rem', maxWidth: '200px', wordBreak: 'break-word', color: 'var(--text-secondary)' }}>
+                    <td style={{ padding: '0.75rem 1rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
                       {rev.comment || 'No comment provided'}
                     </td>
-                    <td style={{ padding: '0.65rem 0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontSize: '0.78rem' }}>
+                    <td style={{ padding: '0.75rem 1rem', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontSize: '0.78rem' }}>
                       {dateStr}
                     </td>
-                    <td style={{ padding: '0.65rem 0.75rem', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '0.75rem 1rem', textAlign: 'center', whiteSpace: 'nowrap' }}>
                       <button
                         onClick={() => handleDeleteReview(rev._id)}
                         disabled={deletingId === rev._id}
                         className="btn-secondary"
-                        style={{ padding: '0.3rem 0.6rem', fontSize: '0.75rem', color: '#dc2626', borderColor: '#fca5a5' }}
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem', color: '#dc2626', borderColor: '#fca5a5', whiteSpace: 'nowrap' }}
                         title="Remove Review"
                       >
                         <Trash2 size={13} />
