@@ -261,9 +261,10 @@ img, svg, video, canvas, audio {
     word-break: break-word;
   }
 
-  .table-responsive {
+  .table-responsive, .admin-table-wrapper {
     display: block;
     width: 100%;
+    max-width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
   }
