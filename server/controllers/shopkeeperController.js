@@ -4,6 +4,7 @@ import Product from '../models/Product.js';
 import Order from '../models/Order.js';
 import Notification from '../models/Notification.js';
 import Coupon from '../models/Coupon.js';
+import { validateDeliveryChargeSlabs } from '../utils/distanceCalculator.js';
 
 /**
  * Helper to fetch a shop and enforce ownership check if shopId is provided.
@@ -239,6 +240,7 @@ export const updateShop = async (req, res, next) => {
       closingTime,
       minimumOrderAmount,
       deliveryFee,
+      deliveryChargeSlabs,
       packingCharges,
       logo,
       coverImage,
@@ -246,7 +248,21 @@ export const updateShop = async (req, res, next) => {
       upiEnabled,
       upiId,
       upiQrImage,
+      latitude,
+      longitude,
+      location,
     } = req.body;
+
+    // Validate delivery charge slabs if provided
+    if (deliveryChargeSlabs !== undefined) {
+      const slabError = validateDeliveryChargeSlabs(deliveryChargeSlabs);
+      if (slabError) {
+        return res.status(400).json({
+          success: false,
+          message: slabError,
+        });
+      }
+    }
 
     const newOpen = openingTime !== undefined ? (openingTime && openingTime.trim() ? openingTime.trim() : null) : shop.openingTime;
     const newClose = closingTime !== undefined ? (closingTime && closingTime.trim() ? closingTime.trim() : null) : shop.closingTime;
@@ -276,6 +292,7 @@ export const updateShop = async (req, res, next) => {
     shop.closingTime = newClose;
     if (minimumOrderAmount !== undefined) shop.minimumOrderAmount = Number(minimumOrderAmount);
     if (deliveryFee !== undefined) shop.deliveryFee = Number(deliveryFee);
+    if (deliveryChargeSlabs !== undefined) shop.deliveryChargeSlabs = deliveryChargeSlabs;
     if (packingCharges !== undefined) shop.packingCharges = Math.max(0, Number(packingCharges) || 0);
     if (logo !== undefined) shop.logo = logo;
     if (coverImage !== undefined) shop.coverImage = coverImage;
@@ -283,6 +300,18 @@ export const updateShop = async (req, res, next) => {
     if (upiEnabled !== undefined) shop.upiEnabled = Boolean(upiEnabled);
     if (upiId !== undefined) shop.upiId = upiId.trim();
     if (upiQrImage !== undefined) shop.upiQrImage = upiQrImage;
+
+    if (location && Array.isArray(location.coordinates) && location.coordinates.length === 2) {
+      shop.location = {
+        type: 'Point',
+        coordinates: [Number(location.coordinates[0]), Number(location.coordinates[1])],
+      };
+    } else if (latitude !== undefined && longitude !== undefined) {
+      shop.location = {
+        type: 'Point',
+        coordinates: [Number(longitude), Number(latitude)],
+      };
+    }
 
     await shop.save();
 

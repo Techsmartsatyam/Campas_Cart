@@ -550,6 +550,12 @@ export default function OrderDetailsPage() {
                 <span>₹{order.packingCharges.toFixed(2)}</span>
               </div>
             )}
+            {order.deliveryDistance !== undefined && order.deliveryDistance !== null && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
+                <span>Delivery Distance</span>
+                <span>{order.deliveryDistance} km</span>
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', color: 'var(--text-muted)' }}>
               <span>Delivery Fee</span>
               <span>₹{order.deliveryFee.toFixed(2)}</span>

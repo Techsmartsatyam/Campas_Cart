@@ -81,6 +81,25 @@ const shopSchema = new mongoose.Schema(
       default: 0,
       min: [0, 'Delivery fee cannot be negative'],
     },
+    deliveryChargeSlabs: [
+      {
+        minDistanceKm: {
+          type: Number,
+          required: true,
+          min: [0, 'Minimum distance cannot be negative'],
+        },
+        maxDistanceKm: {
+          type: Number,
+          required: true,
+          min: [0, 'Maximum distance cannot be negative'],
+        },
+        charge: {
+          type: Number,
+          required: true,
+          min: [0, 'Delivery charge cannot be negative'],
+        },
+      },
+    ],
     packingCharges: {
       type: Number,
       default: 0,

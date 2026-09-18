@@ -267,7 +267,54 @@ export default function CheckoutPage() {
     0
   );
 
-const deliveryFee = Number(shop?.deliveryFee) || 0;
+  // Calculate distance & fee based on shop location & selected address coordinates
+  const selectedAddressObj = addresses.find((a) => a._id === selectedAddressId);
+  const shopCoords = shop?.location?.coordinates;
+  const addrCoords = selectedAddressObj?.location?.coordinates;
+
+  let distanceKm = null;
+  let deliveryFee = Number(shop?.deliveryFee) || 0;
+
+  if (
+    shopCoords &&
+    Array.isArray(shopCoords) &&
+    shopCoords.length >= 2 &&
+    !(shopCoords[0] === 0 && shopCoords[1] === 0) &&
+    addrCoords &&
+    Array.isArray(addrCoords) &&
+    addrCoords.length >= 2 &&
+    !(addrCoords[0] === 0 && addrCoords[1] === 0)
+  ) {
+    const R = 6371;
+    const dLat = ((addrCoords[1] - shopCoords[1]) * Math.PI) / 180;
+    const dLon = ((addrCoords[0] - shopCoords[0]) * Math.PI) / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos((shopCoords[1] * Math.PI) / 180) *
+        Math.cos((addrCoords[1] * Math.PI) / 180) *
+        Math.sin(dLon / 2) *
+        Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    distanceKm = Math.round(R * c * 100) / 100;
+
+    const slabs = shop?.deliveryChargeSlabs || [];
+    if (slabs.length > 0) {
+      const sorted = [...slabs].sort((x, y) => Number(x.minDistanceKm) - Number(y.minDistanceKm));
+      const exact = sorted.find((s) => distanceKm >= Number(s.minDistanceKm) && distanceKm <= Number(s.maxDistanceKm));
+      if (exact) {
+        deliveryFee = Number(exact.charge);
+      } else if (distanceKm <= Number(sorted[0].minDistanceKm)) {
+        deliveryFee = Number(sorted[0].charge);
+      } else {
+        const upper = sorted.find((s) => distanceKm <= Number(s.maxDistanceKm));
+        if (upper) {
+          deliveryFee = Number(upper.charge);
+        } else {
+          deliveryFee = Number(sorted[sorted.length - 1].charge);
+        }
+      }
+    }
+  }
 
 const discountAmount = appliedCoupon
   ? Number(appliedCoupon.discountAmount) || 0
@@ -821,6 +868,12 @@ const finalTotal = Math.max(
                 <span className="cpn-price-label">Packing Charges</span>
                 <span className="cpn-price-value">₹{packingCharges.toFixed(2)}</span>
               </div>
+              {distanceKm !== null && (
+                <div className="cpn-price-row">
+                  <span className="cpn-price-label">Delivery Distance</span>
+                  <span className="cpn-price-value">{distanceKm} km</span>
+                </div>
+              )}
               <div className="cpn-price-row">
                 <span className="cpn-price-label">Delivery Fee</span>
                 <span className="cpn-price-value">{deliveryFee > 0 ? `₹${deliveryFee.toFixed(2)}` : 'FREE'}</span>

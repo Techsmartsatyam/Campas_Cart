@@ -84,6 +84,11 @@ const orderSchema = new mongoose.Schema(
       required: [true, 'Delivery fee is required'],
       min: [0, 'Delivery fee cannot be negative'],
     },
+    deliveryDistance: {
+      type: Number,
+      default: null,
+      min: [0, 'Delivery distance cannot be negative'],
+    },
     packingCharges: {
       type: Number,
       default: 0,

@@ -13,6 +13,7 @@ import Delivery from '../models/Delivery.js';
 import { getIO } from '../config/socket.js';
 import { sendPushToUser, sendPushToTokens } from '../services/pushNotificationService.js';
 import { sendOrderPlacedEmailToShopkeeper } from '../services/emailService.js';
+import { calculateDeliveryFeeForShopAndAddress } from '../utils/distanceCalculator.js';
 
 /**
  * Helper to generate human-readable unique order number: CC-2026-XXXXXX
@@ -340,8 +341,17 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // 5. Calculate delivery fee
-    const deliveryFee = shop.deliveryFee !== undefined ? shop.deliveryFee : 0;
+    // 5. Calculate delivery fee using distance calculator (validates shop & address location coordinates)
+    const deliveryCalc = calculateDeliveryFeeForShopAndAddress(shop, address);
+    if (!deliveryCalc.success) {
+      return res.status(400).json({
+        success: false,
+        message: deliveryCalc.error,
+      });
+    }
+
+    const deliveryFee = deliveryCalc.deliveryFee;
+    const deliveryDistance = deliveryCalc.distanceKm;
 
     // 6. Validate & calculate coupon discount server-side if provided
     let discountAmount = 0;
@@ -432,6 +442,7 @@ const totalAmount = Math.max(
         subtotal: calculatedSubtotal,
         packingCharges,
         deliveryFee,
+        deliveryDistance,
         discount: discountAmount,
         gstAmount,
         totalAmount,

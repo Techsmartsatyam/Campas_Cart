@@ -62,11 +62,51 @@ export default function Shopkeeper() {
     closingTime: '',
     minimumOrderAmount: 0,
     deliveryFee: 0,
+    deliveryChargeSlabs: [],
     packingCharges: 0,
     logo: '',
     coverImage: '',
     isOpen: true,
   });
+
+  const [newSlab, setNewSlab] = useState({ minDistanceKm: '', maxDistanceKm: '', charge: '' });
+
+  const handleAddSlab = () => {
+    const min = Number(newSlab.minDistanceKm);
+    const max = Number(newSlab.maxDistanceKm);
+    const charge = Number(newSlab.charge);
+
+    if (isNaN(min) || min < 0) {
+      alert('Please enter a valid minimum distance (0 or greater).');
+      return;
+    }
+    if (isNaN(max) || max <= min) {
+      alert('Maximum distance must be greater than minimum distance.');
+      return;
+    }
+    if (isNaN(charge) || charge < 0) {
+      alert('Delivery charge cannot be negative.');
+      return;
+    }
+
+    const currentSlabs = shopForm.deliveryChargeSlabs || [];
+    const overlap = currentSlabs.some(
+      (s) =>
+        (min >= s.minDistanceKm && min < s.maxDistanceKm) ||
+        (max > s.minDistanceKm && max <= s.maxDistanceKm) ||
+        (min <= s.minDistanceKm && max >= s.maxDistanceKm)
+    );
+    if (overlap) {
+      alert('Distance slab overlaps with an existing range.');
+      return;
+    }
+
+    const updatedSlabs = [...currentSlabs, { minDistanceKm: min, maxDistanceKm: max, charge }].sort(
+      (a, b) => a.minDistanceKm - b.minDistanceKm
+    );
+    setShopForm({ ...shopForm, deliveryChargeSlabs: updatedSlabs });
+    setNewSlab({ minDistanceKm: '', maxDistanceKm: '', charge: '' });
+  };
 
   const [productSubmitting, setProductSubmitting] = useState(false);
 
@@ -131,6 +171,7 @@ export default function Shopkeeper() {
             closingTime: shopRes.shop.closingTime || '',
             minimumOrderAmount: shopRes.shop.minimumOrderAmount || 0,
             deliveryFee: shopRes.shop.deliveryFee || 0,
+            deliveryChargeSlabs: shopRes.shop.deliveryChargeSlabs || [],
             packingCharges: shopRes.shop.packingCharges || 0,
             logo: shopRes.shop.logo || shopRes.shop.coverImage || '',
             coverImage: shopRes.shop.coverImage || shopRes.shop.logo || '',
@@ -1242,9 +1283,81 @@ export default function Shopkeeper() {
 
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                   <div className="form-group"><label className="form-label">Min Order (₹)</label><input type="number" className="form-input" value={shopForm.minimumOrderAmount} onChange={(e) => setShopForm({ ...shopForm, minimumOrderAmount: e.target.value })} /></div>
-                  <div className="form-group"><label className="form-label">Delivery Fee (₹)</label><input type="number" className="form-input" value={shopForm.deliveryFee} onChange={(e) => setShopForm({ ...shopForm, deliveryFee: e.target.value })} /></div>
+                  <div className="form-group"><label className="form-label">Default Delivery Fee (₹)</label><input type="number" className="form-input" value={shopForm.deliveryFee} onChange={(e) => setShopForm({ ...shopForm, deliveryFee: e.target.value })} /></div>
                 </div>
-                <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }}>Update Shop Settings</button>
+
+                {/* Distance-Based Delivery Charges Section */}
+                <div style={{ marginTop: '1.5rem', paddingTop: '1.25rem', borderTop: '1px solid var(--border-color)' }}>
+                  <h4 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '0.75rem', color: 'var(--text-primary)' }}>
+                    Distance-Based Delivery Charges
+                  </h4>
+
+                  {(!shopForm.deliveryChargeSlabs || shopForm.deliveryChargeSlabs.length === 0) ? (
+                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.75rem' }}>
+                      No distance slabs configured. Orders will use the default delivery fee (₹{shopForm.deliveryFee || 0}).
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                      {shopForm.deliveryChargeSlabs.map((slab, idx) => (
+                        <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: '#f8fafc', padding: '0.5rem 0.75rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)' }}>
+                          <span style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text-primary)' }}>
+                            {slab.minDistanceKm}–{slab.maxDistanceKm} km
+                          </span>
+                          <span style={{ fontSize: '0.9rem', fontWeight: '700', color: 'var(--primary)' }}>
+                            ₹{slab.charge}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = shopForm.deliveryChargeSlabs.filter((_, i) => i !== idx);
+                              setShopForm({ ...shopForm, deliveryChargeSlabs: updated });
+                            }}
+                            style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '600' }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr auto', gap: '0.5rem', alignItems: 'center' }}>
+                    <input
+                      type="number"
+                      placeholder="Min (km)"
+                      className="form-input"
+                      style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
+                      value={newSlab.minDistanceKm}
+                      onChange={(e) => setNewSlab({ ...newSlab, minDistanceKm: e.target.value })}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Max (km)"
+                      className="form-input"
+                      style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
+                      value={newSlab.maxDistanceKm}
+                      onChange={(e) => setNewSlab({ ...newSlab, maxDistanceKm: e.target.value })}
+                    />
+                    <input
+                      type="number"
+                      placeholder="Fee (₹)"
+                      className="form-input"
+                      style={{ padding: '0.4rem 0.6rem', fontSize: '0.85rem' }}
+                      value={newSlab.charge}
+                      onChange={(e) => setNewSlab({ ...newSlab, charge: e.target.value })}
+                    />
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      style={{ padding: '0.4rem 0.8rem', fontSize: '0.85rem' }}
+                      onClick={handleAddSlab}
+                    >
+                      Add Slab
+                    </button>
+                  </div>
+                </div>
+
+                <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1.25rem' }}>Save Delivery Charges</button>
               </form>
             </div>
           )}
