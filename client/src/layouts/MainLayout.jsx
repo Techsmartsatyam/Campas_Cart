@@ -107,9 +107,9 @@ export default function MainLayout() {
           }}
         >
           {/* Logo */}
-          <Link to="/" style={{ textDecoration: 'none' }}>
-            <NearCartLogo size="medium" />
-          </Link>
+        <Link to="/" style={{ textDecoration: 'none' }}>
+  <NearCartLogo size="medium" showFoodDisk={true} />
+</Link>
 
           {/* Desktop Navigation */}
           <nav

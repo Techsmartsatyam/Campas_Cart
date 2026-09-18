@@ -10,7 +10,12 @@ import newLogo from '../assets/newLogo.jpeg';
  * @param {string} textColor - Custom text color override (used when variant is not set)
  * @param {'light'|'dark'} variant - 'light' for white/light backgrounds (default), 'dark' for dark backgrounds
  */
-export default function NearCartLogo({ size = 'medium', showText = true, textColor, variant = 'light' }) {
+export default function NearCartLogo({ size = 'medium',
+   showText = true,
+   showFoodDisk = false,
+   textColor,
+   variant = 'light'
+     }) {
   const dimensions = {
     small: { iconBg: '1.8rem', fontSize: '1.1rem', foodIconSize: 13 },
     medium: { iconBg: '2.2rem', fontSize: '1.35rem', foodIconSize: 16 },
@@ -25,7 +30,14 @@ export default function NearCartLogo({ size = 'medium', showText = true, textCol
     : 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)';
 
   return (
-    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', userSelect: 'none' }}>
+    <div
+  style={{
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.4rem',
+    userSelect: 'none',
+  }}
+>
       {/* Official NearCart Logo Image */}
       <img
         src={newLogo}
@@ -38,32 +50,72 @@ export default function NearCartLogo({ size = 'medium', showText = true, textCol
           flexShrink: 0,
         }}
       />
+{showText && (
+  <div
+    style={{
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'flex-start',
+      gap: '0.05rem',
+      lineHeight: 1,
+      fontFamily: "'Inter', sans-serif",
+    }}
+  >
+    {/* NearCart */}
+    <div
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '0.35rem',
+        fontSize: dimensions.fontSize,
+        fontWeight: '800',
+        color: nearColor,
+        letterSpacing: '-0.03em',
+      }}
+    >
+      <span>Near</span>
 
-      {showText && (
+      <span
+        style={{
+          background: cartGradient,
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+        }}
+      >
+        Cart
+      </span>
+    </div>
+
+    {/* Food Disk - only when enabled */}
+    {showFoodDisk && (
+      <div
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.2rem',
+          fontSize: `calc(${dimensions.fontSize} * 1)`,
+          fontWeight: '700',
+          letterSpacing: '-0.02em',
+          color: nearColor,
+          marginTop: '0.05rem',
+        }}
+      >
+        <span>Food</span>
+
         <span
           style={{
-            fontSize: dimensions.fontSize,
-            fontWeight: '800',
-            color: nearColor,
-            letterSpacing: '-0.03em',
-            fontFamily: "'Inter', sans-serif",
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
+            background: cartGradient,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
           }}
         >
-          <span>Near</span>
-          <span
-            style={{
-              background: cartGradient,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-            }}
-          >
-            Cart
-          </span>
+          Disk
         </span>
-      )}
+      </div>
+    )}
+  </div>
+)}
+   
 
       {/* Restored Small Two-Fork Supporting Food Symbol */}
       <UtensilsCrossed
