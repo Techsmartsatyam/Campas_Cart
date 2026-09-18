@@ -3,7 +3,7 @@ import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { ShoppingBag, LogOut, User as UserIcon, Menu, X, Bell, Check, ExternalLink, Sparkles, Info } from 'lucide-react';
-import NearCartLogo from '../components/NearCartLogo';
+import NearCartLogo, { FoodDiskBrand } from '../components/NearCartLogo';
 import PwaInstallButton from '../components/PwaInstallButton';
 import PwaInstallBanner from '../components/PwaInstallBanner';
 import Footer from '../components/Footer';
@@ -347,22 +347,33 @@ export default function MainLayout() {
                 </Link>
               </div>
             )}
+            {/* Food Disk Right Corner Brand */}
+            <div style={{ marginLeft: '1rem', display: 'flex', alignItems: 'center' }}>
+              <FoodDiskBrand size="medium" />
+            </div>
           </nav>
 
-          {/* Mobile Menu Toggle Button */}
-          <button
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            style={{
-              display: 'none',
-              background: 'none',
-              border: 'none',
-              color: 'var(--text-primary)',
-              cursor: 'pointer',
-            }}
-            className="mobile-toggle"
-          >
-            {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-          </button>
+          {/* Mobile Right Container (Food Disk + Menu Toggle) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }} className="mobile-header-right">
+            <div className="mobile-food-disk">
+              <FoodDiskBrand size="small" />
+            </div>
+
+            {/* Mobile Menu Toggle Button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              style={{
+                display: 'none',
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-primary)',
+                cursor: 'pointer',
+              }}
+              className="mobile-toggle"
+            >
+              {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Navigation Drawer */}
@@ -438,6 +449,9 @@ export default function MainLayout() {
         @media (max-width: 768px) {
           .desktop-nav { display: none !important; }
           .mobile-toggle { display: block !important; }
+        }
+        @media (min-width: 769px) {
+          .mobile-food-disk { display: none !important; }
         }
       `}</style>
 
