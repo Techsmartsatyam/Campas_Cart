@@ -1,10 +1,10 @@
 import React from 'react';
-import { UtensilsCrossed } from 'lucide-react';
+import { UtensilsCrossed, CookingPot } from 'lucide-react';
 import newLogo from '../assets/newLogo.jpeg';
 
 /**
  * NearCart Primary Logo Component (LEFT SIDE)
- * Renders [NearCart Logo Image] + NearCart Text
+ * Renders [NearCart Logo Image] + NearCart Text + Restored Two-Fork Food Symbol
  * @param {'small'|'medium'|'large'} size - Logo size preset
  * @param {boolean} showText - Whether to show the text portion
  * @param {string} textColor - Custom text color override (used when variant is not set)
@@ -12,10 +12,10 @@ import newLogo from '../assets/newLogo.jpeg';
  */
 export default function NearCartLogo({ size = 'medium', showText = true, textColor, variant = 'light' }) {
   const dimensions = {
-    small: { iconBg: '1.8rem', fontSize: '1.1rem' },
-    medium: { iconBg: '2.2rem', fontSize: '1.35rem' },
-    large: { iconBg: '2.8rem', fontSize: '1.75rem' },
-  }[size] || { iconBg: '2.2rem', fontSize: '1.35rem' };
+    small: { iconBg: '1.8rem', fontSize: '1.1rem', foodIconSize: 13 },
+    medium: { iconBg: '2.2rem', fontSize: '1.35rem', foodIconSize: 16 },
+    large: { iconBg: '2.8rem', fontSize: '1.75rem', foodIconSize: 20 },
+  }[size] || { iconBg: '2.2rem', fontSize: '1.35rem', foodIconSize: 16 };
 
   // Determine text colors based on variant
   const isDark = variant === 'dark';
@@ -64,68 +64,97 @@ export default function NearCartLogo({ size = 'medium', showText = true, textCol
           </span>
         </span>
       )}
+
+      {/* Restored Small Two-Fork Supporting Food Symbol */}
+      <UtensilsCrossed
+        size={dimensions.foodIconSize}
+        style={{
+          color: isDark ? '#38bdf8' : 'var(--primary, #0284c7)',
+          opacity: 0.9,
+          flexShrink: 0,
+          marginLeft: '0.1rem',
+        }}
+        aria-hidden="true"
+      />
     </div>
   );
 }
 
 /**
  * Food Disk Secondary Branding Component (RIGHT CORNER)
- * Renders [Food/Utensils Icon Logo] + Food Disk Text
+ * Renders [Food Disk Logo Icon] + Food Disk Text
  * @param {'small'|'medium'|'large'} size - Logo size preset
  * @param {'light'|'dark'} variant - 'light' for white/light backgrounds (default), 'dark' for dark backgrounds
  */
 export function FoodDiskBrand({ size = 'medium', variant = 'light' }) {
   const dimensions = {
-    small: { iconBg: '1.35rem', iconSize: 11, fontSize: '0.75rem' },
-    medium: { iconBg: '1.65rem', iconSize: 13, fontSize: '0.875rem' },
-    large: { iconBg: '2.0rem', iconSize: 15, fontSize: '1.05rem' },
-  }[size] || { iconBg: '1.65rem', iconSize: 13, fontSize: '0.875rem' };
+    small: { iconBg: '1.4rem', iconSize: 11, fontSize: '0.75rem' },
+    medium: { iconBg: '1.75rem', iconSize: 14, fontSize: '0.9rem' },
+    large: { iconBg: '2.1rem', iconSize: 16, fontSize: '1.05rem' },
+  }[size] || { iconBg: '1.75rem', iconSize: 14, fontSize: '0.9rem' };
 
   const isDark = variant === 'dark';
-  const textColor = isDark ? '#38bdf8' : 'var(--primary, #0284c7)';
+  const textColor = isDark ? '#ffffff' : 'var(--text-primary)';
+  const brandGradient = isDark
+    ? 'linear-gradient(135deg, #38bdf8 0%, #818cf8 100%)'
+    : 'linear-gradient(135deg, #0284c7 0%, #4f46e5 100%)';
 
   return (
     <div
       style={{
         display: 'inline-flex',
         alignItems: 'center',
-        gap: '0.35rem',
+        gap: '0.45rem',
         userSelect: 'none',
-        padding: '0.25rem 0.6rem',
-        borderRadius: '0.45rem',
+        padding: '0.3rem 0.65rem',
+        borderRadius: '0.6rem',
         background: isDark ? 'rgba(56, 189, 248, 0.12)' : '#e0f2fe',
         border: `1px solid ${isDark ? 'rgba(56, 189, 248, 0.25)' : '#bae6fd'}`,
+        boxShadow: '0 2px 6px rgba(2, 132, 199, 0.12)',
         flexShrink: 0,
       }}
     >
-      {/* Food / Dish Logo Icon */}
+      {/* Professional Food Disk Logo Icon */}
       <div
         style={{
           width: dimensions.iconBg,
           height: dimensions.iconBg,
-          borderRadius: '0.35rem',
-          background: '#0284c7',
+          borderRadius: '0.45rem',
+          background: brandGradient,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          boxShadow: '0 2px 6px rgba(2, 132, 199, 0.25)',
           flexShrink: 0,
         }}
       >
-        <UtensilsCrossed size={dimensions.iconSize} style={{ color: '#ffffff' }} aria-hidden="true" />
+        <CookingPot size={dimensions.iconSize} style={{ color: '#ffffff' }} aria-hidden="true" />
       </div>
 
       {/* Food Disk Text */}
       <span
         style={{
           fontSize: dimensions.fontSize,
-          fontWeight: '700',
+          fontWeight: '800',
           color: textColor,
-          letterSpacing: '-0.01em',
+          letterSpacing: '-0.02em',
           fontFamily: "'Inter', sans-serif",
           whiteSpace: 'nowrap',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '0.25rem',
         }}
       >
-        Food Disk
+        <span>Food</span>
+        <span
+          style={{
+            background: brandGradient,
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+          }}
+        >
+          Disk
+        </span>
       </span>
     </div>
   );
