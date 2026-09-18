@@ -1332,50 +1332,51 @@ function AdminShopsTab() {
         <p style={{ color: 'var(--text-muted)' }}>No shops found in database.</p>
       ) : (
         <div className="admin-table-wrapper">
-          <table style={{ width: '100%', minWidth: '600px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
+          <table style={{ width: 'max-content', minWidth: '850px', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.85rem' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
-                <th style={{ padding: '0.65rem 0.75rem' }}>Shop / Hotel</th>
-                <th style={{ padding: '0.65rem 0.75rem' }}>Owner</th>
-                <th style={{ padding: '0.65rem 0.75rem' }}>Category</th>
-                <th style={{ padding: '0.65rem 0.75rem' }}>Products</th>
-                <th style={{ padding: '0.65rem 0.75rem' }}>Status</th>
-                <th style={{ padding: '0.65rem 0.75rem', textAlign: 'right' }}>Actions</th>
+                <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap', minWidth: '190px' }}>Shop / Hotel</th>
+                <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap', minWidth: '160px' }}>Owner</th>
+                <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap', minWidth: '140px' }}>Category</th>
+                <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap', minWidth: '100px', textAlign: 'center' }}>Products</th>
+                <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap', minWidth: '130px' }}>Status</th>
+                <th style={{ padding: '0.75rem 1rem', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '200px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
               {shops.map((s) => (
                 <tr key={s._id} style={{ borderBottom: '1px solid var(--border-color)' }}>
-                  <td style={{ padding: '0.65rem 0.75rem', color: 'var(--text-primary)', fontWeight: '700', maxWidth: '140px', wordBreak: 'break-word' }}>
+                  <td style={{ padding: '0.75rem 1rem', color: 'var(--text-primary)', fontWeight: '700', whiteSpace: 'nowrap', minWidth: '190px' }}>
                     {s.name}
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '400' }}>{s.address}</div>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontWeight: '400', whiteSpace: 'nowrap' }}>{s.address}</div>
                   </td>
-                  <td style={{ padding: '0.65rem 0.75rem', color: 'var(--text-secondary)', maxWidth: '140px', wordBreak: 'break-word' }}>
+                  <td style={{ padding: '0.75rem 1rem', color: 'var(--text-secondary)', whiteSpace: 'nowrap', minWidth: '160px' }}>
                     {s.owner?.name || 'Shopkeeper'}<br />
-                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{s.owner?.email || 'N/A'}</span>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{s.owner?.email || 'N/A'}</span>
                   </td>
-                  <td style={{ padding: '0.65rem 0.75rem' }}>
-                    <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '0.2rem 0.45rem', borderRadius: '0.25rem', background: '#f1f5f9', color: 'var(--text-primary)' }}>
+                  <td style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap', minWidth: '140px' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '0.25rem 0.6rem', borderRadius: '0.25rem', background: '#f1f5f9', color: 'var(--text-primary)', whiteSpace: 'nowrap', display: 'inline-block' }}>
                       {s.category?.name || 'General'}
                     </span>
                   </td>
-                  <td style={{ padding: '0.65rem 0.75rem', fontWeight: '700', color: 'var(--primary)', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '0.75rem 1rem', fontWeight: '700', color: 'var(--primary)', whiteSpace: 'nowrap', minWidth: '100px', textAlign: 'center' }}>
                     {s.productCount || 0} items
                   </td>
-                  <td style={{ padding: '0.65rem 0.75rem' }}>
-                    <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '0.2rem 0.45rem', borderRadius: '0.25rem', background: s.isActive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', color: s.isActive ? 'var(--success)' : 'var(--danger)' }}>
+                  <td style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap', minWidth: '130px' }}>
+                    <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '0.25rem 0.6rem', borderRadius: '0.25rem', background: s.isActive ? 'rgba(16, 185, 129, 0.15)' : 'rgba(239, 68, 68, 0.15)', color: s.isActive ? 'var(--success)' : 'var(--danger)', whiteSpace: 'nowrap', display: 'inline-block' }}>
                       {s.isActive ? 'ACTIVE' : 'BLOCKED'}
                     </span>
                   </td>
-                  <td style={{ padding: '0.65rem 0.75rem', textAlign: 'right', whiteSpace: 'nowrap' }}>
-                    <div style={{ display: 'flex', gap: '0.4rem', justifyContent: 'flex-end' }}>
+                  <td style={{ padding: '0.75rem 1rem', textAlign: 'right', whiteSpace: 'nowrap', minWidth: '200px' }}>
+                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'nowrap', width: 'max-content', marginLeft: 'auto' }}>
                       <button
                         onClick={() => handleToggleShopBlock(s._id, s.isActive, s.name)}
                         className="btn-secondary"
                         style={{
-                          padding: '0.3rem 0.65rem',
+                          padding: '0.35rem 0.75rem',
                           fontSize: '0.78rem',
                           color: s.isActive ? 'var(--danger)' : 'var(--success)',
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         {s.isActive ? (
@@ -1393,11 +1394,12 @@ function AdminShopsTab() {
                         onClick={() => setShopToDelete(s)}
                         className="btn-secondary"
                         style={{
-                          padding: '0.3rem 0.65rem',
+                          padding: '0.35rem 0.75rem',
                           fontSize: '0.78rem',
                           color: '#dc2626',
                           borderColor: '#fca5a5',
                           background: '#fef2f2',
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         <Trash2 size={13} /> Delete
