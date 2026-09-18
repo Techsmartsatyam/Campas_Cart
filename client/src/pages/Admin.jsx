@@ -897,7 +897,7 @@ function AdminCleanDataTab({ onDataCleaned }) {
         <strong style={{ display: 'block', fontSize: '0.95rem', marginBottom: '0.25rem' }}>
           ⚠️ DESTRUCTIVE ACTION WARNING
         </strong>
-        Selected transactional records will be permanently removed from MongoDB. Master store structures, admin accounts, and product catalogs will remain untouched.
+        Selected transactional records will be permanently removed from the database system. Master store structures, admin accounts, and product catalogs will remain untouched.
       </div>
 
       {/* Target Options Grid */}

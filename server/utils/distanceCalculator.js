@@ -181,8 +181,7 @@ export function calculateDeliveryFeeForShopAndAddress(shop, address, manualDista
     return { success: true, distanceKm, deliveryFee };
   }
 
-  // Fallback: If no GPS coordinates but fallback fee exists
-  const fallbackFee = shop.deliveryFee !== undefined ? Number(shop.deliveryFee) : 0;
-  return { success: true, distanceKm: 0, deliveryFee: fallbackFee };
+  // Fallback: If no distance input or GPS coordinates are provided, delivery fee is 0
+  return { success: true, distanceKm: 0, deliveryFee: 0 };
 }
 

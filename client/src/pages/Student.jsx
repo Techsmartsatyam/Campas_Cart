@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { getCategories, getProducts, getShops } from '../services/studentService';
 import {
@@ -15,48 +15,96 @@ import NearCartLogo from '../components/NearCartLogo';
 export default function Student() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  const initialCat = searchParams.get('category') || '';
+  const initialSearch = searchParams.get('search') || '';
 
   const [shops, setShops] = useState([]);
+  const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [searchInput, setSearchInput] = useState('');
-  const [submittedSearch, setSubmittedSearch] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [searchInput, setSearchInput] = useState(initialSearch);
+  const [submittedSearch, setSubmittedSearch] = useState(initialSearch);
+  const [selectedCategory, setSelectedCategory] = useState(initialCat);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchData = async (activeQuery = submittedSearch) => {
+  // Sync state from URL parameters when URL changes (e.g. back/forward nav)
+  useEffect(() => {
+    const cat = searchParams.get('category') || '';
+    const q = searchParams.get('search') || '';
+    if (cat !== selectedCategory) setSelectedCategory(cat);
+    if (q !== submittedSearch) {
+      setSubmittedSearch(q);
+      setSearchInput(q);
+    }
+  }, [searchParams]);
+
+  const updateUrlParams = (catVal, searchVal) => {
+    const params = {};
+    if (catVal) params.category = catVal;
+    if (searchVal) params.search = searchVal;
+    setSearchParams(params);
+  };
+
+  const fetchData = async (activeCat = selectedCategory, activeQuery = submittedSearch) => {
     setLoading(true);
     setError('');
     try {
-      const [shopsRes, catRes] = await Promise.all([
-        getShops(activeQuery),
+      const shopParams = {};
+      const prodParams = { limit: 40 };
+
+      if (activeQuery) {
+        shopParams.search = activeQuery;
+        prodParams.search = activeQuery;
+      }
+      if (activeCat) {
+        shopParams.category = activeCat;
+        prodParams.category = activeCat;
+      }
+
+      const [shopsRes, prodRes, catRes] = await Promise.all([
+        getShops(shopParams.search || shopParams.category ? `?${new URLSearchParams(shopParams).toString()}` : ''),
+        getProducts(prodParams),
         getCategories(),
       ]);
 
       if (shopsRes.success) setShops(shopsRes.shops || []);
-      if (catRes.success) setCategories(catRes.categories);
+      if (prodRes.success) setProducts(prodRes.products || []);
+      if (catRes.success) setCategories(catRes.categories || []);
     } catch (err) {
-      setError(err.message || 'Failed to load NearCart shops');
+      setError(err.message || 'Failed to load NearCart items');
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchData(submittedSearch);
-  }, [submittedSearch]);
+    fetchData(selectedCategory, submittedSearch);
+  }, [selectedCategory, submittedSearch]);
+
+  const handleCategorySelect = (catId) => {
+    const nextCat = selectedCategory === catId ? '' : catId;
+    setSelectedCategory(nextCat);
+    updateUrlParams(nextCat, submittedSearch);
+  };
 
   const handleSearchSubmit = (query) => {
     const finalQuery = (query !== undefined ? query : searchInput).trim();
     setSubmittedSearch(finalQuery);
+    updateUrlParams(selectedCategory, finalQuery);
   };
 
   const handleSearchInputChange = (val) => {
     setSearchInput(val);
     if (val.trim() === '' && submittedSearch !== '') {
       setSubmittedSearch('');
+      updateUrlParams(selectedCategory, '');
     }
   };
+
+  const selectedCategoryObj = categories.find((c) => c._id === selectedCategory || c.name.toLowerCase() === selectedCategory.toLowerCase());
+  const categoryTitle = selectedCategoryObj ? selectedCategoryObj.name : 'Category Products';
 
   return (
     <div className="container" style={{ padding: '2rem 0.5rem 4rem 0.5rem' }}>
@@ -111,9 +159,14 @@ export default function Student() {
           <h3 style={{ fontSize: '1.15rem', fontWeight: '800', color: 'var(--text-primary)' }}>
             Categories
           </h3>
-          {selectedCategory && (
+          {(selectedCategory || submittedSearch) && (
             <button
-              onClick={() => setSelectedCategory('')}
+              onClick={() => {
+                setSelectedCategory('');
+                setSubmittedSearch('');
+                setSearchInput('');
+                updateUrlParams('', '');
+              }}
               style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.8rem', fontWeight: '700' }}
             >
               Clear Filter
@@ -125,18 +178,50 @@ export default function Student() {
           <CategoryCard
             category={{ name: 'All Products' }}
             isSelected={selectedCategory === ''}
-            onClick={() => setSelectedCategory('')}
+            onClick={() => handleCategorySelect('')}
           />
           {categories.map((cat) => (
             <CategoryCard
               key={cat._id}
               category={cat}
-              isSelected={selectedCategory === cat._id}
-              onClick={() => setSelectedCategory(selectedCategory === cat._id ? '' : cat._id)}
+              isSelected={selectedCategory === cat._id || selectedCategory.toLowerCase() === cat.name.toLowerCase()}
+              onClick={() => handleCategorySelect(cat._id)}
             />
           ))}
         </div>
       </div>
+
+      {/* Category Products Section (Shown when category filter or search is active, or available products) */}
+      {(selectedCategory || submittedSearch || products.length > 0) && (
+        <div style={{ marginBottom: '2.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div>
+              <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
+                {selectedCategory ? categoryTitle : submittedSearch ? `Search Results for "${submittedSearch}"` : 'Featured Products'}
+              </h2>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>
+                {selectedCategory ? `Items available under ${categoryTitle}` : 'Explore available items across nearby shops'}
+              </p>
+            </div>
+          </div>
+
+          {loading ? (
+            <LoadingSpinner />
+          ) : products.length === 0 ? (
+            <EmptyState message={selectedCategory ? `No products available under "${categoryTitle}".` : 'No matching products found.'} />
+          ) : (
+            <div className="product-grid-responsive">
+              {products.map((prod) => (
+                <ProductCard
+                  key={prod._id}
+                  product={prod}
+                  onClick={() => navigate(`/student/products/${prod._id}`)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Nearby Shops Section */}
       <div style={{ marginBottom: '2.5rem' }}>
