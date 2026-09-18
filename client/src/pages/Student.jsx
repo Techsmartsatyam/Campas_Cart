@@ -1,16 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getCategories, getProducts, getShops } from '../services/studentService';
+import { getCategories, getShops } from '../services/studentService';
 import {
   SearchBar,
   CategoryCard,
   ShopCard,
-  ProductCard,
   LoadingSpinner,
-  EmptyState,
 } from '../components/StudentUIComponents';
 import NearCartLogo from '../components/NearCartLogo';
+import { Store, Compass, ArrowRight } from 'lucide-react';
 
 export default function Student() {
   const { user } = useAuth();
@@ -21,7 +20,6 @@ export default function Student() {
   const initialSearch = searchParams.get('search') || '';
 
   const [shops, setShops] = useState([]);
-  const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [searchInput, setSearchInput] = useState(initialSearch);
   const [submittedSearch, setSubmittedSearch] = useState(initialSearch);
@@ -52,28 +50,19 @@ export default function Student() {
     setError('');
     try {
       const shopParams = {};
-      const prodParams = { limit: 40 };
+      if (activeQuery) shopParams.search = activeQuery;
+      if (activeCat) shopParams.category = activeCat;
 
-      if (activeQuery) {
-        shopParams.search = activeQuery;
-        prodParams.search = activeQuery;
-      }
-      if (activeCat) {
-        shopParams.category = activeCat;
-        prodParams.category = activeCat;
-      }
-
-      const [shopsRes, prodRes, catRes] = await Promise.all([
-        getShops(shopParams.search || shopParams.category ? `?${new URLSearchParams(shopParams).toString()}` : ''),
-        getProducts(prodParams),
+      const queryString = new URLSearchParams(shopParams).toString();
+      const [shopsRes, catRes] = await Promise.all([
+        getShops(queryString ? `?${queryString}` : ''),
         getCategories(),
       ]);
 
       if (shopsRes.success) setShops(shopsRes.shops || []);
-      if (prodRes.success) setProducts(prodRes.products || []);
       if (catRes.success) setCategories(catRes.categories || []);
     } catch (err) {
-      setError(err.message || 'Failed to load NearCart items');
+      setError(err.message || 'Failed to load NearCart shops');
     } finally {
       setLoading(false);
     }
@@ -103,8 +92,17 @@ export default function Student() {
     }
   };
 
-  const selectedCategoryObj = categories.find((c) => c._id === selectedCategory || c.name.toLowerCase() === selectedCategory.toLowerCase());
-  const categoryTitle = selectedCategoryObj ? selectedCategoryObj.name : 'Category Products';
+  const handleShopClick = (shopId) => {
+    const navUrl = selectedCategory
+      ? `/student/shops/${shopId}?category=${encodeURIComponent(selectedCategory)}`
+      : `/student/shops/${shopId}`;
+    navigate(navUrl);
+  };
+
+  const selectedCategoryObj = categories.find(
+    (c) => c._id === selectedCategory || c.name.toLowerCase() === selectedCategory.toLowerCase()
+  );
+  const categoryTitle = selectedCategoryObj ? selectedCategoryObj.name : 'Shops';
 
   return (
     <div className="container" style={{ padding: '2rem 0.5rem 4rem 0.5rem' }}>
@@ -141,14 +139,14 @@ export default function Student() {
             Welcome back, {user?.name ? user.name.split(' ')[0] : 'Student'}! 👋
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
-            Browse products from nearby shops & enjoy fast local delivery straight to your location.
+            Select a nearby shop or hotel to browse its products and menu.
           </p>
 
           <SearchBar
             value={searchInput}
             onChange={handleSearchInputChange}
             onSubmit={handleSearchSubmit}
-            placeholder="Search shops, Maggi, notebooks, snacks, drinks, pens..."
+            placeholder="Search shops & hotels by name or description..."
           />
         </div>
       </div>
@@ -176,7 +174,7 @@ export default function Student() {
 
         <div style={{ display: 'flex', gap: '0.6rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
           <CategoryCard
-            category={{ name: 'All Products' }}
+            category={{ name: 'All Shops' }}
             isSelected={selectedCategory === ''}
             onClick={() => handleCategorySelect('')}
           />
@@ -191,44 +189,40 @@ export default function Student() {
         </div>
       </div>
 
-      {/* Category Products Section (Shown when category filter or search is active, or available products) */}
-      {(selectedCategory || submittedSearch || products.length > 0) && (
-        <div style={{ marginBottom: '2.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <div>
-              <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
-                {selectedCategory ? categoryTitle : submittedSearch ? `Search Results for "${submittedSearch}"` : 'Featured Products'}
-              </h2>
-              <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>
-                {selectedCategory ? `Items available under ${categoryTitle}` : 'Explore available items across nearby shops'}
-              </p>
-            </div>
-          </div>
-
-          {loading ? (
-            <LoadingSpinner />
-          ) : products.length === 0 ? (
-            <EmptyState message={selectedCategory ? `No products available under "${categoryTitle}".` : 'No matching products found.'} />
-          ) : (
-            <div className="product-grid-responsive">
-              {products.map((prod) => (
-                <ProductCard
-                  key={prod._id}
-                  product={prod}
-                  onClick={() => navigate(`/student/products/${prod._id}`)}
-                />
-              ))}
-            </div>
-          )}
+      {/* Guidance Banner */}
+      <div
+        className="glass-card"
+        style={{
+          padding: '1.25rem 1.5rem',
+          marginBottom: '2rem',
+          background: 'linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%)',
+          border: '1px solid #bae6fd',
+          borderRadius: '0.75rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+          color: '#0369a1',
+        }}
+      >
+        <div style={{ width: '2.5rem', height: '2.5rem', borderRadius: '50%', background: '#ffffff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 8px rgba(3, 105, 161, 0.15)' }}>
+          <Store size={22} style={{ color: 'var(--primary)' }} />
         </div>
-      )}
+        <div>
+          <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '800', color: '#0c4a6e' }}>
+            Shop-First Ordering
+          </h4>
+          <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: '#0369a1' }}>
+            Select a shop or hotel below to view its full product menu and place an order.
+          </p>
+        </div>
+      </div>
 
       {/* Nearby Shops Section */}
       <div style={{ marginBottom: '2.5rem' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <div>
             <h2 style={{ fontSize: '1.4rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
-              Nearby Shops & Hotels
+              {selectedCategory ? `Shops in ${categoryTitle}` : submittedSearch ? `Shops matching "${submittedSearch}"` : 'Nearby Shops & Hotels'}
             </h2>
             <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', margin: '0.2rem 0 0 0' }}>
               Select a shop to view its exclusive items and menu
@@ -236,9 +230,11 @@ export default function Student() {
           </div>
         </div>
 
-        {shops.length === 0 ? (
-          <div className="glass-card" style={{ padding: '1.5rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-            No active shops available right now.
+        {loading ? (
+          <LoadingSpinner />
+        ) : shops.length === 0 ? (
+          <div className="glass-card" style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)', fontSize: '0.95rem' }}>
+            No shops available {selectedCategory ? `under category "${categoryTitle}"` : submittedSearch ? `matching "${submittedSearch}"` : 'at the moment'}.
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1.25rem' }}>
@@ -246,7 +242,7 @@ export default function Student() {
               <ShopCard
                 key={shopItem._id}
                 shop={shopItem}
-                onClick={() => navigate(`/student/shops/${shopItem._id}`)}
+                onClick={() => handleShopClick(shopItem._id)}
               />
             ))}
           </div>
