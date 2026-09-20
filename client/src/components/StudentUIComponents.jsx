@@ -194,7 +194,9 @@ export function ShopCard({ shop, onClick }) {
           </div>
           <div>
             <h4 style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--text-primary)' }}>{shop.name}</h4>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{shop.category?.name || 'General Store'}</span>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+              {shop.category?.name || 'General Store'}{shop.foodType ? ` • ${shop.foodType}` : ''}
+            </span>
           </div>
         </div>
 

@@ -288,15 +288,28 @@ export default function Shopkeeper() {
     }
   };
 
+  const [selectedVariants, setSelectedVariants] = useState({ Half: false, Full: false, Small: false, Medium: false, Large: false, Custom: false });
+  const [variantPrices, setVariantPrices] = useState({ Half: '', Full: '', Small: '', Medium: '', Large: '' });
+  const [variantStocks, setVariantStocks] = useState({ Half: 10, Full: 10, Small: 10, Medium: 10, Large: 10 });
+  const [variantPackingCharges, setVariantPackingCharges] = useState({ Half: 0, Full: 0, Small: 0, Medium: 0, Large: 0 });
+  const [customVariantRows, setCustomVariantRows] = useState([{ name: '', price: '', stock: 10, packingCharges: 0 }]);
+
   // Open Modal for Add/Edit Product
   const openProductModal = (product = null) => {
     setError('');
     setSuccess('');
     setImageInput('');
+    setSelectedVariants({ Half: false, Full: false, Small: false, Medium: false, Large: false, Custom: false });
+    setVariantPrices({ Half: '', Full: '', Small: '', Medium: '', Large: '' });
+    setVariantStocks({ Half: 10, Full: 10, Small: 10, Medium: 10, Large: 10 });
+    setVariantPackingCharges({ Half: 0, Full: 0, Small: 0, Medium: 0, Large: 0 });
+    setCustomVariantRows([{ name: '', price: '', stock: 10, packingCharges: 0 }]);
+
     if (product) {
       setEditingProductId(product._id);
       setProductForm({
-        name: product.name,
+        name: product.name || '',
+        variantName: product.variantName || '',
         description: product.description || '',
         category: product.category?._id || product.category || '',
         price: product.price,
@@ -313,6 +326,7 @@ export default function Shopkeeper() {
       setEditingProductId(null);
       setProductForm({
         name: '',
+        variantName: '',
         description: '',
         category: categories.length > 0 ? categories[0]._id : '',
         price: '',
@@ -415,8 +429,59 @@ export default function Shopkeeper() {
         res = await api.put(`/shopkeeper/products/${editingProductId}${shopParam}`, productForm);
       } else {
         const clientKey = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'prod-' + Date.now() + '-' + Math.random().toString(36).substring(2);
+        
+        let variants = null;
+        const hasVariantSelection = Object.values(selectedVariants).some(Boolean);
+        if (hasVariantSelection) {
+          variants = [];
+          const standardSizes = ['Half', 'Full', 'Small', 'Medium', 'Large'];
+          for (const sz of standardSizes) {
+            if (selectedVariants[sz]) {
+              const pVal = parseFloat(variantPrices[sz]);
+              if (isNaN(pVal) || pVal < 0) {
+                setError(`Please enter a valid price for size ${sz}`);
+                setProductSubmitting(false);
+                return;
+              }
+              variants.push({
+                variantName: sz,
+                price: pVal,
+                stock: Number(variantStocks[sz] !== undefined ? variantStocks[sz] : 10),
+                packingCharges: Number(variantPackingCharges[sz] !== undefined ? variantPackingCharges[sz] : 0),
+              });
+            }
+          }
+          if (selectedVariants.Custom) {
+            for (const cRow of customVariantRows) {
+              if (!cRow.name.trim()) {
+                setError('Please provide a name for all custom variants.');
+                setProductSubmitting(false);
+                return;
+              }
+              const pVal = parseFloat(cRow.price);
+              if (isNaN(pVal) || pVal < 0) {
+                setError(`Please enter a valid price for variant "${cRow.name}".`);
+                setProductSubmitting(false);
+                return;
+              }
+              variants.push({
+                variantName: cRow.name.trim(),
+                price: pVal,
+                stock: Number(cRow.stock !== undefined ? cRow.stock : 10),
+                packingCharges: Number(cRow.packingCharges !== undefined ? cRow.packingCharges : 0),
+              });
+            }
+          }
+          if (variants.length === 0) {
+            setError('Please select at least one variant size or add a custom variant.');
+            setProductSubmitting(false);
+            return;
+          }
+        }
+
         res = await api.post(`/shopkeeper/products${shopParam}`, {
           ...productForm,
+          variants,
           idempotencyKey: clientKey,
         });
       }
@@ -1875,67 +1940,251 @@ export default function Shopkeeper() {
                 </div>
               </div>
 
-              {/* Price & Discount Price */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>Regular Price (₹) *</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    className="form-input"
-                    value={productForm.price}
-                    onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
-                    placeholder="0.00"
-                    required
-                    style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
-                  />
+              {/* Editing single variant indicator */}
+              {editingProductId && productForm.variantName && (
+                <div style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#1d4ed8', border: '1px solid rgba(59, 130, 246, 0.25)', padding: '0.6rem 0.85rem', borderRadius: '0.5rem', fontSize: '0.85rem', fontWeight: '700' }}>
+                  Variant: {productForm.variantName}
                 </div>
+              )}
 
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>Discount Price (₹)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    className="form-input"
-                    value={productForm.discountPrice}
-                    onChange={(e) => setProductForm({ ...productForm, discountPrice: e.target.value })}
-                    placeholder="Optional sale price"
-                    style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
-                  />
-                </div>
-              </div>
+              {/* Size / Variant Options Selection (only when creating new product) */}
+              {!editingProductId && (
+                <div style={{ background: '#f8fafc', padding: '1rem', borderRadius: '0.5rem', border: '1px solid var(--border-color)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div>
+                    <label style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.25rem', display: 'block' }}>
+                      Size / Variant Options (Create multiple size products in 1 click)
+                    </label>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>
+                      Select sizes below to create separate variants simultaneously, or leave empty for a single product.
+                    </span>
+                  </div>
 
-              {/* Stock Quantity & Packing Charges */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>Stock Quantity *</label>
-                  <input
-                    type="number"
-                    min="0"
-                    className="form-input"
-                    value={productForm.stock}
-                    onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
-                    required
-                    style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
-                  />
-                </div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.85rem', padding: '0.5rem 0' }}>
+                    {['Half', 'Full', 'Small', 'Medium', 'Large', 'Custom'].map((size) => (
+                      <label key={size} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', cursor: 'pointer', fontWeight: '700', fontSize: '0.85rem', color: 'var(--text-primary)' }}>
+                        <input
+                          type="checkbox"
+                          checked={selectedVariants[size] || false}
+                          onChange={(e) => setSelectedVariants({ ...selectedVariants, [size]: e.target.checked })}
+                          style={{ width: '16px', height: '16px', accentColor: 'var(--primary)' }}
+                        />
+                        {size}
+                      </label>
+                    ))}
+                  </div>
 
-                <div className="form-group" style={{ margin: 0 }}>
-                  <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>Packing Charges (per item) (₹)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    className="form-input"
-                    value={productForm.packingCharges}
-                    onChange={(e) => setProductForm({ ...productForm, packingCharges: e.target.value })}
-                    placeholder="0"
-                    style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
-                  />
+                  {/* Standard Selected Variants Table / Rows */}
+                  {['Half', 'Full', 'Small', 'Medium', 'Large'].map((size) => {
+                    if (!selectedVariants[size]) return null;
+                    return (
+                      <div key={size} style={{ background: '#ffffff', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', display: 'grid', gridTemplateColumns: '80px 1fr 1fr 1fr', gap: '0.75rem', alignItems: 'center' }}>
+                        <span style={{ fontWeight: '800', fontSize: '0.9rem', color: 'var(--primary)' }}>{size}</span>
+                        <div>
+                          <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>Price (₹) *</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="₹ Price"
+                            className="form-input"
+                            style={{ padding: '0.4rem 0.5rem', fontSize: '0.85rem' }}
+                            value={variantPrices[size] || ''}
+                            onChange={(e) => setVariantPrices({ ...variantPrices, [size]: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>Stock *</label>
+                          <input
+                            type="number"
+                            min="0"
+                            placeholder="Stock"
+                            className="form-input"
+                            style={{ padding: '0.4rem 0.5rem', fontSize: '0.85rem' }}
+                            value={variantStocks[size] !== undefined ? variantStocks[size] : 10}
+                            onChange={(e) => setVariantStocks({ ...variantStocks, [size]: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>Packing (₹)</label>
+                          <input
+                            type="number"
+                            min="0"
+                            step="0.01"
+                            placeholder="₹ Packing"
+                            className="form-input"
+                            style={{ padding: '0.4rem 0.5rem', fontSize: '0.85rem' }}
+                            value={variantPackingCharges[size] !== undefined ? variantPackingCharges[size] : 0}
+                            onChange={(e) => setVariantPackingCharges({ ...variantPackingCharges, [size]: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  {/* Custom Variant Rows */}
+                  {selectedVariants.Custom && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.25rem' }}>
+                      <span style={{ fontSize: '0.8rem', fontWeight: '700', color: 'var(--text-secondary)' }}>Custom Variants:</span>
+                      {customVariantRows.map((row, idx) => (
+                        <div key={idx} style={{ background: '#ffffff', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr 1fr auto', gap: '0.5rem', alignItems: 'center' }}>
+                          <div>
+                            <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>Variant Name *</label>
+                            <input
+                              type="text"
+                              placeholder="e.g. Family Pack"
+                              className="form-input"
+                              style={{ padding: '0.4rem 0.5rem', fontSize: '0.85rem' }}
+                              value={row.name}
+                              onChange={(e) => {
+                                const updated = [...customVariantRows];
+                                updated[idx].name = e.target.value;
+                                setCustomVariantRows(updated);
+                              }}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>Price (₹) *</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="₹ Price"
+                              className="form-input"
+                              style={{ padding: '0.4rem 0.5rem', fontSize: '0.85rem' }}
+                              value={row.price}
+                              onChange={(e) => {
+                                const updated = [...customVariantRows];
+                                updated[idx].price = e.target.value;
+                                setCustomVariantRows(updated);
+                              }}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>Stock *</label>
+                            <input
+                              type="number"
+                              min="0"
+                              placeholder="Stock"
+                              className="form-input"
+                              style={{ padding: '0.4rem 0.5rem', fontSize: '0.85rem' }}
+                              value={row.stock}
+                              onChange={(e) => {
+                                const updated = [...customVariantRows];
+                                updated[idx].stock = e.target.value;
+                                setCustomVariantRows(updated);
+                              }}
+                              required
+                            />
+                          </div>
+                          <div>
+                            <label style={{ fontSize: '0.7rem', color: 'var(--text-muted)', display: 'block', fontWeight: '600' }}>Packing (₹)</label>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              placeholder="₹ Packing"
+                              className="form-input"
+                              style={{ padding: '0.4rem 0.5rem', fontSize: '0.85rem' }}
+                              value={row.packingCharges}
+                              onChange={(e) => {
+                                const updated = [...customVariantRows];
+                                updated[idx].packingCharges = e.target.value;
+                                setCustomVariantRows(updated);
+                              }}
+                            />
+                          </div>
+                          {customVariantRows.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => setCustomVariantRows(customVariantRows.filter((_, i) => i !== idx))}
+                              style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '0.2rem' }}
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', alignSelf: 'flex-start' }}
+                        onClick={() => setCustomVariantRows([...customVariantRows, { name: '', price: '', stock: 10, packingCharges: 0 }])}
+                      >
+                        + Add Custom Variant
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
+
+              {/* Price & Discount Price (For single product mode or default fallback) */}
+              {(!Object.values(selectedVariants).some(Boolean) || editingProductId) && (
+                <>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>Regular Price (₹) *</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="form-input"
+                        value={productForm.price}
+                        onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                        placeholder="0.00"
+                        required={!editingProductId ? !Object.values(selectedVariants).some(Boolean) : true}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>Discount Price (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="form-input"
+                        value={productForm.discountPrice}
+                        onChange={(e) => setProductForm({ ...productForm, discountPrice: e.target.value })}
+                        placeholder="Optional sale price"
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>Stock Quantity *</label>
+                      <input
+                        type="number"
+                        min="0"
+                        className="form-input"
+                        value={productForm.stock}
+                        onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
+                        required={!editingProductId ? !Object.values(selectedVariants).some(Boolean) : true}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label" style={{ fontWeight: '700', fontSize: '0.875rem', color: 'var(--text-primary)', marginBottom: '0.35rem', display: 'block' }}>Packing Charges (per item) (₹)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="form-input"
+                        value={productForm.packingCharges}
+                        onChange={(e) => setProductForm({ ...productForm, packingCharges: e.target.value })}
+                        placeholder="0"
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '0.5rem', border: '1px solid #cbd5e1', fontSize: '0.95rem' }}
+                      />
+                    </div>
+                  </div>
+                </>
+              )}
 
               {/* GST */}
               <div className="form-group" style={{ margin: 0 }}>

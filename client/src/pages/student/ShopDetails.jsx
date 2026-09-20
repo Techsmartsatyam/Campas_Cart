@@ -219,6 +219,22 @@ export default function ShopDetails() {
               >
                 {!hasTiming ? 'Hours not set' : currentlyOpen ? 'OPEN' : 'CLOSED'}
               </span>
+              {shop.foodType && (
+                <span
+                  style={{
+                    padding: '0.2rem 0.6rem',
+                    borderRadius: '9999px',
+                    fontSize: '0.75rem',
+                    fontWeight: '700',
+                    background: 'rgba(245, 158, 11, 0.15)',
+                    color: '#d97706',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                  }}
+                >
+                  {shop.foodType}
+                </span>
+              )}
             </div>
 
             <p style={{

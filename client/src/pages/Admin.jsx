@@ -1356,7 +1356,7 @@ function AdminShopsTab() {
                   </td>
                   <td style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap', minWidth: '140px' }}>
                     <span style={{ fontSize: '0.72rem', fontWeight: '700', padding: '0.25rem 0.6rem', borderRadius: '0.25rem', background: '#f1f5f9', color: 'var(--text-primary)', whiteSpace: 'nowrap', display: 'inline-block' }}>
-                      {s.category?.name || 'General'}
+                      {s.category?.name || 'General'}{s.foodType ? ` • ${s.foodType}` : ''}
                     </span>
                   </td>
                   <td style={{ padding: '0.75rem 1rem', fontWeight: '700', color: 'var(--primary)', whiteSpace: 'nowrap', minWidth: '100px', textAlign: 'center' }}>

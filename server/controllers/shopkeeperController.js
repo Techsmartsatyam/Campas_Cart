@@ -142,12 +142,34 @@ export const createShop = async (req, res, next) => {
       packingCharges,
       logo,
       coverImage,
+      foodType,
+      customFoodType,
     } = req.body;
 
     if (!name || !category || !address) {
       return res.status(400).json({
         success: false,
         message: 'Shop name, category, and address are required.',
+      });
+    }
+
+    let finalFoodType = '';
+    if (foodType === 'Custom') {
+      finalFoodType = customFoodType ? customFoodType.trim() : '';
+      if (!finalFoodType) {
+        return res.status(400).json({
+          success: false,
+          message: 'Custom food type is required and cannot be empty.',
+        });
+      }
+    } else if (foodType) {
+      finalFoodType = foodType.trim();
+    }
+
+    if (finalFoodType.length > 50) {
+      return res.status(400).json({
+        success: false,
+        message: 'Food type cannot exceed 50 characters.',
       });
     }
 
@@ -184,6 +206,7 @@ export const createShop = async (req, res, next) => {
       packingCharges: packingCharges !== undefined ? Math.max(0, Number(packingCharges) || 0) : 0,
       logo: logo || '',
       coverImage: coverImage || '',
+      foodType: finalFoodType,
       isApproved: true, // Auto approve for convenience in development
       isActive: true,
       isOpen: true,
@@ -251,6 +274,8 @@ export const updateShop = async (req, res, next) => {
       latitude,
       longitude,
       location,
+      foodType,
+      customFoodType,
     } = req.body;
 
     // Validate delivery charge slabs if provided
@@ -262,6 +287,29 @@ export const updateShop = async (req, res, next) => {
           message: slabError,
         });
       }
+    }
+
+    if (foodType !== undefined || customFoodType !== undefined) {
+      let finalFoodType = '';
+      if (foodType === 'Custom') {
+        finalFoodType = customFoodType ? customFoodType.trim() : '';
+        if (!finalFoodType) {
+          return res.status(400).json({
+            success: false,
+            message: 'Custom food type is required and cannot be empty.',
+          });
+        }
+      } else if (foodType) {
+        finalFoodType = foodType.trim();
+      }
+
+      if (finalFoodType.length > 50) {
+        return res.status(400).json({
+          success: false,
+          message: 'Food type cannot exceed 50 characters.',
+        });
+      }
+      shop.foodType = finalFoodType;
     }
 
     const newOpen = openingTime !== undefined ? (openingTime && openingTime.trim() ? openingTime.trim() : null) : shop.openingTime;
@@ -382,9 +430,188 @@ export const createProduct = async (req, res, next) => {
       gstPercentage,
       packingCharges,
       idempotencyKey,
+      variants,
     } = req.body;
 
     const key = idempotencyKey || req.headers['x-idempotency-key'] || null;
+
+    // Multi-variant product creation flow
+    if (Array.isArray(variants) && variants.length > 0) {
+      if (!name || !category || !unit) {
+        return res.status(400).json({
+          success: false,
+          message: 'Product name, category, and unit are required.',
+        });
+      }
+
+      // Idempotency check for multi-variant
+      if (key) {
+        const existingKeyProducts = await Product.find({
+          shop: shop._id,
+          idempotencyKey: { $regex: `^${key}` },
+        }).sort({ createdAt: 1 });
+
+        if (existingKeyProducts.length >= variants.length) {
+          return res.status(200).json({
+            success: true,
+            message: `${existingKeyProducts.length} product${existingKeyProducts.length > 1 ? 's' : ''} added successfully.`,
+            count: existingKeyProducts.length,
+            products: existingKeyProducts,
+          });
+        }
+      }
+
+      // Validate variants array
+      const variantNamesSeen = new Set();
+      const validatedVariants = [];
+
+      for (let i = 0; i < variants.length; i++) {
+        const v = variants[i];
+        const vName = (v.name || v.variantName || '').trim();
+        if (!vName) {
+          return res.status(400).json({
+            success: false,
+            message: 'Variant name is required for all selected options.',
+          });
+        }
+
+        const lowerVName = vName.toLowerCase();
+        if (variantNamesSeen.has(lowerVName)) {
+          return res.status(400).json({
+            success: false,
+            message: `Duplicate variant name "${vName}" is not allowed in the same submission.`,
+          });
+        }
+        variantNamesSeen.add(lowerVName);
+
+        if (v.price === undefined || v.price === '' || isNaN(Number(v.price))) {
+          return res.status(400).json({
+            success: false,
+            message: `Valid price is required for variant "${vName}".`,
+          });
+        }
+        const vPrice = Number(v.price);
+        if (vPrice < 0) {
+          return res.status(400).json({
+            success: false,
+            message: `Price for variant "${vName}" cannot be negative.`,
+          });
+        }
+
+        const vStock = v.stock !== undefined && v.stock !== '' ? Number(v.stock) : 0;
+        if (isNaN(vStock) || vStock < 0) {
+          return res.status(400).json({
+            success: false,
+            message: `Stock for variant "${vName}" cannot be negative.`,
+          });
+        }
+
+        const vPackingCharges = v.packingCharges !== undefined && v.packingCharges !== ''
+          ? Math.max(0, Number(v.packingCharges) || 0)
+          : (packingCharges !== undefined && packingCharges !== '' ? Math.max(0, Number(packingCharges) || 0) : 0);
+
+        if (vPackingCharges < 0) {
+          return res.status(400).json({
+            success: false,
+            message: `Packing charges for variant "${vName}" cannot be negative.`,
+          });
+        }
+
+        validatedVariants.push({
+          name: vName,
+          price: vPrice,
+          stock: vStock,
+          packingCharges: vPackingCharges,
+        });
+      }
+
+      // Helper to generate formatted display name
+      const formatProductName = (base, variant) => {
+        const trimmedBase = base.trim();
+        const trimmedVariant = variant.trim();
+        const lowerBase = trimmedBase.toLowerCase();
+        const lowerVariant = trimmedVariant.toLowerCase();
+
+        if (lowerBase.endsWith(` - ${lowerVariant}`) || lowerBase.endsWith(`-${lowerVariant}`)) {
+          return trimmedBase;
+        }
+        if (lowerBase === lowerVariant) {
+          return trimmedBase;
+        }
+        return `${trimmedBase} - ${trimmedVariant}`;
+      };
+
+      // Create variants using transaction if supported, else safe batch
+      let session = null;
+      let useTransaction = false;
+      try {
+        session = await mongoose.startSession();
+        session.startTransaction();
+        useTransaction = true;
+      } catch (e) {
+        session = null;
+        useTransaction = false;
+      }
+
+      const createdProducts = [];
+      try {
+        for (let i = 0; i < validatedVariants.length; i++) {
+          const v = validatedVariants[i];
+          const fullProductName = formatProductName(name, v.name);
+          const varIdempotencyKey = key ? `${key}_${i}_${v.name.replace(/\s+/g, '_')}` : undefined;
+
+          const prodData = {
+            shop: shop._id,
+            category,
+            name: fullProductName,
+            variantName: v.name,
+            description: description ? description.trim() : '',
+            price: v.price,
+            unit: unit.trim(),
+            stock: v.stock,
+            isAvailable: v.stock > 0,
+            images: Array.isArray(images) ? images : [],
+            gstPercentage: gstPercentage !== undefined && gstPercentage !== '' ? Math.min(100, Math.max(0, Number(gstPercentage) || 0)) : 0,
+            packingCharges: v.packingCharges,
+            ...(varIdempotencyKey ? { idempotencyKey: varIdempotencyKey } : {}),
+            isActive: true,
+          };
+
+          let created;
+          if (useTransaction && session) {
+            const [doc] = await Product.create([prodData], { session });
+            created = doc;
+          } else {
+            created = await Product.create(prodData);
+          }
+          createdProducts.push(created);
+        }
+
+        if (useTransaction && session) {
+          await session.commitTransaction();
+          session.endSession();
+        }
+
+        const count = createdProducts.length;
+        return res.status(201).json({
+          success: true,
+          message: `${count} product${count > 1 ? 's' : ''} added successfully.`,
+          count,
+          products: createdProducts,
+        });
+      } catch (batchErr) {
+        if (useTransaction && session) {
+          await session.abortTransaction();
+          session.endSession();
+        } else if (createdProducts.length > 0) {
+          const createdIds = createdProducts.map((p) => p._id);
+          await Product.deleteMany({ _id: { $in: createdIds } });
+        }
+        throw batchErr;
+      }
+    }
+
+    // Single product creation flow (existing)
     if (key) {
       const existingProduct = await Product.findOne({ shop: shop._id, idempotencyKey: key });
       if (existingProduct) {
@@ -433,6 +660,7 @@ export const createProduct = async (req, res, next) => {
         shop: shop._id,
         category,
         name: name.trim(),
+        variantName: req.body.variantName ? req.body.variantName.trim() : '',
         description: description ? description.trim() : '',
         price: numPrice,
         discountPrice: numDiscount,
@@ -510,6 +738,7 @@ export const updateProduct = async (req, res, next) => {
       images,
       gstPercentage,
       packingCharges,
+      variantName,
     } = req.body;
 
     if (price !== undefined && Number(price) < 0) {
@@ -525,6 +754,7 @@ export const updateProduct = async (req, res, next) => {
     }
 
     if (name) product.name = name.trim();
+    if (variantName !== undefined) product.variantName = variantName ? variantName.trim() : '';
     if (description !== undefined) product.description = description.trim();
     if (category) product.category = category;
     if (price !== undefined) product.price = Number(price);

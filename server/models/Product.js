@@ -91,7 +91,12 @@ const productSchema = new mongoose.Schema(
     idempotencyKey: {
       type: String,
       trim: true,
-      default: null,
+      default: undefined,
+    },
+    variantName: {
+      type: String,
+      trim: true,
+      default: '',
     },
   },
   {

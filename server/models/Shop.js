@@ -133,6 +133,11 @@ const shopSchema = new mongoose.Schema(
       type: String,
       default: '',
     },
+    foodType: {
+      type: String,
+      trim: true,
+      default: '',
+    },
   },
   {
     timestamps: true,

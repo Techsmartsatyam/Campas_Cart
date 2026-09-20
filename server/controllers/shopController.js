@@ -31,7 +31,7 @@ export const getShops = async (req, res, next) => {
 
     if (search) {
       const searchRegex = new RegExp(search.trim(), 'i');
-      query.$or = [{ name: searchRegex }, { description: searchRegex }];
+      query.$or = [{ name: searchRegex }, { description: searchRegex }, { foodType: searchRegex }];
     }
 
     const shops = await Shop.find(query)
