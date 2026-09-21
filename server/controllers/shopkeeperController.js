@@ -5,6 +5,29 @@ import Order from '../models/Order.js';
 import Notification from '../models/Notification.js';
 import Coupon from '../models/Coupon.js';
 import { validateDeliveryChargeSlabs } from '../utils/distanceCalculator.js';
+import { uploadBase64Image } from '../services/cloudinaryService.js';
+
+/**
+ * Upload Base64 Data URLs in product images array to Cloudinary when configured.
+ * Safely falls back to preserving original Base64 strings if Cloudinary is not configured or upload fails.
+ */
+const processImagesForStorage = async (imagesArray) => {
+  if (!Array.isArray(imagesArray) || imagesArray.length === 0) return [];
+  const processed = [];
+  for (const img of imagesArray) {
+    if (typeof img === 'string' && img.startsWith('data:image/')) {
+      const res = await uploadBase64Image(img);
+      if (res.success && res.url) {
+        processed.push(res.url);
+      } else {
+        processed.push(img);
+      }
+    } else {
+      processed.push(img);
+    }
+  }
+  return processed;
+};
 
 /**
  * Helper to fetch a shop and enforce ownership check if shopId is provided.
@@ -387,8 +410,11 @@ export const getShopkeeperProducts = async (req, res, next) => {
     }
 
     const products = await Product.find({ shop: shop._id })
+      .select('name description category price discountPrice unit stock sku isAvailable isActive rating totalRatings gstPercentage packingCharges variantName createdAt updatedAt images')
+      .slice('images', 1)
       .populate('category', 'name')
-      .sort({ createdAt: -1 });
+      .sort({ createdAt: -1 })
+      .lean();
 
     res.status(200).json({
       success: true,
@@ -434,6 +460,8 @@ export const createProduct = async (req, res, next) => {
     } = req.body;
 
     const key = idempotencyKey || req.headers['x-idempotency-key'] || null;
+
+    const processedImages = await processImagesForStorage(Array.isArray(images) ? images : []);
 
     // Multi-variant product creation flow
     if (Array.isArray(variants) && variants.length > 0) {
@@ -570,7 +598,7 @@ export const createProduct = async (req, res, next) => {
             unit: unit.trim(),
             stock: v.stock,
             isAvailable: v.stock > 0,
-            images: Array.isArray(images) ? images : [],
+            images: processedImages,
             gstPercentage: gstPercentage !== undefined && gstPercentage !== '' ? Math.min(100, Math.max(0, Number(gstPercentage) || 0)) : 0,
             packingCharges: v.packingCharges,
             ...(varIdempotencyKey ? { idempotencyKey: varIdempotencyKey } : {}),
@@ -668,7 +696,7 @@ export const createProduct = async (req, res, next) => {
         stock: numStock,
         sku: sku ? sku.trim() : '',
         isAvailable: isAvailable !== undefined ? isAvailable : numStock > 0,
-        images: Array.isArray(images) ? images : [],
+        images: processedImages,
         gstPercentage: gstPercentage !== undefined && gstPercentage !== '' ? Math.min(100, Math.max(0, Number(gstPercentage) || 0)) : 0,
         packingCharges: packingCharges !== undefined && packingCharges !== '' ? Math.max(0, Number(packingCharges) || 0) : 0,
         ...(key ? { idempotencyKey: key } : {}),
@@ -765,7 +793,9 @@ export const updateProduct = async (req, res, next) => {
     if (stock !== undefined) product.stock = Number(stock);
     if (sku !== undefined) product.sku = sku.trim();
     if (isAvailable !== undefined) product.isAvailable = isAvailable;
-    if (images && Array.isArray(images)) product.images = images;
+    if (images && Array.isArray(images)) {
+      product.images = await processImagesForStorage(images);
+    }
     if (gstPercentage !== undefined) product.gstPercentage = Math.min(100, Math.max(0, Number(gstPercentage) || 0));
     if (packingCharges !== undefined) product.packingCharges = Math.max(0, Number(packingCharges) || 0);
 

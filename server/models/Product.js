@@ -106,6 +106,7 @@ const productSchema = new mongoose.Schema(
 
 // Indexes
 productSchema.index({ shop: 1 });
+productSchema.index({ shop: 1, createdAt: -1 });
 productSchema.index({ category: 1 });
 productSchema.index({ name: 1 });
 productSchema.index({ idempotencyKey: 1 }, { unique: true, sparse: true });
