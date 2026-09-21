@@ -1,7 +1,7 @@
 import api from './api';
 
-export const getCategories = async (search = '') => {
-  return await api.get(`/categories${search ? `?search=${encodeURIComponent(search)}` : ''}`);
+export const getCategories = async (search = '', config = {}) => {
+  return await api.get(`/categories${search ? `?search=${encodeURIComponent(search)}` : ''}`, config);
 };
 
 export const getShops = async (search = '') => {

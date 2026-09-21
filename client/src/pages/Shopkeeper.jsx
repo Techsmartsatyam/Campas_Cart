@@ -147,16 +147,19 @@ export default function Shopkeeper() {
     setLoading(true);
     setError('');
     try {
-      const [shopsRes, catRes] = await Promise.all([
-        api.get('/shopkeeper/shops'),
-        getCategories(),
+      const [shopsRes, catRes] = await Promise.allSettled([
+        api.get('/shopkeeper/shops', { timeout: 30000 }),
+        getCategories('', { timeout: 30000 }),
       ]);
 
-      if (catRes.success) {
-        setCategories(catRes.categories);
+      const shopsData = shopsRes.status === 'fulfilled' ? shopsRes.value : null;
+      const catData = catRes.status === 'fulfilled' ? catRes.value : null;
+
+      if (catData && catData.success) {
+        setCategories(catData.categories);
       }
 
-      const ownedShops = shopsRes.success ? (shopsRes.shops || []) : [];
+      const ownedShops = (shopsData && shopsData.success) ? (shopsData.shops || []) : [];
       setShops(ownedShops);
 
       const activeShopId = targetShopId || selectedShopId || (ownedShops.length > 0 ? ownedShops[0]._id : '');
@@ -164,43 +167,66 @@ export default function Shopkeeper() {
         setSelectedShopId(activeShopId);
         setIsCreatingNewShop(false);
 
-        const [shopRes, statsRes, prodRes, invRes, ordRes] = await Promise.all([
-          api.get(`/shopkeeper/shop?shopId=${activeShopId}`),
-          api.get(`/shopkeeper/stats?shopId=${activeShopId}`),
-          api.get(`/shopkeeper/products?shopId=${activeShopId}`),
-          api.get(`/shopkeeper/inventory?shopId=${activeShopId}`),
-          api.get(`/shopkeeper/orders?shopId=${activeShopId}`),
+        const [shopRes, statsRes, prodRes, ordRes] = await Promise.allSettled([
+          api.get(`/shopkeeper/shop?shopId=${activeShopId}`, { timeout: 30000 }),
+          api.get(`/shopkeeper/stats?shopId=${activeShopId}`, { timeout: 30000 }),
+          api.get(`/shopkeeper/products?shopId=${activeShopId}`, { timeout: 30000 }),
+          api.get(`/shopkeeper/orders?shopId=${activeShopId}`, { timeout: 30000 }),
         ]);
 
-        if (shopRes.success && shopRes.shop) {
-          setShop(shopRes.shop);
+        const shopData = shopRes.status === 'fulfilled' ? shopRes.value : null;
+        const statsData = statsRes.status === 'fulfilled' ? statsRes.value : null;
+        const prodData = prodRes.status === 'fulfilled' ? prodRes.value : null;
+        const ordData = ordRes.status === 'fulfilled' ? ordRes.value : null;
+
+        if (shopData && shopData.success && shopData.shop) {
+          setShop(shopData.shop);
           setShopForm({
-            name: shopRes.shop.name || '',
-            description: shopRes.shop.description || '',
-            phone: shopRes.shop.phone || '',
-            category: shopRes.shop.category?._id || shopRes.shop.category || '',
-            address: shopRes.shop.address || '',
-            openingTime: shopRes.shop.openingTime || '',
-            closingTime: shopRes.shop.closingTime || '',
-            minimumOrderAmount: shopRes.shop.minimumOrderAmount || 0,
-            deliveryFee: shopRes.shop.deliveryFee || 0,
-            deliveryChargeSlabs: shopRes.shop.deliveryChargeSlabs || [],
-            packingCharges: shopRes.shop.packingCharges || 0,
-            logo: shopRes.shop.logo || shopRes.shop.coverImage || '',
-            coverImage: shopRes.shop.coverImage || shopRes.shop.logo || '',
-            isOpen: shopRes.shop.isOpen !== undefined ? shopRes.shop.isOpen : true,
-            upiEnabled: shopRes.shop.upiEnabled !== undefined ? shopRes.shop.upiEnabled : true,
-            upiId: shopRes.shop.upiId || '',
-            upiQrImage: shopRes.shop.upiQrImage || '',
+            name: shopData.shop.name || '',
+            description: shopData.shop.description || '',
+            phone: shopData.shop.phone || '',
+            category: shopData.shop.category?._id || shopData.shop.category || '',
+            address: shopData.shop.address || '',
+            openingTime: shopData.shop.openingTime || '',
+            closingTime: shopData.shop.closingTime || '',
+            minimumOrderAmount: shopData.shop.minimumOrderAmount || 0,
+            deliveryFee: shopData.shop.deliveryFee || 0,
+            deliveryChargeSlabs: shopData.shop.deliveryChargeSlabs || [],
+            packingCharges: shopData.shop.packingCharges || 0,
+            logo: shopData.shop.logo || shopData.shop.coverImage || '',
+            coverImage: shopData.shop.coverImage || shopData.shop.logo || '',
+            isOpen: shopData.shop.isOpen !== undefined ? shopData.shop.isOpen : true,
+            upiEnabled: shopData.shop.upiEnabled !== undefined ? shopData.shop.upiEnabled : true,
+            upiId: shopData.shop.upiId || '',
+            upiQrImage: shopData.shop.upiQrImage || '',
           });
         } else {
           setShop(null);
         }
 
-        if (statsRes.success) setStats(statsRes.stats);
-        if (prodRes.success) setProducts(prodRes.products);
-        if (invRes.success) setInventory(invRes.inventory);
-        if (ordRes.success) setOrders(ordRes.orders);
+        if (statsData && statsData.success) setStats(statsData.stats);
+        if (prodData && prodData.success) {
+          const fetchedProducts = prodData.products || [];
+          setProducts(fetchedProducts);
+          const invList = fetchedProducts.map((p) => {
+            let stockStatus = 'IN_STOCK';
+            if (p.stock === 0) stockStatus = 'OUT_OF_STOCK';
+            else if (p.stock <= 5) stockStatus = 'LOW_STOCK';
+            return {
+              _id: p._id,
+              name: p.name,
+              sku: p.sku || 'N/A',
+              category: p.category?.name || 'General',
+              price: p.price,
+              stock: p.stock,
+              isAvailable: p.isAvailable,
+              stockStatus,
+              lastUpdated: p.updatedAt,
+            };
+          });
+          setInventory(invList);
+        }
+        if (ordData && ordData.success) setOrders(ordData.orders);
       } else {
         setShop(null);
         setStats(null);
@@ -209,7 +235,11 @@ export default function Shopkeeper() {
         setOrders([]);
       }
     } catch (err) {
-      setError(err.message || 'Failed to load shopkeeper data');
+      const isTimeout = err?.message?.toLowerCase().includes('timeout');
+      const userFriendlyMsg = isTimeout
+        ? 'Unable to connect to the server. Please check your network and try refreshing.'
+        : (err?.message || 'Failed to load shopkeeper data');
+      setError(userFriendlyMsg);
     } finally {
       setLoading(false);
     }
