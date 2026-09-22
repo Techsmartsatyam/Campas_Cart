@@ -5,28 +5,52 @@ import Order from '../models/Order.js';
 import Notification from '../models/Notification.js';
 import Coupon from '../models/Coupon.js';
 import { validateDeliveryChargeSlabs } from '../utils/distanceCalculator.js';
-import { uploadBase64Image } from '../services/cloudinaryService.js';
+import { uploadBase64Image, generateCloudinarySignature } from '../services/cloudinaryService.js';
+import { assertNoBase64Image } from '../utils/imageGuard.js';
+
+// @route   POST /api/shopkeeper/cloudinary/sign
+// @desc    Generate server-side signed Cloudinary upload parameters for shopkeepers
+// @access  Private/Shopkeeper
+export const getCloudinarySignature = async (req, res, next) => {
+  try {
+    const folder = req.body.folder || 'nearcart/products';
+    const params = generateCloudinarySignature(folder);
+    return res.status(200).json({
+      success: true,
+      ...params,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: error.message || 'Failed to generate upload signature',
+    });
+  }
+};
 
 /**
  * Upload Base64 Data URLs in product images array to Cloudinary when configured.
  * Safely falls back to preserving original Base64 strings if Cloudinary is not configured or upload fails.
  */
-const processImagesForStorage = async (imagesArray) => {
+const processImagesForStorage = async (imagesArray, folder = 'nearcart/products') => {
   if (!Array.isArray(imagesArray) || imagesArray.length === 0) return [];
-  const processed = [];
-  for (const img of imagesArray) {
+
+  const uploadPromises = imagesArray.map(async (img) => {
+    if (!img) return null;
     if (typeof img === 'string' && img.startsWith('data:image/')) {
-      const res = await uploadBase64Image(img);
-      if (res.success && res.url) {
-        processed.push(res.url);
-      } else {
-        processed.push(img);
+      const res = await uploadBase64Image(img, { folder });
+      if (res.success && res.url && typeof res.url === 'string' && (res.url.startsWith('https://res.cloudinary.com/') || res.url.startsWith('http://') || res.url.startsWith('https://')) && !res.url.startsWith('data:image/')) {
+        return res.url;
       }
+      throw new Error(`Cloudinary image upload failed: ${res.error || 'Upload error'}. Base64 storage is strictly prohibited.`);
+    } else if (typeof img === 'string' && (img.startsWith('http://') || img.startsWith('https://'))) {
+      return img;
     } else {
-      processed.push(img);
+      throw new Error('Invalid image format: Must be a valid HTTP/HTTPS URL or Base64 data string.');
     }
-  }
-  return processed;
+  });
+
+  const results = await Promise.all(uploadPromises);
+  return results.filter(Boolean);
 };
 
 /**
@@ -221,13 +245,23 @@ export const createShop = async (req, res, next) => {
 
     if (typeof finalLogo === 'string' && finalLogo.startsWith('data:image/')) {
       const uploadRes = await uploadBase64Image(finalLogo, { folder: `nearcart/shops/${shopIdTemp}/logo`, public_id: `logo_${shopIdTemp}`, overwrite: true });
-      if (uploadRes.success && uploadRes.url) finalLogo = uploadRes.url;
+      if (uploadRes.success && uploadRes.url && !uploadRes.url.startsWith('data:image/')) {
+        finalLogo = uploadRes.url;
+      } else {
+        return res.status(400).json({ success: false, message: 'Cloudinary upload failed for logo. Base64 storage is not allowed.' });
+      }
     }
 
     if (typeof finalCover === 'string' && finalCover.startsWith('data:image/')) {
       const uploadRes = await uploadBase64Image(finalCover, { folder: `nearcart/shops/${shopIdTemp}/cover`, public_id: `coverImage_${shopIdTemp}`, overwrite: true });
-      if (uploadRes.success && uploadRes.url) finalCover = uploadRes.url;
+      if (uploadRes.success && uploadRes.url && !uploadRes.url.startsWith('data:image/')) {
+        finalCover = uploadRes.url;
+      } else {
+        return res.status(400).json({ success: false, message: 'Cloudinary upload failed for cover image. Base64 storage is not allowed.' });
+      }
     }
+
+    assertNoBase64Image({ logo: finalLogo, coverImage: finalCover }, 'Shop images');
 
     const shop = await Shop.create({
       _id: shopIdTemp,
@@ -383,7 +417,11 @@ export const updateShop = async (req, res, next) => {
     if (logo !== undefined) {
       if (typeof logo === 'string' && logo.startsWith('data:image/')) {
         const uploadRes = await uploadBase64Image(logo, { folder: `nearcart/shops/${shop._id}/logo`, public_id: `logo_${shop._id}`, overwrite: true });
-        if (uploadRes.success && uploadRes.url) shop.logo = uploadRes.url;
+        if (uploadRes.success && uploadRes.url && !uploadRes.url.startsWith('data:image/')) {
+          shop.logo = uploadRes.url;
+        } else {
+          return res.status(400).json({ success: false, message: 'Cloudinary upload failed for logo. Base64 storage is not allowed.' });
+        }
       } else {
         shop.logo = logo;
       }
@@ -391,7 +429,11 @@ export const updateShop = async (req, res, next) => {
     if (coverImage !== undefined) {
       if (typeof coverImage === 'string' && coverImage.startsWith('data:image/')) {
         const uploadRes = await uploadBase64Image(coverImage, { folder: `nearcart/shops/${shop._id}/cover`, public_id: `coverImage_${shop._id}`, overwrite: true });
-        if (uploadRes.success && uploadRes.url) shop.coverImage = uploadRes.url;
+        if (uploadRes.success && uploadRes.url && !uploadRes.url.startsWith('data:image/')) {
+          shop.coverImage = uploadRes.url;
+        } else {
+          return res.status(400).json({ success: false, message: 'Cloudinary upload failed for cover image. Base64 storage is not allowed.' });
+        }
       } else {
         shop.coverImage = coverImage;
       }
@@ -402,14 +444,18 @@ export const updateShop = async (req, res, next) => {
     if (upiQrImage !== undefined) {
       if (typeof upiQrImage === 'string' && upiQrImage.startsWith('data:image/')) {
         const uploadRes = await uploadBase64Image(upiQrImage, { folder: `nearcart/shops/${shop._id}/upi-qr`, public_id: `upiQrImage_${shop._id}`, overwrite: true });
-        if (uploadRes.success && uploadRes.url) {
+        if (uploadRes.success && uploadRes.url && !uploadRes.url.startsWith('data:image/')) {
           shop.upiQrImage = uploadRes.url;
           if (uploadRes.public_id) shop.upiQrPublicId = uploadRes.public_id;
+        } else {
+          return res.status(400).json({ success: false, message: 'Cloudinary upload failed for UPI QR image. Base64 storage is not allowed.' });
         }
       } else {
         shop.upiQrImage = upiQrImage;
       }
     }
+
+    assertNoBase64Image({ logo: shop.logo, coverImage: shop.coverImage, upiQrImage: shop.upiQrImage }, 'Shop update images');
 
     if (location && Array.isArray(location.coordinates) && location.coordinates.length === 2) {
       shop.location = {
@@ -502,6 +548,8 @@ export const createProduct = async (req, res, next) => {
 
     const processedImages = await processImagesForStorage(Array.isArray(images) ? images : []);
 
+    assertNoBase64Image(processedImages, 'product images');
+
     // Multi-variant product creation flow
     if (Array.isArray(variants) && variants.length > 0) {
       if (!name || !category || !unit) {
@@ -565,8 +613,8 @@ export const createProduct = async (req, res, next) => {
           });
         }
 
-        const vStock = v.stock !== undefined && v.stock !== '' ? Number(v.stock) : 0;
-        if (isNaN(vStock) || vStock < 0) {
+        const vStock = v.stock !== undefined && v.stock !== '' ? Number(v.stock) : (Number(stock) || 0);
+        if (vStock < 0) {
           return res.status(400).json({
             success: false,
             message: `Stock for variant "${vName}" cannot be negative.`,
@@ -584,11 +632,15 @@ export const createProduct = async (req, res, next) => {
           });
         }
 
+        const vImages = Array.isArray(v.images) && v.images.length > 0 ? await processImagesForStorage(v.images) : processedImages;
+        assertNoBase64Image(vImages, `variant images for "${vName}"`);
+
         validatedVariants.push({
           name: vName,
           price: vPrice,
           stock: vStock,
           packingCharges: vPackingCharges,
+          images: vImages,
         });
       }
 
@@ -637,12 +689,14 @@ export const createProduct = async (req, res, next) => {
             unit: unit.trim(),
             stock: v.stock,
             isAvailable: v.stock > 0,
-            images: processedImages,
+            images: v.images || processedImages,
             gstPercentage: gstPercentage !== undefined && gstPercentage !== '' ? Math.min(100, Math.max(0, Number(gstPercentage) || 0)) : 0,
             packingCharges: v.packingCharges,
             ...(varIdempotencyKey ? { idempotencyKey: varIdempotencyKey } : {}),
             isActive: true,
           };
+
+          assertNoBase64Image(prodData.images, 'variant images');
 
           let created;
           if (useTransaction && session) {
@@ -723,6 +777,7 @@ export const createProduct = async (req, res, next) => {
     }
 
     try {
+      assertNoBase64Image(processedImages, 'single product images');
       const product = await Product.create({
         shop: shop._id,
         category,
@@ -841,6 +896,8 @@ export const updateProduct = async (req, res, next) => {
     if (product.stock === 0) {
       product.isAvailable = false;
     }
+
+    assertNoBase64Image(product.images, 'product update images');
 
     await product.save();
 

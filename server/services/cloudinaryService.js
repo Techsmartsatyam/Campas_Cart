@@ -21,11 +21,7 @@ export const uploadBase64Image = async (base64Str, options = {}) => {
   }
 
   if (!isCloudinaryConfigured()) {
-    return {
-      success: false,
-      error: 'Cloudinary environment variables (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET) not set',
-      url: base64Str,
-    };
+    throw new Error('Cloudinary environment variables (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET) are not set. Base64 storage is strictly prohibited.');
   }
 
   try {
@@ -38,6 +34,10 @@ export const uploadBase64Image = async (base64Str, options = {}) => {
 
     const result = await cloudinary.uploader.upload(base64Str, uploadOptions);
 
+    if (!result?.secure_url) {
+      throw new Error('Cloudinary response did not contain a valid secure_url');
+    }
+
     return {
       success: true,
       url: result.secure_url,
@@ -47,10 +47,35 @@ export const uploadBase64Image = async (base64Str, options = {}) => {
     };
   } catch (error) {
     console.error('❌ Cloudinary Upload Error:', error.message);
-    return {
-      success: false,
-      error: error.message,
-      url: base64Str, // Keep original Base64 for safety
-    };
+    throw new Error(`Cloudinary upload failed: ${error.message}`);
   }
+};
+
+/**
+ * Generate server-side signed Cloudinary upload parameters for browser direct uploads.
+ * Keeps CLOUDINARY_API_SECRET strictly on the server.
+ */
+export const generateCloudinarySignature = (folder = 'nearcart/products') => {
+  if (!isCloudinaryConfigured()) {
+    throw new Error('Cloudinary is not configured on the server.');
+  }
+
+  const timestamp = Math.floor(Date.now() / 1000);
+  const paramsToSign = {
+    timestamp,
+    folder,
+  };
+
+  const signature = cloudinary.utils.api_sign_request(
+    paramsToSign,
+    process.env.CLOUDINARY_API_SECRET
+  );
+
+  return {
+    signature,
+    timestamp,
+    apiKey: process.env.CLOUDINARY_API_KEY,
+    cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+    folder,
+  };
 };

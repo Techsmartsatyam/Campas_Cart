@@ -357,7 +357,46 @@ export default function Shopkeeper() {
     setImageInput('');
   };
 
-  // Handle local File selection (Convert to Data URL preview & validate max 5)
+  // Direct Browser -> Cloudinary upload helper using server signature
+  const uploadDirectToCloudinary = async (fileItem) => {
+    if (typeof fileItem === 'string') {
+      return fileItem; // Already a Cloudinary URL or remote URL
+    }
+    const file = fileItem.file;
+    if (!file) {
+      throw new Error('Invalid file object');
+    }
+
+    // 1. Get signed params from server
+    const signRes = await api.post('/shopkeeper/cloudinary/sign', { folder: 'nearcart/products' });
+    if (!signRes.success || !signRes.signature) {
+      throw new Error('Failed to get Cloudinary upload signature from server');
+    }
+
+    // 2. Prepare FormData with raw File object (NO Base64 conversion)
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('api_key', signRes.apiKey);
+    formData.append('timestamp', signRes.timestamp);
+    formData.append('signature', signRes.signature);
+    formData.append('folder', signRes.folder);
+
+    // 3. Upload directly from browser to Cloudinary upload endpoint
+    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${signRes.cloudName}/image/upload`;
+    const response = await fetch(cloudinaryUrl, {
+      method: 'POST',
+      body: formData,
+    });
+
+    const result = await response.json();
+    if (!response.ok || !result.secure_url) {
+      throw new Error(result.error?.message || 'Direct Cloudinary upload failed');
+    }
+
+    return result.secure_url;
+  };
+
+  // Handle local File selection (Store File object + URL.createObjectURL for fast local preview)
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
     if (!files || files.length === 0) return;
@@ -367,7 +406,8 @@ export default function Shopkeeper() {
       return;
     }
 
-    files.forEach((file) => {
+    const newImageItems = [];
+    for (const file of files) {
       if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
         setError('Only JPG, PNG and WEBP images are allowed.');
         return;
@@ -376,23 +416,27 @@ export default function Shopkeeper() {
         setError('Image size must be less than 5MB.');
         return;
       }
+      const previewUrl = URL.createObjectURL(file);
+      newImageItems.push({ file, previewUrl });
+    }
 
-      const reader = new FileReader();
-      reader.onload = () => {
-        setProductForm((prev) => ({
-          ...prev,
-          images: [...prev.images, reader.result],
-        }));
-      };
-      reader.readAsDataURL(file);
-    });
+    setProductForm((prev) => ({
+      ...prev,
+      images: [...prev.images, ...newImageItems],
+    }));
   };
 
   // Remove Image from product images list
   const handleRemoveImage = (index) => {
-    setProductForm({
-      ...productForm,
-      images: productForm.images.filter((_, i) => i !== index),
+    setProductForm((prev) => {
+      const target = prev.images[index];
+      if (target && typeof target === 'object' && target.previewUrl) {
+        URL.revokeObjectURL(target.previewUrl);
+      }
+      return {
+        ...prev,
+        images: prev.images.filter((_, i) => i !== index),
+      };
     });
   };
 
@@ -423,10 +467,28 @@ export default function Shopkeeper() {
 
     try {
       setProductSubmitting(true);
+
+      // Upload raw File objects DIRECTLY to Cloudinary before calling Product API
+      const uploadedCloudinaryUrls = await Promise.all(
+        productForm.images.map((imgItem) => uploadDirectToCloudinary(imgItem))
+      );
+
+      // Clean up object URLs
+      productForm.images.forEach((imgItem) => {
+        if (typeof imgItem === 'object' && imgItem.previewUrl) {
+          URL.revokeObjectURL(imgItem.previewUrl);
+        }
+      });
+
+      const sanitizedProductForm = {
+        ...productForm,
+        images: uploadedCloudinaryUrls,
+      };
+
       let res;
       const shopParam = selectedShopId ? `?shopId=${selectedShopId}` : '';
       if (editingProductId) {
-        res = await api.put(`/shopkeeper/products/${editingProductId}${shopParam}`, productForm);
+        res = await api.put(`/shopkeeper/products/${editingProductId}${shopParam}`, sanitizedProductForm);
       } else {
         const clientKey = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : 'prod-' + Date.now() + '-' + Math.random().toString(36).substring(2);
         
@@ -480,7 +542,7 @@ export default function Shopkeeper() {
         }
 
         res = await api.post(`/shopkeeper/products${shopParam}`, {
-          ...productForm,
+          ...sanitizedProductForm,
           variants,
           idempotencyKey: clientKey,
         });
@@ -2253,21 +2315,23 @@ export default function Shopkeeper() {
 
                 {productForm.images.length > 0 && (
                   <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-                    {productForm.images.map((imgUrl, index) => (
-                      <div
-                        key={index}
-                        style={{
-                          width: '70px',
-                          height: '70px',
-                          borderRadius: '0.375rem',
-                          border: index === 0 ? '2px solid var(--primary)' : '1px solid var(--border-color)',
-                          position: 'relative',
-                          overflow: 'hidden',
-                          background: '#f1f5f9',
-                          flexShrink: 0,
-                        }}
-                      >
-                        <img src={imgUrl} alt={`Preview ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    {productForm.images.map((imgItem, index) => {
+                      const displaySrc = typeof imgItem === 'object' ? imgItem.previewUrl : imgItem;
+                      return (
+                        <div
+                          key={index}
+                          style={{
+                            width: '70px',
+                            height: '70px',
+                            borderRadius: '0.375rem',
+                            border: index === 0 ? '2px solid var(--primary)' : '1px solid var(--border-color)',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            background: '#f1f5f9',
+                            flexShrink: 0,
+                          }}
+                        >
+                          <img src={displaySrc} alt={`Preview ${index + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                         {index === 0 && (
                           <span style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(2, 132, 199, 0.9)', color: '#ffffff', fontSize: '0.6rem', fontWeight: '800', textAlign: 'center' }}>
                             MAIN
@@ -2295,8 +2359,9 @@ export default function Shopkeeper() {
                           <X size={12} />
                         </button>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
+                </div>
                 )}
               </div>
 

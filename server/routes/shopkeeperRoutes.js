@@ -17,6 +17,7 @@ import {
   updateShopkeeperCoupon,
   toggleShopkeeperCoupon,
   deleteShopkeeperCoupon,
+  getCloudinarySignature,
 } from '../controllers/shopkeeperController.js';
 import { protect, authorizeRoles } from '../middleware/authMiddleware.js';
 
@@ -29,6 +30,8 @@ const router = express.Router();
 
 // All routes require authentication & SHOPKEEPER role
 router.use(protect, authorizeRoles('SHOPKEEPER'));
+
+router.post('/cloudinary/sign', getCloudinarySignature);
 
 router.get('/stats', getShopkeeperStats);
 
