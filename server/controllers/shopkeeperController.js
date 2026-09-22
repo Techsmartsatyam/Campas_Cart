@@ -215,7 +215,22 @@ export const createShop = async (req, res, next) => {
       }
     }
 
+    const shopIdTemp = new mongoose.Types.ObjectId();
+    let finalLogo = logo || '';
+    let finalCover = coverImage || '';
+
+    if (typeof finalLogo === 'string' && finalLogo.startsWith('data:image/')) {
+      const uploadRes = await uploadBase64Image(finalLogo, { folder: `nearcart/shops/${shopIdTemp}/logo`, public_id: `logo_${shopIdTemp}`, overwrite: true });
+      if (uploadRes.success && uploadRes.url) finalLogo = uploadRes.url;
+    }
+
+    if (typeof finalCover === 'string' && finalCover.startsWith('data:image/')) {
+      const uploadRes = await uploadBase64Image(finalCover, { folder: `nearcart/shops/${shopIdTemp}/cover`, public_id: `coverImage_${shopIdTemp}`, overwrite: true });
+      if (uploadRes.success && uploadRes.url) finalCover = uploadRes.url;
+    }
+
     const shop = await Shop.create({
+      _id: shopIdTemp,
       name: name.trim(),
       description: description ? description.trim() : '',
       phone: phone ? phone.trim() : '',
@@ -227,8 +242,8 @@ export const createShop = async (req, res, next) => {
       minimumOrderAmount: Number(minimumOrderAmount) || 0,
       deliveryFee: Number(deliveryFee) || 0,
       packingCharges: packingCharges !== undefined ? Math.max(0, Number(packingCharges) || 0) : 0,
-      logo: logo || '',
-      coverImage: coverImage || '',
+      logo: finalLogo,
+      coverImage: finalCover,
       foodType: finalFoodType,
       isApproved: true, // Auto approve for convenience in development
       isActive: true,
@@ -365,12 +380,36 @@ export const updateShop = async (req, res, next) => {
     if (deliveryFee !== undefined) shop.deliveryFee = Number(deliveryFee);
     if (deliveryChargeSlabs !== undefined) shop.deliveryChargeSlabs = deliveryChargeSlabs;
     if (packingCharges !== undefined) shop.packingCharges = Math.max(0, Number(packingCharges) || 0);
-    if (logo !== undefined) shop.logo = logo;
-    if (coverImage !== undefined) shop.coverImage = coverImage;
+    if (logo !== undefined) {
+      if (typeof logo === 'string' && logo.startsWith('data:image/')) {
+        const uploadRes = await uploadBase64Image(logo, { folder: `nearcart/shops/${shop._id}/logo`, public_id: `logo_${shop._id}`, overwrite: true });
+        if (uploadRes.success && uploadRes.url) shop.logo = uploadRes.url;
+      } else {
+        shop.logo = logo;
+      }
+    }
+    if (coverImage !== undefined) {
+      if (typeof coverImage === 'string' && coverImage.startsWith('data:image/')) {
+        const uploadRes = await uploadBase64Image(coverImage, { folder: `nearcart/shops/${shop._id}/cover`, public_id: `coverImage_${shop._id}`, overwrite: true });
+        if (uploadRes.success && uploadRes.url) shop.coverImage = uploadRes.url;
+      } else {
+        shop.coverImage = coverImage;
+      }
+    }
     if (isOpen !== undefined) shop.isOpen = Boolean(isOpen);
     if (upiEnabled !== undefined) shop.upiEnabled = Boolean(upiEnabled);
     if (upiId !== undefined) shop.upiId = upiId.trim();
-    if (upiQrImage !== undefined) shop.upiQrImage = upiQrImage;
+    if (upiQrImage !== undefined) {
+      if (typeof upiQrImage === 'string' && upiQrImage.startsWith('data:image/')) {
+        const uploadRes = await uploadBase64Image(upiQrImage, { folder: `nearcart/shops/${shop._id}/upi-qr`, public_id: `upiQrImage_${shop._id}`, overwrite: true });
+        if (uploadRes.success && uploadRes.url) {
+          shop.upiQrImage = uploadRes.url;
+          if (uploadRes.public_id) shop.upiQrPublicId = uploadRes.public_id;
+        }
+      } else {
+        shop.upiQrImage = upiQrImage;
+      }
+    }
 
     if (location && Array.isArray(location.coordinates) && location.coordinates.length === 2) {
       shop.location = {
