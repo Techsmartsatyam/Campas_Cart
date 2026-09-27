@@ -13,7 +13,7 @@ const sendTokenResponse = (user, statusCode, res, message = 'Success') => {
   );
 
   const cookieName = process.env.COOKIE_NAME || 'campuscart_token';
-  const isProduction = process.env.NODE_ENV === 'production';
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
   const maxAgeMs = 15 * 24 * 60 * 60 * 1000; // 15 days
 
   const options = {
