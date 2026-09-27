@@ -252,7 +252,6 @@ export default function Register() {
             size="large"
             text="continue_with"
             shape="rectangular"
-            width="100%"
           />
         </div>
 
