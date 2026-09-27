@@ -19,7 +19,7 @@ const userSchema = new mongoose.Schema(
     },
     phone: {
       type: String,
-      required: [true, 'Phone number is required'],
+      default: '',
       trim: true,
     },
     password: {
@@ -52,6 +52,19 @@ const userSchema = new mongoose.Schema(
     profileImage: {
       type: String,
       default: '',
+    },
+    googleId: {
+      type: String,
+      default: '',
+    },
+    authProvider: {
+      type: String,
+      enum: ['local', 'google'],
+      default: 'local',
+    },
+    passwordSet: {
+      type: Boolean,
+      default: true,
     },
     isActive: {
       type: Boolean,

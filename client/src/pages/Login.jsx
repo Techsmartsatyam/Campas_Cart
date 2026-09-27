@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { Eye, EyeOff, LogIn, AlertCircle } from 'lucide-react';
 
@@ -10,9 +11,53 @@ export default function Login() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  const handleAuthSuccessRedirect = (user) => {
+    const role = user?.role;
+    const redirectPath =
+      location.state?.from?.pathname ||
+      (role === 'STUDENT'
+        ? '/student'
+        : role === 'SHOPKEEPER'
+        ? '/shopkeeper'
+        : role === 'DELIVERY_BOY'
+        ? '/delivery'
+        : role === 'ADMIN'
+        ? '/admin'
+        : '/');
+    navigate(redirectPath, { replace: true });
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
+    setSubmitting(true);
+    try {
+      if (!credentialResponse?.credential) {
+        throw new Error('No Google credentials received');
+      }
+
+      const res = await googleLogin({
+        credential: credentialResponse.credential,
+      });
+
+      if (res.success && res.user) {
+        handleAuthSuccessRedirect(res.user);
+      } else {
+        setError(res.message || 'Google authentication failed');
+      }
+    } catch (err) {
+      setError(err.message || 'Google Sign-In failed. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError('Google Sign-In was cancelled or encountered an error.');
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,19 +67,7 @@ export default function Login() {
     try {
       const res = await login(email, password);
       if (res.success && res.user) {
-        const role = res.user.role;
-        const redirectPath =
-          location.state?.from?.pathname ||
-          (role === 'STUDENT'
-            ? '/student'
-            : role === 'SHOPKEEPER'
-            ? '/shopkeeper'
-            : role === 'DELIVERY_BOY'
-            ? '/delivery'
-            : role === 'ADMIN'
-            ? '/admin'
-            : '/');
-        navigate(redirectPath, { replace: true });
+        handleAuthSuccessRedirect(res.user);
       } else {
         setError(res.message || 'Login failed');
       }
@@ -125,6 +158,33 @@ export default function Login() {
             {submitting ? 'Signing In...' : 'Sign In'}
           </button>
         </form>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            margin: '1.5rem 0',
+            gap: '0.75rem',
+          }}
+        >
+          <div style={{ flex: 1, height: '1px', background: 'var(--card-border, #e2e8f0)' }} />
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #64748b)', fontWeight: '500' }}>
+            OR
+          </span>
+          <div style={{ flex: 1, height: '1px', background: 'var(--card-border, #e2e8f0)' }} />
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            theme="outline"
+            size="large"
+            text="continue_with"
+            shape="rectangular"
+            width="100%"
+          />
+        </div>
 
         <div style={{ textAlign: 'center', marginTop: '1.75rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
           Don't have a student account?{' '}

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import { useAuth } from '../context/AuthContext';
 import { UserPlus, AlertCircle, Eye, EyeOff, Info } from 'lucide-react';
 
@@ -16,11 +17,39 @@ export default function Register() {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  const { register } = useAuth();
+  const { register, googleLogin } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleGoogleSuccess = async (credentialResponse) => {
+    setError('');
+    setSubmitting(true);
+    try {
+      if (!credentialResponse?.credential) {
+        throw new Error('No Google credentials received');
+      }
+
+      const res = await googleLogin({
+        credential: credentialResponse.credential,
+      });
+
+      if (res.success && res.user) {
+        navigate('/student', { replace: true });
+      } else {
+        setError(res.message || 'Google registration failed');
+      }
+    } catch (err) {
+      setError(err.message || 'Google Sign-Up failed. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError('Google Sign-Up was cancelled or encountered an error.');
   };
 
   const handleSubmit = async (e) => {
@@ -200,6 +229,33 @@ export default function Register() {
           </button>
         </form>
 
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            margin: '1.5rem 0',
+            gap: '0.75rem',
+          }}
+        >
+          <div style={{ flex: 1, height: '1px', background: 'var(--card-border, #e2e8f0)' }} />
+          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary, #64748b)', fontWeight: '500' }}>
+            OR
+          </span>
+          <div style={{ flex: 1, height: '1px', background: 'var(--card-border, #e2e8f0)' }} />
+        </div>
+
+        <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            theme="outline"
+            size="large"
+            text="continue_with"
+            shape="rectangular"
+            width="100%"
+          />
+        </div>
+
         <div style={{ textAlign: 'center', marginTop: '1.5rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
           Already have an account?{' '}
           <Link to="/login" style={{ color: 'var(--primary)', fontWeight: '600' }}>
@@ -210,3 +266,4 @@ export default function Register() {
     </div>
   );
 }
+

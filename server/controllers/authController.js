@@ -33,6 +33,9 @@ const sendTokenResponse = (user, statusCode, res, message = 'Success') => {
     role: user.role,
     accountStatus: user.accountStatus,
     profileImage: user.profileImage,
+    authProvider: user.authProvider || 'local',
+    passwordSet: user.passwordSet !== undefined ? user.passwordSet : true,
+    googleConnected: Boolean(user.googleId),
     isActive: user.isActive,
     isVerified: user.isVerified,
     createdAt: user.createdAt,
@@ -130,7 +133,93 @@ export const register = async (req, res, next) => {
 // @access  Public
 export const googleAuth = async (req, res, next) => {
   try {
-    const { email, name, phone, googleId } = req.body;
+    const { token: googleToken, credential, email: bodyEmail, name: bodyName, phone: bodyPhone, googleId: bodyGoogleId, picture: bodyPicture } = req.body;
+
+    let email = bodyEmail;
+    let name = bodyName;
+    let googleId = bodyGoogleId;
+    let profileImage = bodyPicture || '';
+
+    // If an ID token / credential was supplied, verify it server-side using Google Auth Library
+    const idTokenToVerify = credential || googleToken;
+    if (idTokenToVerify) {
+      try {
+        const { OAuth2Client } = await import('google-auth-library');
+        const googleClientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID;
+        
+        console.log('[Google Auth Info] Starting verification:', {
+          hasCredential: Boolean(idTokenToVerify),
+          hasConfiguredClientId: Boolean(googleClientId),
+        });
+
+        const client = new OAuth2Client(googleClientId);
+
+        const ticket = await client.verifyIdToken({
+          idToken: idTokenToVerify,
+          audience: googleClientId ? [googleClientId] : undefined,
+        });
+        const payload = ticket.getPayload();
+
+        console.log('[Google Auth Info] Verification result:', {
+          hasPayload: Boolean(payload),
+          hasEmail: Boolean(payload?.email),
+          emailVerified: Boolean(payload?.email_verified),
+          hasSub: Boolean(payload?.sub),
+        });
+
+        if (!payload) {
+          return res.status(401).json({
+            success: false,
+            message: 'Unable to parse Google authentication payload. Please try again.',
+          });
+        }
+
+        if (!payload.email) {
+          return res.status(400).json({
+            success: false,
+            message: 'Your Google account did not provide an email address.',
+          });
+        }
+
+        if (payload.email_verified === false) {
+          return res.status(403).json({
+            success: false,
+            message: 'Your Google account email address is not verified by Google.',
+          });
+        }
+
+        email = payload.email;
+        name = payload.name || name;
+        googleId = payload.sub || googleId;
+        if (payload.picture && !profileImage) {
+          profileImage = payload.picture;
+        }
+      } catch (verifyErr) {
+        console.error('[Google Auth Error] Token verification failed:', verifyErr.message);
+
+        // If direct verified payload was provided in fallback body (e.g. dev mode), continue only if email exists
+        if (!email) {
+          let userMessage = 'Google Sign-In verification failed. Please try again.';
+          if (verifyErr.message?.includes('expired')) {
+            userMessage = 'Google Sign-In session has expired. Please try again.';
+          } else if (verifyErr.message?.includes('audience mismatch') || verifyErr.message?.includes('Recipient')) {
+            userMessage = 'Google Client ID mismatch between frontend and backend configuration.';
+          } else if (verifyErr.message?.includes('wrong number of segments')) {
+            userMessage = 'Invalid Google credential token format received.';
+          }
+
+          return res.status(401).json({
+            success: false,
+            message: userMessage,
+          });
+        }
+      }
+    } else if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: 'No Google authentication credentials were provided.',
+      });
+    }
 
     if (!email) {
       return res.status(400).json({
@@ -152,13 +241,20 @@ export const googleAuth = async (req, res, next) => {
     let user = await User.findOne({ email: normalizedEmail });
 
     if (user) {
-      // Existing Google account login -> DO NOT send welcome notification or email
+      // Existing user login
       if (!user.isActive) {
         return res.status(401).json({
           success: false,
           message: 'Your account is deactivated. Please contact support.',
         });
       }
+
+      // Link googleId if not already present
+      if (googleId && !user.googleId) {
+        user.googleId = googleId;
+        await user.save();
+      }
+
       return sendTokenResponse(user, 200, res, 'Google login successful');
     }
 
@@ -167,11 +263,16 @@ export const googleAuth = async (req, res, next) => {
     user = await User.create({
       name: name ? name.trim() : 'Google User',
       email: normalizedEmail,
-      phone: phone ? phone.trim() : '0000000000',
+      phone: bodyPhone ? bodyPhone.trim() : '',
       password: randomPassword,
       role: 'STUDENT',
       accountStatus: 'APPROVED',
+      profileImage: profileImage || '',
+      googleId: googleId || '',
+      authProvider: 'google',
+      passwordSet: false,
       isActive: true,
+      isVerified: true,
     });
 
     // Create in-app welcome notification for newly registered Google student
@@ -300,6 +401,66 @@ export const getMe = async (req, res, next) => {
         role: user.role,
         accountStatus: user.accountStatus,
         profileImage: user.profileImage,
+        authProvider: user.authProvider || 'local',
+        passwordSet: user.passwordSet !== undefined ? user.passwordSet : true,
+        googleConnected: Boolean(user.googleId),
+        isActive: user.isActive,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// @route   POST /api/auth/set-password
+// @desc    Set password for Google-created or existing authenticated user
+// @access  Private
+export const setPassword = async (req, res, next) => {
+  try {
+    const { password } = req.body;
+
+    if (!password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a new password',
+      });
+    }
+
+    if (password.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'Password must be at least 6 characters long',
+      });
+    }
+
+    const user = await User.findById(req.user._id).select('+password');
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found',
+      });
+    }
+
+    user.password = password;
+    user.passwordSet = true;
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Password set successfully. You can now sign in with Google or your email and password.',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        accountStatus: user.accountStatus,
+        profileImage: user.profileImage,
+        authProvider: user.authProvider || 'local',
+        passwordSet: true,
+        googleConnected: Boolean(user.googleId),
         isActive: user.isActive,
         isVerified: user.isVerified,
         createdAt: user.createdAt,

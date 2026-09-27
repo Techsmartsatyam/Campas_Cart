@@ -6,6 +6,7 @@ import {
   googleAuth,
   logout,
   getMe,
+  setPassword,
   getSocketToken,
   updateProfile,
   createStaff,
@@ -23,6 +24,7 @@ router.post('/logout', logout);
 
 // Protected routes
 router.get('/me', protect, getMe);
+router.post('/set-password', protect, setPassword);
 router.get('/socket-token', protect, getSocketToken);
 router.put('/profile', protect, updateProfile);
 

@@ -42,6 +42,22 @@ export const AuthProvider = ({ children }) => {
     return res;
   };
 
+  const googleLogin = async (googlePayload) => {
+    const res = await api.post('/auth/google', googlePayload);
+    if (res.success && res.user) {
+      setUser(res.user);
+    }
+    return res;
+  };
+
+  const setPassword = async (password) => {
+    const res = await api.post('/auth/set-password', { password });
+    if (res.success && res.user) {
+      setUser(res.user);
+    }
+    return res;
+  };
+
   const logout = async () => {
     try {
       await api.post('/auth/logout');
@@ -60,6 +76,8 @@ export const AuthProvider = ({ children }) => {
         isAuthenticated: !!user,
         login,
         register,
+        googleLogin,
+        setPassword,
         logout,
         refreshUser,
       }}

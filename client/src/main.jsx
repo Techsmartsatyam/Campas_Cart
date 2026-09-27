@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import App from './App.jsx';
 import ErrorBoundary from './components/ErrorBoundary.jsx';
 import { AuthProvider } from './context/AuthContext.jsx';
@@ -15,14 +16,18 @@ window.addEventListener('beforeinstallprompt', (event) => {
   window.__nearCartDeferredInstallPrompt = event;
 });
 
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1005956411546-googleclientidplaceholder.apps.googleusercontent.com';
+
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ErrorBoundary>
-      <AuthProvider>
-        <NotificationProvider>
-          <App />
-        </NotificationProvider>
-      </AuthProvider>
+      <GoogleOAuthProvider clientId={googleClientId}>
+        <AuthProvider>
+          <NotificationProvider>
+            <App />
+          </NotificationProvider>
+        </AuthProvider>
+      </GoogleOAuthProvider>
     </ErrorBoundary>
   </React.StrictMode>,
 );

@@ -24,6 +24,7 @@ const Delivery = lazy(() => import('./pages/Delivery'));
 const Admin = lazy(() => import('./pages/Admin'));
 const About = lazy(() => import('./pages/About'));
 const Profile = lazy(() => import('./pages/Profile'));
+const SetPassword = lazy(() => import('./pages/SetPassword'));
 import NearCartLoader from './components/NearCartLoader';
 
 const PageFallback = () => (
@@ -87,6 +88,14 @@ function App() {
             <Route path="unauthorized" element={<Unauthorized />} />
             <Route path="about" element={<About />} />
             <Route path="profile" element={<Profile />} />
+            <Route
+              path="set-password"
+              element={
+                <ProtectedRoute>
+                  <SetPassword />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Protected Student Routes */}
             <Route
