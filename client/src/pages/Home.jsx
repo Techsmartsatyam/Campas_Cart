@@ -123,39 +123,6 @@ export default function Home() {
       {/* Hero Section */}
       <section style={{ padding: '4.5rem 0 3.5rem 0', textAlign: 'center', position: 'relative' }}>
         <div className="container">
-          {/* Status badge */}
-          <div
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.4rem 1rem',
-              borderRadius: '9999px',
-              background: '#f1f5f9',
-              border: '1px solid var(--border-color)',
-              fontSize: '0.85rem',
-              marginBottom: '2rem',
-            }}
-          >
-            {apiStatus.loading ? (
-              <span style={{ color: 'var(--text-muted)' }}>Connecting to NearCart network...</span>
-            ) : apiStatus.success ? (
-              <>
-                <CheckCircle2 style={{ width: '0.9rem', height: '0.9rem', color: 'var(--success)' }} />
-                <span style={{ color: 'var(--success)', fontWeight: '500' }}>{apiStatus.message}</span>
-              </>
-            ) : (
-              <>
-                <AlertCircle style={{ width: '0.9rem', height: '0.9rem', color: 'var(--danger)' }} />
-                <span style={{ color: 'var(--danger)', fontWeight: '500' }}>API Offline (Run Backend Server)</span>
-              </>
-            )}
-          </div>
-
-          <div style={{ marginBottom: '1.25rem' }}>
-            
-          </div>
-
           <h1
             style={{
               fontSize: 'clamp(2.2rem, 5vw, 3.6rem)',
