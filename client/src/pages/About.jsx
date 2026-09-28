@@ -98,7 +98,7 @@ export default function About() {
 
           <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', flexWrap: 'wrap' }}>
             <Link
-              to="/student"
+              to="/user"
               className="btn-primary"
               style={{
                 padding: '0.75rem 1.5rem',

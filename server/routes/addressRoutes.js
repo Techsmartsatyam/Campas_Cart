@@ -10,7 +10,7 @@ import {
 const router = express.Router();
 
 router.use(protect);
-router.use(authorizeRoles ('STUDENT'));
+router.use(authorizeRoles ('USER'));
 
 router.get('/', getAddresses);
 router.post('/', createAddress);

@@ -23,7 +23,7 @@ async function runCodPaymentTests() {
     await mongoose.connect(process.env.MONGO_URI);
     console.log('Connected to DB.\n');
 
-    testStudent = await User.findOne({ role: 'STUDENT' });
+    testStudent = await User.findOne({ role: 'USER' });
     testDeliveryBoy = await User.findOne({ role: 'DELIVERY_BOY' });
     testShop = await Shop.findOne({});
     testProduct = await Product.findOne({ shop: testShop._id });

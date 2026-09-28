@@ -22,7 +22,7 @@ async function runE2EVerification() {
     console.log('✅ Connected to MongoDB.');
 
     // Step 0: Set up test user, shop, product
-    studentUser = await User.findOne({ role: 'STUDENT' });
+    studentUser = await User.findOne({ role: 'USER' });
     testShop = await Shop.findOne({});
     testProduct = await Product.findOne({ shop: testShop._id });
 

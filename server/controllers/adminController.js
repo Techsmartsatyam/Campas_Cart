@@ -320,7 +320,7 @@ export const previewCleanData = async (req, res, next) => {
       reviews: targetList.includes('reviews') ? await mongoose.model('Review').countDocuments() : 0,
       notifications: targetList.includes('notifications') ? await mongoose.model('Notification').countDocuments() : 0,
       carts: targetList.includes('carts') ? await mongoose.model('Cart').countDocuments() : 0,
-      testUsers: targetList.includes('testUsers') ? await User.countDocuments({ role: 'STUDENT' }) : 0,
+      testUsers: targetList.includes('testUsers') ? await User.countDocuments({ role: 'USER' }) : 0,
     };
 
     return res.status(200).json({
@@ -486,16 +486,16 @@ export const executeCleanData = async (req, res, next) => {
       deletedSummary.carts += cartRes.deletedCount || 0;
     }
 
-    // F. TEST / STUDENT USERS
+    // F. TEST / REGULAR USERS
     if (selectedTargets.includes('testUsers')) {
-      // Find all STUDENT users (Excludes ADMIN, SHOPKEEPER, DELIVERY_BOY)
-      const students = await User.find({ role: 'STUDENT' }).select('_id');
-      const studentIds = students.map((s) => s._id);
+      // Find all USER role users (Excludes ADMIN, SHOPKEEPER, DELIVERY_BOY)
+      const users = await User.find({ role: 'USER' }).select('_id');
+      const userIds = users.map((s) => s._id);
 
-      if (studentIds.length > 0) {
-        await Address.deleteMany({ user: { $in: studentIds } });
-        await Cart.deleteMany({ user: { $in: studentIds } });
-        const userRes = await User.deleteMany({ role: 'STUDENT' });
+      if (userIds.length > 0) {
+        await Address.deleteMany({ user: { $in: userIds } });
+        await Cart.deleteMany({ user: { $in: userIds } });
+        const userRes = await User.deleteMany({ role: 'USER' });
         deletedSummary.testUsers = userRes.deletedCount || 0;
       }
     }

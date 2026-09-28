@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { getShopById, getProducts, getCategories } from '../../services/studentService';
-import { ProductCard, LoadingSpinner, EmptyState, SearchBar, CategoryCard, formatTimeAMPM, isShopOpen } from '../../components/StudentUIComponents';
+import { getShopById, getProducts, getCategories } from '../../services/userService';
+import { ProductCard, LoadingSpinner, EmptyState, SearchBar, CategoryCard, formatTimeAMPM, isShopOpen } from '../../components/UserUIComponents';
 import { Store, ArrowLeft, Phone, MapPin, Star, Clock, Tag } from 'lucide-react';
 import api from '../../services/api';
 
@@ -122,7 +122,7 @@ export default function ShopDetails() {
       <div className="container" style={{ padding: '4rem 1.5rem', textAlign: 'center' }}>
         <div className="glass-card" style={{ maxWidth: '500px', margin: '0 auto' }}>
           <h3 style={{ fontSize: '1.5rem', color: 'var(--danger)', marginBottom: '1rem' }}>{error || 'Shop Unavailable'}</h3>
-          <button onClick={() => navigate('/student')} className="btn-secondary">
+          <button onClick={() => navigate('/user')} className="btn-secondary">
             Back to NearCart Stores
           </button>
         </div>
@@ -144,7 +144,7 @@ export default function ShopDetails() {
   return (
     <div className="container" style={{ padding: '2.5rem 1.5rem 5rem 1.5rem' }}>
       <button
-        onClick={() => navigate('/student')}
+        onClick={() => navigate('/user')}
         className="btn-secondary"
         style={{ marginBottom: '1.5rem', padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}
       >
@@ -353,7 +353,7 @@ export default function ShopDetails() {
                 <ProductCard
                   key={prod._id}
                   product={prod}
-                  onClick={() => navigate(`/student/products/${prod._id}`)}
+                  onClick={() => navigate(`/user/products/${prod._id}`)}
                 />
               ))}
             </div>
@@ -452,7 +452,7 @@ function ShopReviewsSection({ shopId, shopName }) {
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
           {reviews.map((rev) => {
-            const uName = rev.user?.name || 'Verified Student';
+            const uName = rev.user?.name || 'Verified User';
             const uImg = rev.user?.profileImage;
             const dateStr = new Date(rev.createdAt).toLocaleDateString('en-IN', {
               day: 'numeric',

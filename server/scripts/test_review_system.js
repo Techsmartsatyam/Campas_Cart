@@ -22,26 +22,26 @@ async function runReviewSystemTests() {
     // 1. Setup/Find Test Entities
     console.log('\n--- 1. SETTING UP TEST DATA ---');
 
-    let student = await User.findOne({ role: 'STUDENT' });
+    let student = await User.findOne({ role: 'USER' });
     if (!student) {
       student = await User.create({
         name: 'Test Student',
         email: 'teststudent_review@nearcart.com',
         phone: '9876543210',
         password: 'Password123!',
-        role: 'STUDENT',
+        role: 'USER',
         accountStatus: 'APPROVED',
       });
     }
 
-    let otherStudent = await User.findOne({ role: 'STUDENT', _id: { $ne: student._id } });
+    let otherStudent = await User.findOne({ role: 'USER', _id: { $ne: student._id } });
     if (!otherStudent) {
       otherStudent = await User.create({
         name: 'Other Student',
         email: 'otherstudent_review@nearcart.com',
         phone: '9876543211',
         password: 'Password123!',
-        role: 'STUDENT',
+        role: 'USER',
         accountStatus: 'APPROVED',
       });
     }

@@ -765,10 +765,10 @@ export default function Delivery() {
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
           <div>
             <h3 style={{ fontSize: '1.2rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <MessageSquare size={18} style={{ color: 'var(--primary)' }} /> Student Delivery Reviews
+              <MessageSquare size={18} style={{ color: 'var(--primary)' }} /> User Delivery Reviews
             </h3>
             <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.825rem', color: 'var(--text-muted)' }}>
-              Feedback submitted by students for completed deliveries
+              Feedback submitted by users for completed deliveries
             </p>
           </div>
 
@@ -788,7 +788,7 @@ export default function Delivery() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem' }}>
             {deliveryReviews.map((rev) => {
-              const uName = rev.user?.name || 'Verified Student';
+              const uName = rev.user?.name || 'Verified User';
               const uImg = rev.user?.profileImage;
               const dateStr = new Date(rev.createdAt).toLocaleDateString('en-IN', {
                 day: 'numeric',

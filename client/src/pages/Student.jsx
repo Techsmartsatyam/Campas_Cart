@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getCategories, getShops } from '../services/studentService';
+import { getCategories, getShops } from '../services/userService';
 import {
   SearchBar,
   CategoryCard,
   ShopCard,
   LoadingSpinner,
-} from '../components/StudentUIComponents';
+} from '../components/UserUIComponents';
 import { Store, Compass, ArrowRight } from 'lucide-react';
 
 export default function Student() {
@@ -93,8 +93,8 @@ export default function Student() {
 
   const handleShopClick = (shopId) => {
     const navUrl = selectedCategory
-      ? `/student/shops/${shopId}?category=${encodeURIComponent(selectedCategory)}`
-      : `/student/shops/${shopId}`;
+      ? `/user/shops/${shopId}?category=${encodeURIComponent(selectedCategory)}`
+      : `/user/shops/${shopId}`;
     navigate(navUrl);
   };
 
@@ -130,12 +130,12 @@ export default function Student() {
                 fontWeight: '800',
               }}
             >
-              STUDENT MARKETPLACE
+              LOCAL MARKETPLACE
             </span>
           </div>
 
           <h1 style={{ fontSize: '1.8rem', fontWeight: '800', marginBottom: '0.4rem', color: 'var(--text-primary)' }}>
-            Welcome back, {user?.name ? user.name.split(' ')[0] : 'Student'}! 👋
+            Welcome back, {user?.name ? user.name.split(' ')[0] : 'User'}! 👋
           </h1>
           <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '1.25rem' }}>
             Select a nearby shop or hotel to browse its products and menu.

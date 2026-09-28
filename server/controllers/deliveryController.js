@@ -121,9 +121,9 @@ export const acceptDelivery = async (req, res, next) => {
     // 4. Fetch Delivery Boy details safely (name, phone, email, profileImage)
     const deliveryBoy = await User.findById(deliveryBoyId).select('name phone email profileImage');
 
-    // 5. Create Notifications for Student & Shopkeeper
+    // 5. Create Notifications for User & Shopkeeper
     try {
-      // A. Student Notification
+      // A. User Notification
       await Notification.create({
         user: order.user,
         title: 'Delivery Boy Assigned',
@@ -169,8 +169,8 @@ export const acceptDelivery = async (req, res, next) => {
         deliveryBoy: deliveryBoyData,
       });
 
-      // Create Notification for Student
-      const studentNotif = await Notification.create({
+      // Create Notification for User
+      const userNotif = await Notification.create({
         user: order.user,
         title: 'Delivery Partner Assigned',
         message: `${deliveryBoy.name} has accepted delivery for order ${order.orderNumber}.`,
@@ -180,23 +180,23 @@ export const acceptDelivery = async (req, res, next) => {
       });
 
       io.to(`user:${order.user.toString()}`).emit('notification:new', {
-        _id: studentNotif._id,
-        title: studentNotif.title,
-        message: studentNotif.message,
-        type: studentNotif.type,
-        relatedOrder: studentNotif.relatedOrder,
-        isRead: studentNotif.isRead,
-        createdAt: studentNotif.createdAt,
+        _id: userNotif._id,
+        title: userNotif.title,
+        message: userNotif.message,
+        type: userNotif.type,
+        relatedOrder: userNotif.relatedOrder,
+        isRead: userNotif.isRead,
+        createdAt: userNotif.createdAt,
       });
 
-      // Send FCM push to Student
+      // Send FCM push to User
       sendPushToUser(order.user, {
-        title: studentNotif.title,
-        body: studentNotif.message,
+        title: userNotif.title,
+        body: userNotif.message,
         orderId: order._id,
         type: 'DELIVERY',
         url: `/orders/${order._id}`,
-      }).catch((err) => console.warn('Student delivery acceptance FCM notice:', err.message));
+      }).catch((err) => console.warn('User delivery acceptance FCM notice:', err.message));
 
       // Create Notification for Shopkeeper if owner exists
       const shopDoc = await mongoose.model('Shop').findById(order.shop).select('name owner address');

@@ -97,11 +97,36 @@ function App() {
               }
             />
 
-            {/* Protected Student Routes */}
+            {/* Protected User Routes */}
+            <Route
+              path="user"
+              element={
+                <ProtectedRoute allowedRoles={['USER']}>
+                  <Student />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="user/shops/:id"
+              element={
+                <ProtectedRoute allowedRoles={['USER']}>
+                  <ShopDetails />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="user/products/:id"
+              element={
+                <ProtectedRoute allowedRoles={['USER']}>
+                  <ProductDetails />
+                </ProtectedRoute>
+              }
+            />
+            {/* Legacy Student Route Aliases for smooth backwards compatibility */}
             <Route
               path="student"
               element={
-                <ProtectedRoute allowedRoles={['STUDENT']}>
+                <ProtectedRoute allowedRoles={['USER']}>
                   <Student />
                 </ProtectedRoute>
               }
@@ -109,7 +134,7 @@ function App() {
             <Route
               path="student/shops/:id"
               element={
-                <ProtectedRoute allowedRoles={['STUDENT']}>
+                <ProtectedRoute allowedRoles={['USER']}>
                   <ShopDetails />
                 </ProtectedRoute>
               }
@@ -117,7 +142,7 @@ function App() {
             <Route
               path="student/products/:id"
               element={
-                <ProtectedRoute allowedRoles={['STUDENT']}>
+                <ProtectedRoute allowedRoles={['USER']}>
                   <ProductDetails />
                 </ProtectedRoute>
               }
@@ -125,7 +150,7 @@ function App() {
             <Route
               path="cart"
               element={
-                <ProtectedRoute allowedRoles={['STUDENT']}>
+                <ProtectedRoute allowedRoles={['USER']}>
                   <CartPage />
                 </ProtectedRoute>
               }
@@ -133,7 +158,7 @@ function App() {
             <Route
               path="checkout"
               element={
-                <ProtectedRoute allowedRoles={['STUDENT']}>
+                <ProtectedRoute allowedRoles={['USER']}>
                   <CheckoutPage />
                 </ProtectedRoute>
               }
@@ -141,7 +166,7 @@ function App() {
             <Route
               path="orders"
               element={
-                <ProtectedRoute allowedRoles={['STUDENT']}>
+                <ProtectedRoute allowedRoles={['USER']}>
                   <OrderHistoryPage />
                 </ProtectedRoute>
               }
@@ -149,7 +174,7 @@ function App() {
             <Route
               path="orders/:orderId"
               element={
-                <ProtectedRoute allowedRoles={['STUDENT', 'SHOPKEEPER', 'ADMIN', 'DELIVERY_BOY']}>
+                <ProtectedRoute allowedRoles={['USER', 'SHOPKEEPER', 'ADMIN', 'DELIVERY_BOY']}>
                   <OrderDetailsPage />
                 </ProtectedRoute>
               }
@@ -157,7 +182,7 @@ function App() {
             <Route
               path="orders/:orderId/success"
               element={
-                <ProtectedRoute allowedRoles={['STUDENT']}>
+                <ProtectedRoute allowedRoles={['USER']}>
                   <OrderSuccessPage />
                 </ProtectedRoute>
               }
@@ -166,7 +191,7 @@ function App() {
             <Route
               path="notifications"
               element={
-                <ProtectedRoute allowedRoles={['STUDENT', 'SHOPKEEPER', 'ADMIN', 'DELIVERY_BOY']}>
+                <ProtectedRoute allowedRoles={['USER', 'SHOPKEEPER', 'ADMIN', 'DELIVERY_BOY']}>
                   <NotificationsPage />
                 </ProtectedRoute>
               }

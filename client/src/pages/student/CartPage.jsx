@@ -117,10 +117,10 @@ export default function CartPage() {
           </div>
           <h2 style={{ fontSize: '1.5rem', color: 'var(--text-primary)', margin: 0 }}>Your cart is empty</h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: 0 }}>
-            Looks like you haven't added any products from campus shops yet.
+            Looks like you haven't added any products from local shops yet.
           </p>
-          <Link to="/student" className="btn-primary" style={{ padding: '0.75rem 1.5rem', marginTop: '0.5rem' }}>
-            <ArrowLeft size={18} /> Explore Campus Shops
+          <Link to="/user" className="btn-primary" style={{ padding: '0.75rem 1.5rem', marginTop: '0.5rem' }}>
+            <ArrowLeft size={18} /> Explore Local Shops
           </Link>
         </div>
       </div>
@@ -203,7 +203,7 @@ export default function CartPage() {
 
                 {/* Info */}
                 <div style={{ flex: 1, minWidth: '160px' }}>
-                  <Link to={`/student/products/${product._id}`} style={{ color: 'var(--text-primary)', fontWeight: '700', fontSize: '1.05rem', textDecoration: 'none' }}>
+                  <Link to={`/user/products/${product._id}`} style={{ color: 'var(--text-primary)', fontWeight: '700', fontSize: '1.05rem', textDecoration: 'none' }}>
                     {product.name || 'Product'}
                   </Link>
                   <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.2rem' }}>
@@ -276,7 +276,7 @@ export default function CartPage() {
           })}
 
           <div style={{ marginTop: '0.5rem' }}>
-            <Link to="/student" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+            <Link to="/user" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
               <ArrowLeft size={16} /> Add more items from shop
             </Link>
           </div>

@@ -104,7 +104,7 @@ const notifyRecipient = async (recipientId, title, message, relatedOrderId) => {
 /**
  * @desc    Submit a review (PRODUCT, SHOP, or DELIVERY)
  * @route   POST /api/reviews
- * @access  Private (STUDENT only)
+ * @access  Private (USER only)
  */
 export const createReview = async (req, res, next) => {
   try {
@@ -251,7 +251,7 @@ export const createReview = async (req, res, next) => {
         await notifyRecipient(
           shopDoc.owner,
           `New ${type === 'SHOP' ? 'Shop' : 'Product'} Review ⭐`,
-          `A student left a ${numericRating}-star review for ${itemText}.`,
+          `A user left a ${numericRating}-star review for ${itemText}.`,
           orderId
         );
       }
@@ -259,7 +259,7 @@ export const createReview = async (req, res, next) => {
       await notifyRecipient(
         finalDeliveryBoy,
         'New Delivery Review ⭐',
-        `A student rated your delivery service ${numericRating} stars!`,
+        `A user rated your delivery service ${numericRating} stars!`,
         orderId
       );
     }
@@ -473,7 +473,7 @@ export const getDeliveryBoyReviews = async (req, res, next) => {
 /**
  * @desc    Get all reviews for an order (to display rating status per item)
  * @route   GET /api/reviews/order/:orderId
- * @access  Private (STUDENT / SHOPKEEPER / DELIVERY_BOY / ADMIN)
+ * @access  Private (USER / SHOPKEEPER / DELIVERY_BOY / ADMIN)
  */
 export const getOrderReviews = async (req, res, next) => {
   try {

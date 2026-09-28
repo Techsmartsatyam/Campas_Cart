@@ -14,8 +14,8 @@ export default function PublicOnlyRoute({ children }) {
   if (isAuthenticated && user) {
     const getRolePath = (role) => {
       switch (role) {
-        case 'STUDENT':
-          return '/student';
+        case 'USER':
+          return '/user';
         case 'SHOPKEEPER':
           return '/shopkeeper';
         case 'DELIVERY_BOY':
@@ -23,7 +23,7 @@ export default function PublicOnlyRoute({ children }) {
         case 'ADMIN':
           return '/admin';
         default:
-          return '/student';
+          return '/user';
       }
     };
 

@@ -54,8 +54,8 @@ export default function OrderHistoryPage() {
     <div className="container" style={{ padding: '2.5rem 1rem', maxWidth: '800px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
-          <Link to="/student" style={{ color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', marginBottom: '0.4rem' }}>
-            <ArrowLeft size={16} /> Back to Student Hub
+          <Link to="/user" style={{ color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', marginBottom: '0.4rem' }}>
+            <ArrowLeft size={16} /> Back to User Hub
           </Link>
           <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0 }}>
             My Orders
@@ -78,8 +78,8 @@ export default function OrderHistoryPage() {
           <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
             You haven't placed any orders yet.
           </p>
-          <Link to="/student" className="btn-primary" style={{ padding: '0.6rem 1.25rem' }}>
-            Browse Campus Shops
+          <Link to="/user" className="btn-primary" style={{ padding: '0.6rem 1.25rem' }}>
+            Browse Local Shops
           </Link>
         </div>
       ) : (

@@ -10,9 +10,9 @@ import {
 
 const router = express.Router();
 
-// Protect all cart routes for STUDENT only
+// Protect all cart routes for USER only
 router.use(protect);
-router.use(authorizeRoles('STUDENT'));
+router.use(authorizeRoles('USER'));
 
 router.get('/', getCart);
 router.post('/add', addToCart);

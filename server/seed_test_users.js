@@ -15,7 +15,7 @@ async function checkAndSeedUsers() {
       name: 'Test Student',
       email: 'student@campuscart.com',
       password: 'Password123!',
-      role: 'STUDENT',
+      role: 'USER',
       phone: '9999999999',
       isActive: true,
       accountStatus: 'APPROVED'

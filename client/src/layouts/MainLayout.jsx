@@ -44,8 +44,8 @@ export default function MainLayout() {
   const recentNotifications = notifications.slice(0, 5);
 
   useEffect(() => {
-    // Fetch live cart item count if authenticated student
-    if (isAuthenticated && user?.role === 'STUDENT') {
+    // Fetch live cart item count if authenticated user
+    if (isAuthenticated && user?.role === 'USER') {
       api.get('/cart')
         .then((res) => {
           if (res && res.success && res.data && res.data.items) {
@@ -110,8 +110,8 @@ export default function MainLayout() {
   const getDashboardPath = () => {
     if (!user) return '/';
     switch (user.role) {
-      case 'STUDENT':
-        return '/student';
+      case 'USER':
+        return '/user';
       case 'SHOPKEEPER':
         return '/shopkeeper';
       case 'DELIVERY_BOY':
@@ -173,9 +173,9 @@ export default function MainLayout() {
               <span>Home</span>
             </NavLink>
 
-            {isAuthenticated && user?.role === 'STUDENT' && (
+            {isAuthenticated && user?.role === 'USER' && (
               <NavLink
-                to="/student"
+                to="/user"
                 className={({ isActive }) => `nav-icon-link ${isActive ? 'active' : ''}`}
                 title="Shops Marketplace"
                 aria-label="Shops Marketplace"
@@ -199,7 +199,7 @@ export default function MainLayout() {
 
             {isAuthenticated ? (
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', marginLeft: '0.5rem', paddingLeft: '0.5rem', borderLeft: '1px solid #e2e8f0' }}>
-                {user.role === 'STUDENT' && (
+                {user.role === 'USER' && (
                   <>
                     <NavLink
                       to="/orders"
@@ -392,8 +392,8 @@ export default function MainLayout() {
 
           {/* Mobile Right Container */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} className="mobile-header-right">
-            {/* Mobile Quick Cart Link if logged in student */}
-            {isAuthenticated && user?.role === 'STUDENT' && (
+            {/* Mobile Quick Cart Link if logged in user */}
+            {isAuthenticated && user?.role === 'USER' && (
               <NavLink
                 to="/cart"
                 className="nav-icon-btn"
@@ -456,9 +456,9 @@ export default function MainLayout() {
               <span>Home</span>
             </NavLink>
 
-            {isAuthenticated && user?.role === 'STUDENT' && (
+            {isAuthenticated && user?.role === 'USER' && (
               <NavLink
-                to="/student"
+                to="/user"
                 onClick={() => setMobileMenuOpen(false)}
                 className={({ isActive }) => `mobile-nav-link ${isActive ? 'active' : ''}`}
               >
@@ -480,7 +480,7 @@ export default function MainLayout() {
 
             {isAuthenticated ? (
               <>
-                {user.role === 'STUDENT' && (
+                {user.role === 'USER' && (
                   <>
                     <NavLink
                       to="/orders"
@@ -684,7 +684,7 @@ export default function MainLayout() {
       <PwaInstallBanner />
 
       {/* Auto Review Popup for Delivered Orders */}
-      {isAuthenticated && user?.role === 'STUDENT' && <AutoReviewPopup />}
+      {isAuthenticated && user?.role === 'USER' && <AutoReviewPopup />}
 
       {/* Footer */}
       <Footer />
