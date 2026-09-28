@@ -55,8 +55,14 @@ export default function Login() {
     }
   };
 
-  const handleGoogleError = () => {
-    setError('Google Sign-In was cancelled or encountered an error.');
+  const handleGoogleError = (errorResponse) => {
+    console.error('[NearCart] Google Sign-In error:', errorResponse);
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      setError('Google Sign-In is not configured. VITE_GOOGLE_CLIENT_ID is missing.');
+    } else {
+      setError('Google Sign-In was cancelled or encountered an error. Please try again.');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -182,6 +188,7 @@ export default function Login() {
             size="large"
             text="continue_with"
             shape="rectangular"
+            width="100%"
           />
         </div>
 

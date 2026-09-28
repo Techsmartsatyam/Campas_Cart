@@ -365,7 +365,7 @@ export const login = async (req, res, next) => {
 export const logout = async (req, res, next) => {
   try {
     const cookieName = process.env.COOKIE_NAME || 'campuscart_token';
-    const isProduction = process.env.NODE_ENV === 'production';
+    const isProduction = process.env.NODE_ENV === 'production' || process.env.RENDER === 'true';
 
     res.cookie(cookieName, '', {
       httpOnly: true,

@@ -16,7 +16,11 @@ window.addEventListener('beforeinstallprompt', (event) => {
   window.__nearCartDeferredInstallPrompt = event;
 });
 
-const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '970764493699-ppifa4mr7utt7bpcqr19aievi79u8g1v.apps.googleusercontent.com';
+const googleClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
+
+if (!googleClientId) {
+  console.warn('[NearCart] VITE_GOOGLE_CLIENT_ID is not set. Google Sign-In will not work.');
+}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

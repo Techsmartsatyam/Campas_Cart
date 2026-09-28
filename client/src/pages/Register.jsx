@@ -48,8 +48,14 @@ export default function Register() {
     }
   };
 
-  const handleGoogleError = () => {
-    setError('Google Sign-Up was cancelled or encountered an error.');
+  const handleGoogleError = (errorResponse) => {
+    console.error('[NearCart] Google Sign-Up error:', errorResponse);
+    const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+    if (!clientId) {
+      setError('Google Sign-Up is not configured. VITE_GOOGLE_CLIENT_ID is missing.');
+    } else {
+      setError('Google Sign-Up was cancelled or encountered an error. Please try again.');
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -252,6 +258,7 @@ export default function Register() {
             size="large"
             text="continue_with"
             shape="rectangular"
+            width="100%"
           />
         </div>
 
