@@ -174,7 +174,7 @@ export default function OrderSuccessPage() {
           <Link to="/orders" className="btn-primary" style={{ padding: '0.75rem 1.5rem' }}>
             <Package size={18} /> View My Orders
           </Link>
-          <Link to="/user" className="btn-secondary" style={{ padding: '0.75rem 1.5rem' }}>
+          <Link to="/student" className="btn-secondary" style={{ padding: '0.75rem 1.5rem' }}>
             Continue Shopping
           </Link>
         </div>

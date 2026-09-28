@@ -37,7 +37,7 @@ export default function Register() {
       });
 
       if (res.success && res.user) {
-        navigate('/user', { replace: true });
+        navigate('/student', { replace: true });
       } else {
         setError(res.message || 'Google registration failed');
       }
@@ -83,7 +83,7 @@ export default function Register() {
       );
 
       if (res.success) {
-        navigate('/user', { replace: true });
+        navigate('/student', { replace: true });
       } else {
         setError(res.message || 'Registration failed');
       }
@@ -98,7 +98,7 @@ export default function Register() {
     <div className="container" style={{ padding: '3.5rem 1.5rem', display: 'flex', justifyContent: 'center' }}>
       <div className="glass-card" style={{ width: '100%', maxWidth: '480px', padding: '2.5rem 2rem' }}>
         <div style={{ textAlign: 'center', marginBottom: '1.75rem' }}>
-          <h2 style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-primary)' }}>Create User Account</h2>
+          <h2 style={{ fontSize: '1.75rem', fontWeight: '700', color: 'var(--text-primary)' }}>Create Student Account</h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Get started with NearCart local delivery</p>
         </div>
 
@@ -231,7 +231,7 @@ export default function Register() {
             disabled={submitting}
             style={{ width: '100%', padding: '0.85rem', marginTop: '0.5rem' }}
           >
-            {submitting ? 'Creating Account...' : 'Register'}
+            {submitting ? 'Creating Account...' : 'Register as Student'}
           </button>
         </form>
 

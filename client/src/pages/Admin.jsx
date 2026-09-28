@@ -444,7 +444,7 @@ export default function Admin() {
 
             {/* Role Filter */}
             <div style={{ display: 'flex', gap: '0.5rem', fontSize: '0.85rem' }}>
-              {['ALL', 'USER', 'SHOPKEEPER', 'DELIVERY_BOY'].map((role) => (
+              {['ALL', 'STUDENT', 'SHOPKEEPER', 'DELIVERY_BOY'].map((role) => (
                 <button
                   key={role}
                   onClick={() => setUserRoleFilter(role)}
@@ -588,7 +588,7 @@ export default function Admin() {
                 <thead>
                   <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)', textAlign: 'left' }}>
                     <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Order</th>
-                    <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>User</th>
+                    <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Student</th>
                     <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Amount</th>
                     <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Method</th>
                     <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Status</th>
@@ -713,7 +713,7 @@ function AdminReviewsTab() {
             Review Moderation & Feedback Stream
           </h3>
           <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Monitor user ratings and feedback across NearCart
+            Monitor student ratings and feedback across NearCart
           </p>
         </div>
 
@@ -748,7 +748,7 @@ function AdminReviewsTab() {
             <thead>
               <tr style={{ background: '#f8fafc', borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
                 <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Type</th>
-                <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>User</th>
+                <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Student</th>
                 <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Target Name</th>
                 <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Rating</th>
                 <th style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>Comment</th>
@@ -779,7 +779,7 @@ function AdminReviewsTab() {
                       </span>
                     </td>
                     <td style={{ padding: '0.75rem 1rem', fontWeight: '600', whiteSpace: 'nowrap' }}>
-                      {rev.user?.name || 'User'}
+                      {rev.user?.name || 'Student'}
                     </td>
                     <td style={{ padding: '0.75rem 1rem', whiteSpace: 'nowrap' }}>
                       {targetText}
@@ -842,8 +842,8 @@ function AdminCleanDataTab({ onDataCleaned }) {
     deliveries: 'Delivery Records',
     reviews: 'Reviews & Ratings (Resets aggregate scores to 0)',
     notifications: 'Notifications Stream',
-    carts: 'User Active & Abandoned Carts',
-    testUsers: 'Test / Regular User Accounts (Preserves Admins, Shopkeepers & Delivery Boys)',
+    carts: 'Student Active & Abandoned Carts',
+    testUsers: 'Test / Student User Accounts (Preserves Admins, Shopkeepers & Delivery Boys)',
   };
 
   const getActiveTargetsList = () =>
@@ -1104,7 +1104,7 @@ function AdminCleanDataTab({ onDataCleaned }) {
                 <strong>{previewCounts.carts}</strong>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span>Test User accounts to delete:</span>
+                <span>Test Student accounts to delete:</span>
                 <strong>{previewCounts.testUsers}</strong>
               </div>
             </div>
@@ -1281,7 +1281,7 @@ function AdminCleanDataTab({ onDataCleaned }) {
               <div>Reviews deleted: <strong>{cleanResult.deletedCounts?.reviews || 0}</strong></div>
               <div>Notifications deleted: <strong>{cleanResult.deletedCounts?.notifications || 0}</strong></div>
               <div>Carts deleted: <strong>{cleanResult.deletedCounts?.carts || 0}</strong></div>
-              <div>Test Users deleted: <strong>{cleanResult.deletedCounts?.testUsers || 0}</strong></div>
+              <div>Test Students deleted: <strong>{cleanResult.deletedCounts?.testUsers || 0}</strong></div>
             </div>
 
             <div style={{ background: '#ecfdf5', borderRadius: '0.5rem', border: '1px solid #a7f3d0', padding: '0.75rem 1rem', marginBottom: '1.5rem', fontSize: '0.825rem', color: '#047857' }}>

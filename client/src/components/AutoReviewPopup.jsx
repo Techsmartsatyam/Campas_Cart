@@ -41,7 +41,7 @@ export default function AutoReviewPopup() {
 
   // Find the newest unreviewed delivered order
   const checkUnreviewedDeliveredOrders = useCallback(async () => {
-    if (!isAuthenticated || !user || user.role !== 'USER') return;
+    if (!isAuthenticated || !user || user.role !== 'STUDENT') return;
     if (isFetchingRef.current) return;
 
     try {
@@ -83,7 +83,7 @@ export default function AutoReviewPopup() {
 
   // Real-time socket listener for live delivery completion
   useEffect(() => {
-    if (!globalSocket || !isAuthenticated || user?.role !== 'USER') return;
+    if (!globalSocket || !isAuthenticated || user?.role !== 'STUDENT') return;
 
     const handleOrderUpdated = (data) => {
       if (data && (data.orderStatus === 'DELIVERED' || data.deliveryStatus === 'DELIVERED')) {

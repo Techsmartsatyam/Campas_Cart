@@ -27,7 +27,7 @@ const generateOrderNumber = () => {
 /**
  * @desc    Validate and apply a coupon
  * @route   POST /api/orders/apply-coupon
- * @access  Private (User)
+ * @access  Private (Student)
  */
 export const applyCoupon = async (req, res) => {
   try {
@@ -129,9 +129,9 @@ export const applyCoupon = async (req, res) => {
 };
 
 /**
- * @desc    Create new order from User's cart
+ * @desc    Create new order from Student's cart
  * @route   POST /api/orders
- * @access  Private (User)
+ * @access  Private (Student)
  */
 export const createOrder = async (req, res) => {
   try {
@@ -169,7 +169,7 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // 1. Verify delivery address belongs to user
+    // 1. Verify delivery address belongs to student
     const address = await Address.findOne({ _id: addressId, user: req.user._id });
     if (!address) {
       return res.status(404).json({
@@ -516,7 +516,7 @@ const totalAmount = Math.max(
       await couponDoc.save();
     }
 
-    // 12. Clear User's cart only if standard cart flow
+    // 12. Clear Student's cart only if standard cart flow
     if (cartToClear) {
       cartToClear.items = [];
       await cartToClear.save();
@@ -533,7 +533,8 @@ const totalAmount = Math.max(
 try {
   const notifications = [];
 
-  const userNotification = await Notification.create({
+  // A. Student notification
+  const studentNotification = await Notification.create({
     user: req.user._id,
     title: 'Order Placed Successfully',
     message: `Your order ${order.orderNumber} has been placed successfully.`,
@@ -542,7 +543,7 @@ try {
     isRead: false,
   });
 
-  notifications.push(userNotification);
+  notifications.push(studentNotification);
 
   // B. Shopkeeper notification
   if (shop.owner) {
@@ -657,7 +658,7 @@ try {
       });
     }
 
-    // 3. Emit to User
+    // 3. Emit to Student
     io.to(`user:${req.user._id.toString()}`).emit('order:created', {
       orderId: order._id,
       orderNumber: order.orderNumber,
@@ -680,7 +681,7 @@ try {
   try {
     const pushTasks = [];
 
-    // User push
+    // Student push
     pushTasks.push(
       sendPushToUser(req.user._id, {
         title: 'Order Placed',
@@ -688,7 +689,7 @@ try {
         orderId: order._id,
         type: 'ORDER',
         url: `/orders/${order._id}`,
-      }).then((res) => ({ role: 'User', res }))
+      }).then((res) => ({ role: 'Student', res }))
     );
 
     // Shopkeeper push
@@ -810,7 +811,6 @@ try {
         shopPhone: shopDoc.phone || '',
         shopAddress: shopDoc.address || '',
         shopUpiId: shopDoc.upiId || order.upiQrSnapshot?.upiId || '',
-        userName: req.user.name || 'Customer',
         studentName: req.user.name || 'Customer',
         customerPhone: req.user.phone || 'Not provided',
         customerEmail: req.user.email || 'Not provided',
@@ -870,11 +870,11 @@ try {
 };
 
 /**
- * @desc    Get order history for authenticated User
+ * @desc    Get order history for authenticated Student
  * @route   GET /api/orders
- * @access  Private (User)
+ * @access  Private (Student)
  */
-export const getUserOrders = async (req, res) => {
+export const getStudentOrders = async (req, res) => {
   try {
     const orders = await Order.find({ user: req.user._id })
       // .populate('shop', 'name bannerImage address')
@@ -888,7 +888,7 @@ export const getUserOrders = async (req, res) => {
       data: orders,
     });
   } catch (error) {
-    console.error('Error fetching user orders:', error);
+    console.error('Error fetching student orders:', error);
     return res.status(500).json({
       success: false,
       message: 'Failed to fetch order history',
@@ -900,7 +900,7 @@ export const getUserOrders = async (req, res) => {
 /**
  * @desc    Get order details by ID
  * @route   GET /api/orders/:id
- * @access  Private (User / Shopkeeper / Admin / Delivery)
+ * @access  Private (Student / Shopkeeper / Admin / Delivery)
  */
 export const getOrderById = async (req, res) => {
   try {
@@ -916,7 +916,8 @@ export const getOrderById = async (req, res) => {
       });
     }
 
-    if (req.user.role === 'USER' && order.user.toString() !== req.user._id.toString()) {
+    // Authorization check: Student can only view their own orders
+    if (req.user.role === 'STUDENT' && order.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({
         success: false,
         message: 'Unauthorized access to order details',
@@ -952,9 +953,9 @@ export const getOrderById = async (req, res) => {
 };
 
 /**
- * @desc    Cancel order by authenticated User
+ * @desc    Cancel order by authenticated Student
  * @route   PATCH /api/orders/:id/cancel
- * @access  Private (User)
+ * @access  Private (Student)
  */
 export const cancelOrder = async (req, res) => {
   try {
@@ -977,7 +978,7 @@ export const cancelOrder = async (req, res) => {
       });
     }
 
-    // Cancellation check: User can cancel ONLY when PLACED or SHOP_ACCEPTED
+    // Cancellation check: Student can cancel ONLY when PLACED or SHOP_ACCEPTED
     const CANCELLABLE_STATUSES = ['PLACED', 'SHOP_ACCEPTED'];
     if (!CANCELLABLE_STATUSES.includes(order.orderStatus)) {
       return res.status(400).json({
@@ -995,7 +996,7 @@ export const cancelOrder = async (req, res) => {
     }
 
     order.orderStatus = 'CANCELLED';
-    order.cancellationReason = cancellationReason ? cancellationReason.trim() : 'Cancelled by User';
+    order.cancellationReason = cancellationReason ? cancellationReason.trim() : 'Cancelled by Student';
     await order.save();
 
     // Safely restore product stock
@@ -1018,20 +1019,20 @@ export const cancelOrder = async (req, res) => {
       { path: 'items.product', select: 'name images unit' },
     ]);
 
-    // Create Notification for Shopkeeper informing about User Cancellation
+    // Create Notification for Shopkeeper informing about Student Cancellation
     try {
       if (order.shop && order.shop.owner) {
         await Notification.create({
           user: order.shop.owner,
           title: 'Order Cancelled',
-          message: `Order ${order.orderNumber} has been cancelled by the user.`,
+          message: `Order ${order.orderNumber} has been cancelled by the student.`,
           type: 'ORDER',
           relatedOrder: order._id,
           isRead: false,
         });
       }
     } catch (notifErr) {
-      console.warn('User cancellation notification notice:', notifErr.message);
+      console.warn('Student cancellation notification notice:', notifErr.message);
     }
 
     return res.status(200).json({

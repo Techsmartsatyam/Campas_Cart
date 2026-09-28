@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import api from '../services/api';
-import { getCategories } from '../services/userService';
+import { getCategories } from '../services/studentService';
 import {
   Store,
   Plus,
@@ -1177,7 +1177,7 @@ export default function Shopkeeper() {
                         </span>
                       </div>
                       <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-                        Customer: {ord.user?.name} ({ord.user?.phone}) • Total: ₹{ord.totalAmount}
+                        Student: {ord.user?.name} ({ord.user?.phone}) • Total: ₹{ord.totalAmount}
                       </p>
                       <div style={{ margin: '0.35rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.825rem' }}>
                         <span>Payment: <strong>{ord.paymentMethod}</strong></span>
@@ -1354,14 +1354,14 @@ export default function Shopkeeper() {
                 Payment Settings & UPI QR
               </h3>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '1.5rem' }}>
-                Manage your shop's UPI payments and payment QR code for customer online orders.
+                Manage your shop's UPI payments and payment QR code for student online orders.
               </p>
 
               <form onSubmit={handleSaveShop}>
                 <div className="form-group" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 1rem', background: '#f8fafc', border: '1px solid var(--border-color)', borderRadius: '0.5rem', marginBottom: '1.25rem' }}>
                   <div>
                     <strong style={{ color: 'var(--text-primary)', display: 'block', fontSize: '0.95rem' }}>UPI Payments</strong>
-                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Allow customers to pay via your shop's UPI QR</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Allow students to pay via your shop's UPI QR</span>
                   </div>
                   <button
                     type="button"
@@ -2454,7 +2454,7 @@ function ShopkeeperReviewsTab({ shop }) {
             Customer Ratings & Feedback
           </h3>
           <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-            Reviews for your shop and products left by customers
+            Reviews for your shop and products left by campus students
           </p>
         </div>
 
@@ -2483,7 +2483,7 @@ function ShopkeeperReviewsTab({ shop }) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           {reviews.map((rev) => {
-            const uName = rev.user?.name || 'Verified User';
+            const uName = rev.user?.name || 'Verified Student';
             const uImg = rev.user?.profileImage;
             const targetName = rev.type === 'SHOP' ? 'Shop Feedback' : rev.product?.name ? `Product: ${rev.product.name}` : 'Product Review';
             const dateStr = new Date(rev.createdAt).toLocaleDateString('en-IN', {

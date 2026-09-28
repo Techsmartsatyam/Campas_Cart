@@ -2,7 +2,7 @@ import express from 'express';
 import { protect, authorizeRoles } from '../middleware/authMiddleware.js';
 import {
   createOrder,
-  getUserOrders,
+  getStudentOrders,
   getOrderById,
   applyCoupon,
   cancelOrder,
@@ -16,11 +16,11 @@ const router = express.Router();
 
 router.use(protect);
 
-// User endpoints
-router.post('/apply-coupon', authorizeRoles('USER'), applyCoupon);
-router.post('/', authorizeRoles('USER'), createOrder);
-router.get('/', authorizeRoles('USER'), getUserOrders);
-router.patch('/:id/cancel', authorizeRoles('USER'), cancelOrder);
+// Student endpoints
+router.post('/apply-coupon', authorizeRoles('STUDENT'), applyCoupon);
+router.post('/', authorizeRoles('STUDENT'), createOrder);
+router.get('/', authorizeRoles('STUDENT'), getStudentOrders);
+router.patch('/:id/cancel', authorizeRoles('STUDENT'), cancelOrder);
 router.get('/:orderId/payment-qr', getOrderPaymentQr);
 router.get('/:orderId/receipt', generateReceiptPdf);
 router.get('/:id', getOrderById); // Order details verification handles role check inside controller

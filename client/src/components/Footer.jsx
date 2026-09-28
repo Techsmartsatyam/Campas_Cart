@@ -184,7 +184,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link to="/user" className="footer-link">
+                <Link to="/student" className="footer-link">
                   Customer Marketplace
                 </Link>
               </li>
@@ -231,7 +231,7 @@ export default function Footer() {
             </h4>
             <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.78rem' }}>
               <li>
-                <Link to="/user" className="footer-link">
+                <Link to="/student" className="footer-link">
                   Customer Marketplace
                 </Link>
               </li>

@@ -1093,8 +1093,8 @@ export const updateOrderStatus = async (req, res, next) => {
       }
     }
 
-    // Create Notification document for User on order status change
-    let userNotification = null;
+    // Create Notification document for Student on order status change
+    let studentNotification = null;
     try {
       let notifTitle = `Order Status: ${orderStatus.replace(/_/g, ' ')}`;
       let notifMsg = `Your order ${order.orderNumber} status updated to ${orderStatus.replace(/_/g, ' ')}.`;
@@ -1118,7 +1118,7 @@ export const updateOrderStatus = async (req, res, next) => {
         notifMsg = `Order ${order.orderNumber} was cancelled.${reasonMsg}`;
       }
 
-      userNotification = await Notification.create({
+      studentNotification = await Notification.create({
         user: order.user,
         title: notifTitle,
         message: notifMsg,
@@ -1136,15 +1136,15 @@ export const updateOrderStatus = async (req, res, next) => {
       const { sendPushToUser } = await import('../services/pushNotificationService.js');
       const io = getIO();
 
-      if (userNotification) {
+      if (studentNotification) {
         io.to(`user:${order.user.toString()}`).emit('notification:new', {
-          _id: userNotification._id,
-          title: userNotification.title,
-          message: userNotification.message,
-          type: userNotification.type,
-          relatedOrder: userNotification.relatedOrder,
-          isRead: userNotification.isRead,
-          createdAt: userNotification.createdAt,
+          _id: studentNotification._id,
+          title: studentNotification.title,
+          message: studentNotification.message,
+          type: studentNotification.type,
+          relatedOrder: studentNotification.relatedOrder,
+          isRead: studentNotification.isRead,
+          createdAt: studentNotification.createdAt,
         });
       }
 
@@ -1157,19 +1157,19 @@ export const updateOrderStatus = async (req, res, next) => {
         updatedAt: order.updatedAt,
       };
 
-      // Emit to User
+      // Emit to Student
       io.to(`user:${order.user.toString()}`).emit('order:updated', statusPayload);
       // Emit to Shopkeeper
       io.to(`user:${req.user._id.toString()}`).emit('order:updated', statusPayload);
 
-      // Send FCM push to User
+      // Send FCM push to Student
       sendPushToUser(order.user, {
-        title: userNotification?.title || `Order Status: ${orderStatus.replace(/_/g, ' ')}`,
-        body: userNotification?.message || `Your order ${order.orderNumber} status changed to ${orderStatus.replace(/_/g, ' ')}.`,
+        title: studentNotification?.title || `Order Status: ${orderStatus.replace(/_/g, ' ')}`,
+        body: studentNotification?.message || `Your order ${order.orderNumber} status changed to ${orderStatus.replace(/_/g, ' ')}.`,
         orderId: order._id,
         type: 'ORDER',
         url: `/orders/${order._id}`,
-      }).catch((err) => console.warn('User FCM status update notice:', err.message));
+      }).catch((err) => console.warn('Student FCM status update notice:', err.message));
     } catch (sockErr) {
       console.warn('Socket/FCM order status update notice:', sockErr.message);
     }

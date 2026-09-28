@@ -69,11 +69,11 @@ export const initSocket = (httpServer, corsOptions) => {
         if (!order) return;
 
         // Authorization check
-        const isUser = socket.user.role === 'USER' && order.user.toString() === socket.user._id.toString();
+        const isStudent = socket.user.role === 'STUDENT' && order.user.toString() === socket.user._id.toString();
         const isShopkeeper = socket.user.role === 'SHOPKEEPER' && order.shop.toString() === (socket.user.shopId || order.shop.toString());
         const isDeliveryBoy = socket.user.role === 'DELIVERY_BOY';
 
-        if (!isUser && !isShopkeeper && !isDeliveryBoy) {
+        if (!isStudent && !isShopkeeper && !isDeliveryBoy) {
           console.warn(`Unauthorized room join attempt by ${socket.user._id} for order ${orderId}`);
           return;
         }

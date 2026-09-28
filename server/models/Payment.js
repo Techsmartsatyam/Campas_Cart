@@ -50,7 +50,7 @@ const paymentSchema = new mongoose.Schema(
       trim: true,
       default: '',
     },
-    userConfirmedAt: {
+    studentConfirmedAt: {
       type: Date,
       default: null,
     },

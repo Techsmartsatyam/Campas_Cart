@@ -170,8 +170,7 @@ export const sendOrderPlacedEmailToShopkeeper = async ({
   shopPhone = '',
   shopAddress = '',
   shopUpiId = '',
-  userName = 'Customer',
-  studentName,
+  studentName = 'Customer',
   customerPhone = 'Not provided',
   // customerEmail = 'Not provided',
   orderNumber,
@@ -335,7 +334,7 @@ export const sendOrderPlacedEmailToShopkeeper = async ({
           <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
             <tr>
               <td style="padding: 5px 0; color: #64748b; width: 45%;">Customer Name:</td>
-              <td style="padding: 5px 0; font-weight: 700; color: #0f172a;">${userName || studentName || 'Not provided'}</td>
+              <td style="padding: 5px 0; font-weight: 700; color: #0f172a;">${studentName || 'Not provided'}</td>
             </tr>
             <tr>
               <td style="padding: 5px 0; color: #64748b;">Mobile Number:</td>
@@ -535,7 +534,7 @@ export const sendDeliveryAssignedEmailToDeliveryBoy = async ({
       <div style="background: #f8fafc; padding: 16px; border-radius: 6px; margin: 18px 0; border: 1px solid #e2e8f0;">
         <h3 style="margin-top: 0; color: #334155; font-size: 1rem;">Assignment Details</h3>
         <p style="margin: 6px 0;"><strong>Pickup Shop:</strong> ${shopName} (${shopAddress || 'See dashboard for details'})</p>
-        <p style="margin: 6px 0;"><strong>Customer Name:</strong> ${customerName || 'User'}</p>
+        <p style="margin: 6px 0;"><strong>Customer Name:</strong> ${customerName || 'Student'}</p>
         <p style="margin: 6px 0;"><strong>Delivery Destination:</strong> ${deliveryAddress}</p>
         <p style="margin: 6px 0;"><strong>Order Amount:</strong> ₹${totalAmount}</p>
       </div>
@@ -605,7 +604,7 @@ export const sendDeliveryAssignedEmailToDeliveryBoy = async ({
 };
 
 /**
- * Send welcome email to newly registered user/customer using Brevo HTTP API
+ * Send welcome email to newly registered student/customer using Brevo HTTP API
  */
 export const sendWelcomeEmailToUser = async ({ userEmail, userName }) => {
   if (!userEmail) return { success: false, reason: 'No recipient email provided' };

@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getProductById } from '../../services/userService';
+import { getProductById } from '../../services/studentService';
 import api from '../../services/api';
-import { LoadingSpinner } from '../../components/UserUIComponents';
+import { LoadingSpinner } from '../../components/StudentUIComponents';
 import { ArrowLeft, ChevronLeft, ChevronRight, X, Maximize2, ShoppingCart, Zap, Plus, Minus, Star, MessageSquare, User } from 'lucide-react';
 
 export default function ProductDetails() {
@@ -147,8 +147,8 @@ export default function ProductDetails() {
       <div className="container" style={{ padding: '4rem 1.5rem', textAlign: 'center' }}>
         <div className="glass-card" style={{ maxWidth: '500px', margin: '0 auto' }}>
           <h3 style={{ fontSize: '1.5rem', color: 'var(--danger)', marginBottom: '1rem' }}>{error || 'Product Unavailable'}</h3>
-          <button onClick={() => navigate('/user')} className="btn-secondary">
-            Back to Dashboard
+          <button onClick={() => navigate('/student')} className="btn-secondary">
+            Back to Student Dashboard
           </button>
         </div>
       </div>
@@ -396,7 +396,7 @@ export default function ProductDetails() {
                 </span>
               </div>
               <button
-                onClick={() => navigate(`/user/shops/${product.shop._id}`)}
+                onClick={() => navigate(`/student/shops/${product.shop._id}`)}
                 className="btn-secondary"
                 style={{ padding: '0.4rem 0.85rem', fontSize: '0.85rem' }}
               >
@@ -530,7 +530,7 @@ export default function ProductDetails() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {reviews.map((rev) => {
-              const uName = rev.user?.name || 'Verified User';
+              const uName = rev.user?.name || 'Verified Student';
               const uImg = rev.user?.profileImage;
               const dateStr = new Date(rev.createdAt).toLocaleDateString('en-IN', {
                 day: 'numeric',

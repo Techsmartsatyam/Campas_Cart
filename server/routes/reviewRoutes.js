@@ -20,7 +20,7 @@ router.get('/shop/:shopId', getShopReviews);
 router.get('/delivery/:deliveryBoyId', getDeliveryBoyReviews);
 
 // Protected routes
-router.post('/', protect, authorizeRoles('USER'), createReview);
+router.post('/', protect, authorizeRoles('STUDENT'), createReview);
 router.get('/order/:orderId', protect, getOrderReviews);
 router.get('/shopkeeper/overview', protect, authorizeRoles('SHOPKEEPER'), getShopkeeperReviewsOverview);
 router.get('/admin/all', protect, authorizeRoles('ADMIN'), getAllReviewsAdmin);

@@ -24,7 +24,7 @@ async function runCleanDataTests() {
 
     // 1. Setup / Identify Test Accounts
     const adminUser = await User.findOne({ role: 'ADMIN' });
-    const studentUser = await User.findOne({ role: 'USER' });
+    const studentUser = await User.findOne({ role: 'STUDENT' });
     const shopkeeperUser = await User.findOne({ role: 'SHOPKEEPER' });
     const deliveryUser = await User.findOne({ role: 'DELIVERY_BOY' });
 

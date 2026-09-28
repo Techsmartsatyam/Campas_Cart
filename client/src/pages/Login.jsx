@@ -19,8 +19,8 @@ export default function Login() {
     const role = user?.role;
     const redirectPath =
       location.state?.from?.pathname ||
-      (role === 'USER'
-        ? '/user'
+      (role === 'STUDENT'
+        ? '/student'
         : role === 'SHOPKEEPER'
         ? '/shopkeeper'
         : role === 'DELIVERY_BOY'
@@ -118,7 +118,7 @@ export default function Login() {
             <input
               type="email"
               className="form-input"
-              placeholder="user@example.com"
+              placeholder="student@university.edu"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -193,7 +193,7 @@ export default function Login() {
         </div>
 
         <div style={{ textAlign: 'center', marginTop: '1.75rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-          Don't have an account?{' '}
+          Don't have a student account?{' '}
           <Link to="/register" style={{ color: 'var(--primary)', fontWeight: '600' }}>
             Register Now
           </Link>

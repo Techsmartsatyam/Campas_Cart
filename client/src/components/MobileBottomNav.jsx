@@ -9,9 +9,9 @@ export default function MobileBottomNav() {
   const navigate = useNavigate();
   const [cartCount, setCartCount] = useState(0);
 
-  // Fetch cart count for users
+  // Fetch cart count for student users
   useEffect(() => {
-    if (isAuthenticated && user?.role === 'USER') {
+    if (isAuthenticated && user?.role === 'STUDENT') {
       api.get('/cart')
         .then((res) => {
           if (res && res.success && res.data && res.data.items) {
@@ -46,8 +46,8 @@ export default function MobileBottomNav() {
           <House size={22} className="tab-icon" />
           <span className="tab-label">Home</span>
         </NavLink>
-        {isAuthenticated && user?.role === 'USER' && (
-          <NavLink to="/user" className={({ isActive }) => `mobile-tab-link ${isActive ? 'active' : ''}`} title="Shops Marketplace" aria-label="Shops Marketplace">
+        {isAuthenticated && user?.role === 'STUDENT' && (
+          <NavLink to="/student" className={({ isActive }) => `mobile-tab-link ${isActive ? 'active' : ''}`} title="Shops Marketplace" aria-label="Shops Marketplace">
             <Store size={22} className="tab-icon" />
             <span className="tab-label">Shops</span>
           </NavLink>
@@ -56,7 +56,7 @@ export default function MobileBottomNav() {
           <Info size={22} className="tab-icon" />
           <span className="tab-label">About</span>
         </NavLink>
-        {isAuthenticated && user?.role === 'USER' && (
+        {isAuthenticated && user?.role === 'STUDENT' && (
           <NavLink to="/cart" className={({ isActive }) => `mobile-tab-link ${isActive ? 'active' : ''}`} title="Cart" aria-label="Cart">
             <div style={{ position: 'relative' }}>
               <ShoppingCart size={22} className="tab-icon" />

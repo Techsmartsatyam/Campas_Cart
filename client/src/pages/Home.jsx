@@ -24,10 +24,10 @@ export default function Home() {
   const [apiStatus, setApiStatus] = useState({ loading: true, success: false, message: '' });
 
   const getDashboardPath = () => {
-    if (!user) return '/user';
+    if (!user) return '/student';
     switch (user.role) {
-      case 'USER':
-        return '/user';
+      case 'STUDENT':
+        return '/student';
       case 'SHOPKEEPER':
         return '/shopkeeper';
       case 'DELIVERY_BOY':
@@ -35,7 +35,7 @@ export default function Home() {
       case 'ADMIN':
         return '/admin';
       default:
-        return '/user';
+        return '/student';
     }
   };
 
@@ -63,8 +63,8 @@ export default function Home() {
       badge: 'Mobile UI',
     },
     {
-      title: 'Shop-Focused User Browsing',
-      desc: 'Primary user view prioritizes direct product items. Full shop details open only on intentional shop selection.',
+      title: 'Shop-Focused Student Browsing',
+      desc: 'Primary student view prioritizes direct product items. Full shop details open only on intentional shop selection.',
       badge: 'UX Fix',
     },
     {
@@ -72,8 +72,11 @@ export default function Home() {
       desc: 'Route-level code splitting, lazy-loaded map tracking, and optimized lean database query projections.',
       badge: 'Performance',
     },
-  
-    
+    {
+      title: 'Instant Real-Time Notifications',
+      desc: 'Consolidated real-time delivery tracker with background push notifications.',
+      badge: 'Real-Time',
+    },
   ];
 
   const features = [
@@ -102,7 +105,11 @@ export default function Home() {
       desc: 'Real-time GPS tracking on your order lifecycle from shop acceptance to doorstep delivery.',
       icon: Clock,
     },
-    
+    {
+      title: 'Progressive Web App (PWA)',
+      desc: 'Installable mobile-first web app with offline capabilities and push alerts.',
+      icon: ShoppingBag,
+    },
   ];
 
   const steps = [
@@ -148,7 +155,7 @@ export default function Home() {
               fontWeight: '400',
             }}
           >
-            NearCart connects users & customers with nearby local shops for fast, convenient, and reliable local delivery.
+            NearCart connects students & customers with nearby local shops for fast, convenient, and reliable local delivery.
           </p>
 
           <div
@@ -165,7 +172,7 @@ export default function Home() {
               </Link>
             ) : (
               <>
-                <Link to="/user" className="btn-primary" style={{ padding: '0.85rem 1.75rem', fontSize: '1rem' }}>
+                <Link to="/student" className="btn-primary" style={{ padding: '0.85rem 1.75rem', fontSize: '1rem' }}>
                   Browse Marketplace <ArrowRight size={18} />
                 </Link>
                 <Link to="/login" className="btn-secondary" style={{ padding: '0.85rem 1.75rem', fontSize: '1rem' }}>
@@ -230,11 +237,11 @@ export default function Home() {
               <div style={{ width: '2.75rem', height: '2.75rem', borderRadius: '0.5rem', background: '#e0f2fe', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
                 <ShoppingBag style={{ color: 'var(--primary)' }} size={22} />
               </div>
-              <h3 style={{ fontSize: '1.15rem', fontWeight: '700', marginBottom: '0.4rem' }}>User / Customer</h3>
+              <h3 style={{ fontSize: '1.15rem', fontWeight: '700', marginBottom: '0.4rem' }}>Student / Customer</h3>
               <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
-                Order snacks, grocery items, stationery, and daily essentials straight to your home or location.
+                Order snacks, grocery items, stationery, and daily essentials straight to your hostel or location.
               </p>
-              <Link to="/user" style={{ color: 'var(--primary)', fontSize: '0.875rem', fontWeight: '700' }}>
+              <Link to="/student" style={{ color: 'var(--primary)', fontSize: '0.875rem', fontWeight: '700' }}>
                 Access Marketplace →
               </Link>
             </div>
@@ -317,7 +324,7 @@ export default function Home() {
         <div className="container">
           <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
             <h2 style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '0.5rem' }}>Platform Features</h2>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Engineered for local community micro-delivery.</p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem' }}>Engineered for university & local community micro-delivery.</p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
@@ -351,7 +358,7 @@ export default function Home() {
                 Built with Purpose
               </h2>
               <p style={{ fontSize: '1.05rem', color: 'var(--text-secondary)', lineHeight: '1.6', marginBottom: '2rem' }}>
-                NearCart connects customers and users with nearby local shops for convenient ordering and fast, reliable delivery. Designed to empower local vendors and deliver everyday essentials with speed and transparency.
+                NearCart connects customers and students with nearby local shops for convenient ordering and fast, reliable delivery. Designed to empower local vendors and deliver everyday essentials with speed and transparency.
               </p>
 
               <div style={{ display: 'inline-flex', flexWrap: 'wrap', gap: '0.75rem', justifyContent: 'center', marginBottom: '2rem' }}>
@@ -406,10 +413,10 @@ export default function Home() {
                 </div>
                 <div>
                   <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: 'var(--text-primary)' }}>
-                    NearCart
+                    NearCart Platform Engineering
                   </h4>
                   <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
-                    Developer & Product Architecture Team •  Local Delivery Infrastructure
+                    Developer & Product Architecture Team • Full-Stack Local Delivery Infrastructure
                   </p>
                 </div>
               </div>

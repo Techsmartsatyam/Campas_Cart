@@ -20,8 +20,8 @@ async function runReviewSecurityTests() {
     console.log('Connected to MongoDB.');
 
     // Find a student user
-    const student = await User.findOne({ role: 'USER' });
-    const otherStudent = await User.findOne({ role: 'USER', _id: { $ne: student._id } });
+    const student = await User.findOne({ role: 'STUDENT' });
+    const otherStudent = await User.findOne({ role: 'STUDENT', _id: { $ne: student._id } });
     const sampleShop = await Shop.findOne({});
 
     if (!student || !sampleShop) {

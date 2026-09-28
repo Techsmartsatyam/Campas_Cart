@@ -50,7 +50,7 @@ const sendTokenResponse = (user, statusCode, res, message = 'Success') => {
 };
 
 // @route   POST /api/auth/register
-// @desc    Register a new USER user (Public)
+// @desc    Register a new STUDENT user (Public)
 // @access  Public
 export const register = async (req, res, next) => {
   try {
@@ -66,7 +66,7 @@ export const register = async (req, res, next) => {
     if (!isValidEmail(email)) {
       return res.status(400).json({
         success: false,
-        message: 'Please enter a valid email address (e.g. user@example.com)',
+        message: 'Please enter a valid email address (e.g. student@example.com)',
       });
     }
 
@@ -88,17 +88,17 @@ export const register = async (req, res, next) => {
       });
     }
 
-    // Public registration ALWAYS forces USER role
+    // Public registration ALWAYS forces STUDENT role
     const user = await User.create({
       name: name.trim(),
       email: normalizedEmail,
       phone: phone.trim(),
       password,
-      role: 'USER',
+      role: 'STUDENT',
       accountStatus: 'APPROVED',
     });
 
-    // Create in-app welcome notification for newly registered user
+    // Create in-app welcome notification for newly registered student
     try {
       const welcomeNotif = await Notification.create({
         user: user._id,
@@ -265,7 +265,7 @@ export const googleAuth = async (req, res, next) => {
       email: normalizedEmail,
       phone: bodyPhone ? bodyPhone.trim() : '',
       password: randomPassword,
-      role: 'USER',
+      role: 'STUDENT',
       accountStatus: 'APPROVED',
       profileImage: profileImage || '',
       googleId: googleId || '',
@@ -275,7 +275,7 @@ export const googleAuth = async (req, res, next) => {
       isVerified: true,
     });
 
-    // Create in-app welcome notification for newly registered Google user
+    // Create in-app welcome notification for newly registered Google student
     try {
       const welcomeNotif = await Notification.create({
         user: user._id,

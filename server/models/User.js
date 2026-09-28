@@ -30,11 +30,11 @@ const userSchema = new mongoose.Schema(
     role: {
       type: String,
       enum: {
-        values: ['USER', 'SHOPKEEPER', 'DELIVERY_BOY', 'ADMIN'],
+        values: ['STUDENT', 'SHOPKEEPER', 'DELIVERY_BOY', 'ADMIN'],
         message: '{VALUE} is not a valid user role',
       },
       required: true,
-      default: 'USER',
+      default: 'STUDENT',
     },
     accountStatus: {
       type: String,
@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema(
         message: '{VALUE} is not a valid account status',
       },
       default: function () {
-        if (this.role === 'USER' || this.role === 'ADMIN') {
+        if (this.role === 'STUDENT' || this.role === 'ADMIN') {
           return 'APPROVED';
         }
         return 'PENDING';

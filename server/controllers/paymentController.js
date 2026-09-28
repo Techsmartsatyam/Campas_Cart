@@ -4,9 +4,9 @@ import Order from '../models/Order.js';
 import Notification from '../models/Notification.js';
 
 /**
- * @desc    Get shop-specific UPI QR details for a User's specific Order
+ * @desc    Get shop-specific UPI QR details for a Student's specific Order
  * @route   GET /api/payments/qr/:orderId
- * @access  Private (User)
+ * @access  Private (Student)
  */
 export const getOrderPaymentQr = async (req, res, next) => {
   try {
@@ -21,7 +21,7 @@ export const getOrderPaymentQr = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-    // Security check: User can ONLY view payment QR for their own order
+    // Security check: Student can ONLY view payment QR for their own order
     if (order.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ success: false, message: 'Unauthorized access to order payment QR' });
     }
@@ -66,9 +66,9 @@ export const getOrderPaymentQr = async (req, res, next) => {
 };
 
 /**
- * @desc    User confirms UPI payment ("I Have Paid")
+ * @desc    Student confirms UPI payment ("I Have Paid")
  * @route   POST /api/payments/upi/confirm
- * @access  Private (User)
+ * @access  Private (Student)
  */
 export const confirmUpiPayment = async (req, res, next) => {
   try {
@@ -83,7 +83,7 @@ export const confirmUpiPayment = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-    // Security check: User can only confirm their own order
+    // Security check: Student can only confirm their own order
     if (order.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ success: false, message: 'Unauthorized payment confirmation attempt' });
     }
@@ -119,7 +119,7 @@ export const confirmUpiPayment = async (req, res, next) => {
     payment.status = 'USER_CONFIRMED';
     payment.method = 'UPI';
     payment.transactionId = transactionId || payment.transactionId || `UPI_TXN_${Date.now()}`;
-    payment.userConfirmedAt = now;
+    payment.studentConfirmedAt = now;
     await payment.save();
 
     // Create Notification for Shopkeeper
@@ -129,7 +129,7 @@ export const confirmUpiPayment = async (req, res, next) => {
         await Notification.create({
           user: shop.owner,
           title: 'UPI Payment Claimed',
-          message: `User marked payment as completed for Order ${order.orderNumber}. Please verify.`,
+          message: `Student marked payment as completed for Order ${order.orderNumber}. Please verify.`,
           type: 'ORDER',
           relatedOrder: order._id,
           isRead: false,
@@ -209,7 +209,7 @@ export const verifyShopkeeperUpiPayment = async (req, res, next) => {
     payment.verifiedBy = req.user._id;
     await payment.save();
 
-    // Create Notification for User
+    // Create Notification for Student
     try {
       await Notification.create({
         user: order.user,
@@ -298,7 +298,7 @@ export const rejectShopkeeperUpiPayment = async (req, res, next) => {
 /**
  * @desc    Generate & stream official PDF Payment Receipt
  * @route   GET /api/orders/:orderId/receipt
- * @access  Private (User / Shopkeeper / Admin)
+ * @access  Private (Student / Shopkeeper / Admin)
  */
 export const generateReceiptPdf = async (req, res, next) => {
   try {
@@ -317,12 +317,12 @@ export const generateReceiptPdf = async (req, res, next) => {
       return res.status(404).json({ success: false, message: 'Order not found' });
     }
 
-    // Authorization check: User owner, Shop owner, or Admin
-    const isUserOwner = req.user.role === 'USER' && order.user._id.toString() === req.user._id.toString();
+    // Authorization check: Student owner, Shop owner, or Admin
+    const isStudentOwner = req.user.role === 'STUDENT' && order.user._id.toString() === req.user._id.toString();
     const isShopOwner = req.user.role === 'SHOPKEEPER' && order.shop.owner.toString() === req.user._id.toString();
     const isAdmin = req.user.role === 'ADMIN';
 
-    if (!isUserOwner && !isShopOwner && !isAdmin) {
+    if (!isStudentOwner && !isShopOwner && !isAdmin) {
       return res.status(403).json({ success: false, message: 'Unauthorized access to order receipt' });
     }
 
@@ -353,7 +353,7 @@ export const generateReceiptPdf = async (req, res, next) => {
     doc.text(`Payment Verified Date: ${payment?.verifiedAt ? new Date(payment.verifiedAt).toLocaleString('en-IN') : new Date().toLocaleString('en-IN')}`);
     doc.moveDown();
 
-    doc.text(`Customer Name: ${order.user?.name || 'User'}`);
+    doc.text(`Customer Name: ${order.user?.name || 'Student'}`);
     doc.text(`Customer Phone: ${order.user?.phone || 'N/A'}`);
     doc.text(`Delivery Address: ${order.address?.fullAddress || 'Campus Address'}`);
     doc.moveDown();
@@ -494,7 +494,7 @@ export const handleRazorpayWebhook = async (req, res, next) => {
 };
 
 /**
- * @desc    Get payment visibility data for Admin / User / Shopkeeper
+ * @desc    Get payment visibility data for Admin / Student / Shopkeeper
  * @route   GET /api/payments
  * @access  Private
  */
@@ -502,7 +502,7 @@ export const getPayments = async (req, res, next) => {
   try {
     let filter = {};
 
-    if (req.user.role === 'USER') {
+    if (req.user.role === 'STUDENT') {
       filter.user = req.user._id;
     } else if (req.user.role === 'SHOPKEEPER') {
       const shopOrders = await Order.find({ shop: req.user.shopId }).select('_id');

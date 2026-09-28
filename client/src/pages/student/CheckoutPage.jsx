@@ -357,7 +357,7 @@ export default function CheckoutPage() {
     <div className="container" style={{ padding: '2rem 1rem' }}>
       {/* Back button & Title */}
       <div style={{ marginBottom: '1.5rem' }}>
-        <Link to={buyNowItem ? `/user/products/${buyNowItem.product._id}` : "/cart"} style={{ color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
+        <Link to={buyNowItem ? `/student/products/${buyNowItem.product._id}` : "/cart"} style={{ color: 'var(--text-muted)', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.9rem', marginBottom: '0.5rem' }}>
           <ArrowLeft size={16} /> {buyNowItem ? 'Back to Product' : 'Back to Cart'}
         </Link>
         <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
