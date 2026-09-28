@@ -104,6 +104,14 @@ const userSchema = new mongoose.Schema(
 userSchema.index({ role: 1 });
 userSchema.index({ rating: -1 });
 
+// Pre-save hook to migrate legacy STUDENT role to USER
+userSchema.pre('validate', function (next) {
+  if (this.role === 'STUDENT') {
+    this.role = 'USER';
+  }
+  next();
+});
+
 // Pre-save hook to hash password if modified
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();

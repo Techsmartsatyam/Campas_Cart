@@ -35,7 +35,7 @@ async function runCleanDataTests() {
     const { previewCleanData, executeCleanData } = await import('../controllers/adminController.js');
 
     // TEST 1: Student calls cleanup API -> Expected 403 / Reject
-    console.log('\n--- TEST 1: STUDENT AUTHORIZATION CHECK ---');
+    console.log('\n--- TEST 1: USER AUTHORIZATION CHECK ---');
     let studentErrRes = null;
     await executeCleanData(
       { user: studentUser, body: { targets: ['orders'], confirmation: 'CLEAN NEARCART' } },
@@ -43,9 +43,9 @@ async function runCleanDataTests() {
       (err) => console.error(err)
     );
     if (studentErrRes && studentErrRes.code === 403) {
-      console.log(`✅ Correctly rejected Student access (Code: 403, Message: "${studentErrRes.d.message}")`);
+      console.log(`✅ Correctly rejected User access (Code: 403, Message: "${studentErrRes.d.message}")`);
     } else {
-      throw new Error(`Expected 403 for student but got: ${JSON.stringify(studentErrRes)}`);
+      throw new Error(`Expected 403 for user but got: ${JSON.stringify(studentErrRes)}`);
     }
 
     // TEST 2: Shopkeeper calls cleanup API -> Expected 403 / Reject
