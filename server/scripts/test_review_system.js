@@ -306,8 +306,8 @@ async function runReviewSystemTests() {
       throw new Error(`Failed to create product review: ${JSON.stringify(prodResData)}`);
     }
 
-    // 7. TEST REJECT REVIEW FOR OTHER USER'S ORDER
-    console.log('\n--- TEST 7: REJECT REVIEW FOR OTHER USER ORDER ---');
+    // 7. TEST REJECT REVIEW FOR OTHER STUDENT'S ORDER
+    console.log('\n--- TEST 7: REJECT REVIEW FOR OTHER STUDENT ORDER ---');
     let unauthorizedRes = null;
     await createReview(
       {
