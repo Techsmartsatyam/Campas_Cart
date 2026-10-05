@@ -193,7 +193,7 @@ export default function Login() {
         </div>
 
         <div style={{ textAlign: 'center', marginTop: '1.75rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-          Don't have a student/ costumer account?{' '}
+          Don't have a Student / Atithi account?{' '}
           <Link to="/register" style={{ color: 'var(--primary)', fontWeight: '600' }}>
             Register Now 
           </Link>

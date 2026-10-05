@@ -343,8 +343,8 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    // 5. Calculate delivery fee server-side using customer-entered distance (or fallback)
-    const deliveryCalc = calculateDeliveryFeeForShopAndAddress(shop, address, reqDeliveryDistance);
+    // 5. Calculate delivery fee server-side authoritatively from shop and customer address coordinates
+    const deliveryCalc = calculateDeliveryFeeForShopAndAddress(shop, address);
     if (!deliveryCalc.success) {
       return res.status(400).json({
         success: false,
@@ -1045,6 +1045,55 @@ export const cancelOrder = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: 'Failed to cancel order',
+      error: error.message,
+    });
+  }
+};
+
+/**
+ * @desc    Get estimated delivery distance and fee before order creation
+ * @route   POST /api/orders/delivery-estimate
+ * @access  Private (Student)
+ */
+export const estimateDeliveryFee = async (req, res) => {
+  try {
+    const { shopId, addressId } = req.body;
+
+    if (!shopId) {
+      return res.status(400).json({ success: false, message: 'Shop ID is required' });
+    }
+    if (!addressId) {
+      return res.status(400).json({ success: false, message: 'Address ID is required' });
+    }
+
+    const address = await Address.findOne({ _id: addressId, user: req.user._id });
+    if (!address) {
+      return res.status(404).json({ success: false, message: 'Delivery address not found' });
+    }
+
+    const shop = await Shop.findById(shopId);
+    if (!shop) {
+      return res.status(404).json({ success: false, message: 'Shop not found' });
+    }
+
+    const deliveryCalc = calculateDeliveryFeeForShopAndAddress(shop, address);
+    if (!deliveryCalc.success) {
+      return res.status(400).json({
+        success: false,
+        message: deliveryCalc.error,
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      distanceKm: deliveryCalc.distanceKm,
+      deliveryFee: deliveryCalc.deliveryFee,
+    });
+  } catch (error) {
+    console.error('Error estimating delivery fee:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to calculate delivery fee estimate',
       error: error.message,
     });
   }

@@ -1,4 +1,106 @@
 import Address from '../models/Address.js';
+import { validateCoordinates } from '../utils/distanceCalculator.js';
+
+const FORBIDDEN_PLACEHOLDERS = [
+  'SELECT HOSTEL',
+  'SELECT',
+  'CHOOSE HOSTEL',
+  'ENTER HOSTEL NAME',
+  'N/A',
+  'NA',
+  'NONE',
+  'NULL',
+  'UNDEFINED',
+  'TEST HOSTEL',
+  'HOME ADDRESS',
+  'YOUR HOSTEL',
+];
+
+const sanitizeHostelFields = (reqBody, userCustomerType) => {
+  const addressLabel = (reqBody.label || 'HOSTEL').toUpperCase();
+  const customerType = (userCustomerType || reqBody.customerType || 'STUDENT').toUpperCase();
+
+  let hostelName = reqBody.hostelName ? reqBody.hostelName.trim() : '';
+  let roomNumber = reqBody.roomNumber ? reqBody.roomNumber.trim() : '';
+
+  // ATITHI or HOME addresses MUST NOT contain any hostel info
+  if (customerType === 'ATITHI' || addressLabel === 'HOME') {
+    return { hostelName: '', roomNumber: '' };
+  }
+
+  // Sanitize / reject placeholder values
+  if (FORBIDDEN_PLACEHOLDERS.includes(hostelName.toUpperCase())) {
+    hostelName = '';
+    roomNumber = '';
+  }
+
+  return { hostelName, roomNumber };
+};
+
+/**
+ * Helper to extract and validate location coordinates from request body
+ */
+const extractAndValidateLocation = (reqBody) => {
+  let lat = reqBody.latitude !== undefined ? reqBody.latitude : (reqBody.lat !== undefined ? reqBody.lat : null);
+  let lng = reqBody.longitude !== undefined ? reqBody.longitude : (reqBody.lng !== undefined ? reqBody.lng : null);
+
+  if ((lat === null || lng === null) && reqBody.location && Array.isArray(reqBody.location.coordinates) && reqBody.location.coordinates.length >= 2) {
+    lng = reqBody.location.coordinates[0];
+    lat = reqBody.location.coordinates[1];
+  }
+
+  if (lat === null || lng === null || lat === '' || lng === '') {
+    return { location: null, error: null };
+  }
+
+  const error = validateCoordinates(lat, lng);
+  if (error) {
+    return { location: null, error };
+  }
+
+  return {
+    location: {
+      type: 'Point',
+      coordinates: [Number(lng), Number(lat)],
+    },
+    error: null,
+  };
+};
+
+/**
+ * @desc    Get available campus hostel names
+ * @route   GET /api/addresses/hostels
+ * @access  Private (Student)
+ */
+export const getHostels = async (req, res) => {
+  try {
+    const existingHostels = await Address.distinct('hostelName', {
+      hostelName: { $exists: true, $ne: '' },
+    });
+
+    const cleanHostels = Array.from(
+      new Set(
+        existingHostels
+          .map((h) => h && h.trim())
+          .filter((h) => h && !FORBIDDEN_PLACEHOLDERS.includes(h.toUpperCase()))
+      )
+    );
+
+    const defaultCampusHostels = ['Bhabha Hostel', 'Hostel 1', 'Hostel 5', 'Block A', 'Block B', 'Block C'];
+    const allHostels = Array.from(new Set([...cleanHostels, ...defaultCampusHostels]));
+
+    return res.status(200).json({
+      success: true,
+      data: allHostels,
+    });
+  } catch (error) {
+    console.error('Error fetching hostels:', error);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to fetch hostels',
+    });
+  }
+};
 
 /**
  * @desc    Get all addresses for authenticated student
@@ -24,13 +126,13 @@ export const getAddresses = async (req, res) => {
 };
 
 /**
- * @desc    Create new delivery address for student
+ * @desc    Create new delivery address for student / atithi
  * @route   POST /api/addresses
  * @access  Private (Student)
  */
 export const createAddress = async (req, res) => {
   try {
-    const { label, hostelName, roomNumber, fullAddress, landmark, city, state, postalCode, isDefault } = req.body;
+    const { label, fullAddress, landmark, city, state, postalCode, isDefault } = req.body;
 
     if (!fullAddress || !fullAddress.trim()) {
       return res.status(400).json({
@@ -38,6 +140,16 @@ export const createAddress = async (req, res) => {
         message: 'Full address is required',
       });
     }
+
+    const { location, error: locationError } = extractAndValidateLocation(req.body);
+    if (locationError) {
+      return res.status(400).json({
+        success: false,
+        message: locationError,
+      });
+    }
+
+    const { hostelName, roomNumber } = sanitizeHostelFields(req.body, req.user?.customerType);
 
     // If setting as default, clear default status from other user addresses
     if (isDefault) {
@@ -48,17 +160,21 @@ export const createAddress = async (req, res) => {
     const count = await Address.countDocuments({ user: req.user._id });
     const makeDefault = count === 0 ? true : Boolean(isDefault);
 
+    const userCustomerType = (req.user?.customerType || 'STUDENT').toUpperCase();
+    const effectiveLabel = userCustomerType === 'ATITHI' ? 'HOME' : (label || 'HOSTEL');
+
     const address = await Address.create({
       user: req.user._id,
-      label: label || 'HOSTEL',
-      hostelName: hostelName ? hostelName.trim() : '',
-      roomNumber: roomNumber ? roomNumber.trim() : '',
+      label: effectiveLabel,
+      hostelName,
+      roomNumber,
       fullAddress: fullAddress.trim(),
       landmark: landmark ? landmark.trim() : '',
       city: city ? city.trim() : '',
       state: state ? state.trim() : '',
       postalCode: postalCode ? postalCode.trim() : '',
       isDefault: makeDefault,
+      ...(location ? { location } : {}),
     });
 
     return res.status(201).json({
@@ -92,21 +208,35 @@ export const updateAddress = async (req, res) => {
       });
     }
 
-    const { label, hostelName, roomNumber, fullAddress, landmark, city, state, postalCode, isDefault } = req.body;
+    const { label, fullAddress, landmark, city, state, postalCode, isDefault } = req.body;
+
+    const { location, error: locationError } = extractAndValidateLocation(req.body);
+    if (locationError) {
+      return res.status(400).json({
+        success: false,
+        message: locationError,
+      });
+    }
 
     if (isDefault && !address.isDefault) {
       await Address.updateMany({ user: req.user._id }, { isDefault: false });
     }
 
-    if (label) address.label = label;
-    if (hostelName !== undefined) address.hostelName = hostelName.trim();
-    if (roomNumber !== undefined) address.roomNumber = roomNumber.trim();
+    const userCustomerType = (req.user?.customerType || 'STUDENT').toUpperCase();
+    const effectiveLabel = userCustomerType === 'ATITHI' ? 'HOME' : (label || address.label);
+
+    const { hostelName, roomNumber } = sanitizeHostelFields(req.body, userCustomerType);
+
+    address.label = effectiveLabel;
+    address.hostelName = hostelName;
+    address.roomNumber = roomNumber;
     if (fullAddress) address.fullAddress = fullAddress.trim();
     if (landmark !== undefined) address.landmark = landmark.trim();
     if (city !== undefined) address.city = city.trim();
     if (state !== undefined) address.state = state.trim();
     if (postalCode !== undefined) address.postalCode = postalCode.trim();
     if (isDefault !== undefined) address.isDefault = Boolean(isDefault);
+    if (location) address.location = location;
 
     await address.save();
 

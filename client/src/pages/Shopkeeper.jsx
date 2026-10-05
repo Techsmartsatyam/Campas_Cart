@@ -25,6 +25,8 @@ import {
   X,
   Star,
   Tag,
+  MapPin,
+  Navigation,
 } from 'lucide-react';
 import CouponManagement from '../components/CouponManagement';
 
@@ -67,7 +69,36 @@ export default function Shopkeeper() {
     logo: '',
     coverImage: '',
     isOpen: true,
+    latitude: '',
+    longitude: '',
   });
+
+  // Shop Location Detection State
+  const [shopLocDetecting, setShopLocDetecting] = useState(false);
+  const [shopLocMsg, setShopLocMsg] = useState('');
+
+  const handleDetectShopLocation = () => {
+    if (!navigator.geolocation) {
+      setShopLocMsg('Geolocation is not supported by your browser.');
+      return;
+    }
+    setShopLocDetecting(true);
+    setShopLocMsg('');
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const lat = parseFloat(pos.coords.latitude.toFixed(7));
+        const lng = parseFloat(pos.coords.longitude.toFixed(7));
+        setShopForm((prev) => ({ ...prev, latitude: lat, longitude: lng }));
+        setShopLocMsg(`\u2705 Location captured: ${lat}, ${lng}`);
+        setShopLocDetecting(false);
+      },
+      (err) => {
+        setShopLocMsg('\u274c Failed to get location: ' + err.message);
+        setShopLocDetecting(false);
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
 
   const [newSlab, setNewSlab] = useState({ minDistanceKm: '', maxDistanceKm: '', charge: '' });
 
@@ -192,7 +223,14 @@ export default function Shopkeeper() {
             upiEnabled: shopRes.shop.upiEnabled !== undefined ? shopRes.shop.upiEnabled : true,
             upiId: shopRes.shop.upiId || '',
             upiQrImage: shopRes.shop.upiQrImage || '',
+            latitude: shopRes.shop.location?.coordinates?.[1] || '',
+            longitude: shopRes.shop.location?.coordinates?.[0] || '',
           });
+          setShopLocMsg(
+            shopRes.shop.location?.coordinates?.[1]
+              ? `\u2705 Current location: ${shopRes.shop.location.coordinates[1]}, ${shopRes.shop.location.coordinates[0]}`
+              : ''
+          );
         } else {
           setShop(null);
         }
@@ -758,6 +796,33 @@ export default function Shopkeeper() {
             <div className="form-group">
               <label className="form-label">Campus Address</label>
               <input type="text" className="form-input" placeholder="e.g. SAC Building, Room 102" value={shopForm.address} onChange={(e) => setShopForm({ ...shopForm, address: e.target.value })} required />
+            </div>
+
+            {/* Shop GPS Location */}
+            <div className="form-group">
+              <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                <MapPin size={15} /> Shop Location (GPS)
+              </label>
+              <button
+                type="button"
+                onClick={handleDetectShopLocation}
+                disabled={shopLocDetecting}
+                className="btn-secondary"
+                style={{ fontSize: '0.85rem', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+              >
+                <Navigation size={14} />
+                {shopLocDetecting ? 'Detecting...' : (shopForm.latitude ? 'Update Location' : 'Detect My Location')}
+              </button>
+              {shopLocMsg && (
+                <div style={{ marginTop: '0.4rem', fontSize: '0.82rem', color: shopLocMsg.startsWith('\u2705') ? '#059669' : '#dc2626' }}>
+                  {shopLocMsg}
+                </div>
+              )}
+              {shopForm.latitude && shopForm.longitude && (
+                <div style={{ marginTop: '0.3rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                  Lat: {shopForm.latitude}, Lng: {shopForm.longitude}
+                </div>
+              )}
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -1558,6 +1623,33 @@ export default function Shopkeeper() {
                 </div>
 
                 <div className="form-group"><label className="form-label">Campus Address</label><input type="text" className="form-input" value={shopForm.address} onChange={(e) => setShopForm({ ...shopForm, address: e.target.value })} required /></div>
+
+                {/* Shop GPS Location */}
+                <div className="form-group" style={{ marginTop: '0.75rem' }}>
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <MapPin size={15} /> Shop Location (GPS)
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleDetectShopLocation}
+                    disabled={shopLocDetecting}
+                    className="btn-secondary"
+                    style={{ fontSize: '0.85rem', padding: '0.5rem 1rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                  >
+                    <Navigation size={14} />
+                    {shopLocDetecting ? 'Detecting...' : (shopForm.latitude ? 'Update Location' : 'Detect My Location')}
+                  </button>
+                  {shopLocMsg && (
+                    <div style={{ marginTop: '0.4rem', fontSize: '0.82rem', color: shopLocMsg.startsWith('\u2705') ? '#059669' : '#dc2626' }}>
+                      {shopLocMsg}
+                    </div>
+                  )}
+                  {shopForm.latitude && shopForm.longitude && (
+                    <div style={{ marginTop: '0.3rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                      Lat: {shopForm.latitude}, Lng: {shopForm.longitude}
+                    </div>
+                  )}
+                </div>
 
                 {/* Shop Timings */}
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
