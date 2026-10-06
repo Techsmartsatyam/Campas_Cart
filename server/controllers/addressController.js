@@ -89,7 +89,7 @@ export const getHostels = async (req, res) => {
       )
     );
 
-    const defaultCampusHostels = ['Bhabha Hostel', 'Hostel 1', 'Hostel 5', 'Block A', 'Block B', 'Block C'];
+    const defaultCampusHostels = [ 'Hostel 1', 'Hostel 5', 'Block A', 'Block B', 'Block C'];
     const allHostels = Array.from(new Set([...cleanHostels, ...defaultCampusHostels]));
 
     return res.status(200).json({

@@ -1185,16 +1185,28 @@ export default function CheckoutPage() {
                 />
               </div>
 
-              {/* GPS Location for accurate distance calculation */}
-              <div style={{ background: hasValidLocation ? '#ecfdf5' : '#fef2f2', border: `1px solid ${hasValidLocation ? '#a7f3d0' : '#fca5a5'}`, borderRadius: '0.5rem', padding: '0.85rem 1rem' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', fontSize: '0.85rem', fontWeight: '700', color: hasValidLocation ? '#065f46' : '#991b1b', marginBottom: '0.5rem' }}>
-                  <MapPin size={16} style={{ color: hasValidLocation ? '#059669' : '#dc2626' }} />
-                  {hasValidLocation ? '✅ Location Pinned Successfully' : '⚠️ Map Location Required'}
-                </label>
+              {/* Location Pin Section */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '0.4rem', padding: '0.75rem 0.85rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+                  <label style={{ fontSize: '0.85rem', color: 'var(--text-muted)', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                    <span>Location</span>
+                    <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  {hasValidLocation ? (
+                    <span style={{ fontSize: '0.78rem', color: '#16a34a', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}>
+                      ✓ Location pinned
+                    </span>
+                  ) : (
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                      Pin required to save
+                    </span>
+                  )}
+                </div>
+
                 {hasValidLocation ? (
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#047857', fontWeight: '600' }}>
-                      Lat: {Number(addressFormData.latitude).toFixed(5)}, Lng: {Number(addressFormData.longitude).toFixed(5)}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem', marginTop: '0.25rem' }}>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                      Coordinates: {Number(addressFormData.latitude).toFixed(4)}, {Number(addressFormData.longitude).toFixed(4)}
                     </span>
                     <button
                       type="button"
@@ -1206,15 +1218,15 @@ export default function CheckoutPage() {
                           { enableHighAccuracy: true, timeout: 10000 }
                         );
                       }}
-                      style={{ fontSize: '0.78rem', padding: '0.25rem 0.5rem', background: '#ffffff', border: '1px solid #10b981', borderRadius: '0.3rem', cursor: 'pointer', color: '#047857', fontWeight: '600' }}
+                      style={{ fontSize: '0.75rem', padding: '0.2rem 0.5rem', background: '#ffffff', border: '1px solid #cbd5e1', borderRadius: '0.3rem', cursor: 'pointer', color: 'var(--text-muted)' }}
                     >
-                      Update Pin
+                      Update
                     </button>
                   </div>
                 ) : (
                   <div>
-                    <p style={{ fontSize: '0.8rem', color: '#b91c1c', margin: '0 0 0.5rem 0', fontWeight: '500' }}>
-                      Pin your location on the map before saving the address.
+                    <p style={{ fontSize: '0.8rem', color: 'var(--text-muted)', margin: '0 0 0.5rem 0' }}>
+                      Pin your location on the map to save this address.
                     </p>
                     <button
                       type="button"
@@ -1227,9 +1239,9 @@ export default function CheckoutPage() {
                         );
                       }}
                       className="btn-secondary"
-                      style={{ fontSize: '0.85rem', padding: '0.45rem 0.9rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: '#ffffff', border: '1px solid #dc2626', color: '#dc2626', fontWeight: '700' }}
+                      style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: '#ffffff', border: '1px solid #cbd5e1', color: 'var(--text-primary)', fontWeight: '600' }}
                     >
-                      <Compass size={14} /> Pin My Location
+                      <Compass size={14} /> 📍 Pin My Location
                     </button>
                   </div>
                 )}
