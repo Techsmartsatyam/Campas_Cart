@@ -3,7 +3,8 @@ import { useNavigate, Link, useLocation } from 'react-router-dom';
 import api from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { detectUserLocality } from '../../utils/locationService';
-import { MapPin, Plus, Check, Tag, CreditCard, ShoppingBag, ShieldCheck, AlertCircle, ArrowLeft, CheckCircle, Zap, Compass, Loader2 } from 'lucide-react';
+import { isShopOpen } from '../../components/StudentUIComponents';
+import { MapPin, Plus, Check, Tag, CreditCard, ShoppingBag, ShieldCheck, AlertCircle, ArrowLeft, CheckCircle, Zap, Compass, Loader2, Lock } from 'lucide-react';
 
 export default function CheckoutPage() {
   const { user } = useAuth();
@@ -293,6 +294,11 @@ export default function CheckoutPage() {
 
   const handlePlaceOrder = async () => {
     if (submitting) return;
+
+    if (shop && !isShopOpen(shop)) {
+      setError('This shop is currently closed. Orders cannot be placed at this time.');
+      return;
+    }
 
     if (!selectedAddressId) {
       setError('Please select or add a delivery address');

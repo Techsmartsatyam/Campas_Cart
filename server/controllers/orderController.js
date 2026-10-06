@@ -235,6 +235,15 @@ export const createOrder = async (req, res) => {
         });
       }
 
+      // Closed shop protection — final security boundary
+      if (!shop.isOpen) {
+        return res.status(403).json({
+          success: false,
+          shopClosed: true,
+          message: `Cannot place order because ${shop.name} is currently closed.`,
+        });
+      }
+
       // Calculate server-side effective selling price
       const effectivePrice =
         product.discountPrice != null && product.discountPrice < product.price
@@ -281,6 +290,15 @@ export const createOrder = async (req, res) => {
         return res.status(400).json({
           success: false,
           message: 'The shop associated with your cart is not available',
+        });
+      }
+
+      // Closed shop protection — final security boundary for cart-based orders
+      if (!shop.isOpen) {
+        return res.status(403).json({
+          success: false,
+          shopClosed: true,
+          message: `Cannot place order because ${shop.name} is currently closed.`,
         });
       }
 
