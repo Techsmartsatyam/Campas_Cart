@@ -1,5 +1,5 @@
 import Address from '../models/Address.js';
-import { validateCoordinates } from '../utils/distanceCalculator.js';
+import { validateCoordinates, isValidCoordinatePair } from '../utils/distanceCalculator.js';
 
 const FORBIDDEN_PLACEHOLDERS = [
   'SELECT HOSTEL',
@@ -40,7 +40,7 @@ const sanitizeHostelFields = (reqBody, userCustomerType) => {
 /**
  * Helper to extract and validate location coordinates from request body
  */
-const extractAndValidateLocation = (reqBody) => {
+const extractAndValidateLocation = (reqBody, requireLocation = true) => {
   let lat = reqBody.latitude !== undefined ? reqBody.latitude : (reqBody.lat !== undefined ? reqBody.lat : null);
   let lng = reqBody.longitude !== undefined ? reqBody.longitude : (reqBody.lng !== undefined ? reqBody.lng : null);
 
@@ -50,6 +50,9 @@ const extractAndValidateLocation = (reqBody) => {
   }
 
   if (lat === null || lng === null || lat === '' || lng === '') {
+    if (requireLocation) {
+      return { location: null, error: 'Please pin your exact location on the map before saving the address.' };
+    }
     return { location: null, error: null };
   }
 
@@ -141,11 +144,11 @@ export const createAddress = async (req, res) => {
       });
     }
 
-    const { location, error: locationError } = extractAndValidateLocation(req.body);
-    if (locationError) {
+    const { location, error: locationError } = extractAndValidateLocation(req.body, true);
+    if (locationError || !location) {
       return res.status(400).json({
         success: false,
-        message: locationError,
+        message: locationError || 'Please pin your exact location on the map before saving the address.',
       });
     }
 
@@ -210,11 +213,20 @@ export const updateAddress = async (req, res) => {
 
     const { label, fullAddress, landmark, city, state, postalCode, isDefault } = req.body;
 
-    const { location, error: locationError } = extractAndValidateLocation(req.body);
+    const { location, error: locationError } = extractAndValidateLocation(req.body, false);
     if (locationError) {
       return res.status(400).json({
         success: false,
         message: locationError,
+      });
+    }
+
+    if (location) {
+      address.location = location;
+    } else if (!isValidCoordinatePair(address.location?.coordinates)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please pin your exact location on the map before saving the address.',
       });
     }
 
